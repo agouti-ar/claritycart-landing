@@ -70,7 +70,7 @@
     <header class="w-full max-w-7xl mx-auto px-6 py-6 flex justify-between items-center relative z-10">
         <div class="flex items-center gap-3 text-2xl font-bold tracking-tight cursor-pointer">
             <div class="relative flex items-center justify-center w-8 h-8 rounded-full border-[3px] border-saas-text border-r-transparent">
-                <div class="absolute top-0 right-[1px] w-2.5 h-2.5 rounded-full bg-saas-accent shadow-[0_0_10px_2px_rgba(59,130,246,0.8)] animate-pulse"></div>
+                <div class="absolute top-0 right-[1px] w-2.5 h-2.5 rounded-full bg-blue-400 shadow-[0_0_12px_4px_rgba(96,165,250,0.6)] ring-2 ring-blue-400/50 animate-pulse"></div>
             </div>
             ClarityCart AI
         </div>
@@ -188,39 +188,44 @@
         <!-- Pricing Section -->
         <section id="pricing" class="py-24 bg-saas-card text-center">
             <h2 class="text-3xl font-bold mb-12">Simple, transparent pricing.</h2>
-            <div class="max-w-4xl mx-auto px-4 text-left flex flex-col md:flex-row gap-8 justify-center">
-                <!-- Pro Monthly Plan -->
-                <div
-                    class="bg-saas-bg p-8 rounded-2xl shadow-lg border border-slate-800 relative flex flex-col w-full md:w-1/2">
-                    <h3 class="text-xl font-bold mb-2 text-slate-100">Pro Monthly</h3>
-                    <div class="text-4xl font-extrabold mb-4 text-slate-100">$9.99<span
-                            class="text-lg text-slate-400 font-medium">/mo</span></div>
+            <div class="max-w-6xl mx-auto px-4 text-left grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Starter Plan -->
+                <div class="bg-saas-bg p-8 rounded-2xl shadow-lg border border-slate-800 relative flex flex-col">
+                    <h3 class="text-xl font-bold mb-2 text-slate-100">Starter</h3>
+                    <div class="text-4xl font-extrabold mb-4 text-slate-100">$9.99<span class="text-lg text-slate-400 font-medium">/mo</span></div>
                     <ul class="text-slate-400 mb-8 flex-grow space-y-3">
-                        <li class="flex items-center gap-3"><svg class="w-5 h-5 text-saas-accent flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>Up to 1,000 AI responses/mo</li>
-                        <li class="flex items-center gap-3"><svg class="w-5 h-5 text-saas-accent flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>Autonomous context awareness</li>
-                        <li class="flex items-center gap-3"><svg class="w-5 h-5 text-saas-accent flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>Smart Context Scraping</li>
-                        <li class="flex items-center gap-3"><svg class="w-5 h-5 text-saas-accent flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>7-Day Free Trial</li>
+                        <li class="flex items-center gap-3"><svg class="w-5 h-5 text-saas-accent flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>Up to 500 AI responses/mo</li>
+                        <li class="flex items-center gap-3"><svg class="w-5 h-5 text-saas-accent flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>Standard design</li>
+                        <li class="flex items-center gap-3"><svg class="w-5 h-5 text-saas-accent flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>ClarityCart branding</li>
                     </ul>
-                    <button
-                        class="open-modal-btn w-full py-3 rounded-lg bg-saas-card border border-slate-700 text-white hover:bg-slate-700 transition-all font-semibold flex items-center justify-center">
+                    <button class="open-modal-btn w-full py-3 rounded-lg bg-saas-card border border-slate-700 text-white hover:bg-slate-700 transition-all font-semibold flex items-center justify-center">
                         Start 7-Day Trial
                     </button>
                 </div>
-                <!-- Pro Yearly Plan -->
-                <div
-                    class="bg-saas-bg p-8 rounded-2xl shadow-lg border border-slate-800 ring-2 ring-saas-accent relative flex flex-col w-full md:w-1/2">
-                    <div class="absolute top-0 right-8 transform -translate-y-1/2 bg-saas-accent text-white px-3 py-1 rounded-full text-sm font-bold tracking-wide">SAVE 25%</div>
-                    <h3 class="text-xl font-bold mb-2 text-slate-100">Pro Yearly</h3>
-                    <div class="text-4xl font-extrabold mb-4 text-slate-100"><span class="line-through text-slate-500 text-lg mr-2">$119.88</span>$89<span
-                            class="text-lg text-slate-400 font-medium">/year</span></div>
+                <!-- Growth Plan (Highlighted) -->
+                <div class="bg-saas-bg p-8 rounded-2xl shadow-lg border border-slate-800 ring-2 ring-saas-accent relative flex flex-col transform md:-translate-y-4">
+                    <div class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-saas-accent text-white px-4 py-1 rounded-full text-sm font-bold tracking-wide">MOST POPULAR</div>
+                    <h3 class="text-xl font-bold mb-2 text-slate-100">Growth</h3>
+                    <div class="text-4xl font-extrabold mb-4 text-slate-100">$29.99<span class="text-lg text-slate-400 font-medium">/mo</span></div>
                     <ul class="text-slate-400 mb-8 flex-grow space-y-3">
-                        <li class="flex items-center gap-3"><svg class="w-5 h-5 text-saas-accent flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>Up to 1,000 AI responses/mo</li>
-                        <li class="flex items-center gap-3"><svg class="w-5 h-5 text-saas-accent flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>Autonomous context awareness</li>
-                        <li class="flex items-center gap-3"><svg class="w-5 h-5 text-saas-accent flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>Smart Context Scraping</li>
-                        <li class="flex items-center gap-3"><svg class="w-5 h-5 text-saas-accent flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>7-Day Free Trial</li>
+                        <li class="flex items-center gap-3"><svg class="w-5 h-5 text-saas-accent flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>Up to 2,500 AI responses/mo</li>
+                        <li class="flex items-center gap-3"><svg class="w-5 h-5 text-saas-accent flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>Custom Brand Voice</li>
+                        <li class="flex items-center gap-3"><svg class="w-5 h-5 text-saas-accent flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>Priority Support</li>
                     </ul>
-                    <button
-                        class="open-modal-btn w-full py-3 rounded-lg bg-saas-accent text-white hover:bg-blue-600 hover:shadow-[0_0_15px_rgba(59,130,246,0.4)] transition-all font-semibold flex items-center justify-center">
+                    <button class="open-modal-btn w-full py-3 rounded-lg bg-saas-accent text-white hover:bg-blue-600 hover:shadow-[0_0_15px_rgba(59,130,246,0.4)] transition-all font-semibold flex items-center justify-center">
+                        Start 7-Day Trial
+                    </button>
+                </div>
+                <!-- Agency Plan -->
+                <div class="bg-saas-bg p-8 rounded-2xl shadow-lg border border-slate-800 relative flex flex-col">
+                    <h3 class="text-xl font-bold mb-2 text-slate-100">Agency</h3>
+                    <div class="text-4xl font-extrabold mb-4 text-slate-100">$79.99<span class="text-lg text-slate-400 font-medium">/mo</span></div>
+                    <ul class="text-slate-400 mb-8 flex-grow space-y-3">
+                        <li class="flex items-center gap-3"><svg class="w-5 h-5 text-saas-accent flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>Up to 10,000 AI responses/mo</li>
+                        <li class="flex items-center gap-3"><svg class="w-5 h-5 text-saas-accent flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>Custom Widget Colors</li>
+                        <li class="flex items-center gap-3"><svg class="w-5 h-5 text-saas-accent flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>Remove Branding (White-label)</li>
+                    </ul>
+                    <button class="open-modal-btn w-full py-3 rounded-lg bg-saas-card border border-slate-700 text-white hover:bg-slate-700 transition-all font-semibold flex items-center justify-center">
                         Start 7-Day Trial
                     </button>
                 </div>
