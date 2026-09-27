@@ -668,6 +668,7 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                     })
                 })
                 .then(res => {
+                    if (res.status === 503) throw new Error('503 High Demand');
                     if (!res.ok) throw new Error('Network response was not ok');
                     return res.json();
                 })
@@ -704,7 +705,12 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                     sendBtn.disabled = false;
                     input.focus();
                     
-                    addMessage("Произошла ошибка при соединении с сервером. Пожалуйста, попробуйте еще раз.", 'ai');
+                    const errMsg = (err.message || err.toString()).toLowerCase();
+                    if (errMsg.includes('503') || errMsg.includes('high demand') || errMsg.includes('overloaded')) {
+                        addMessage("Our AI advisor is experiencing a brief traffic spike. Please click your question again in a few seconds.", 'ai');
+                    } else {
+                        addMessage("Произошла ошибка при соединении с сервером. Пожалуйста, попробуйте еще раз.", 'ai');
+                    }
                 });
             };
 
@@ -731,6 +737,12 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
 
             // Settings Modal Logic
             const stgBtn = shadow.getElementById('settings-btn');
+            
+            const isAdmin = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.search.includes('admin=1');
+            if (!isAdmin && stgBtn) {
+                stgBtn.style.display = 'none';
+            }
+
             const stgModal = shadow.getElementById('settings-modal');
             const stgSave = shadow.getElementById('stg-save');
             const stgTone = shadow.getElementById('stg-tone');
