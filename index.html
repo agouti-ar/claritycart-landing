@@ -54,6 +54,19 @@
             -webkit-text-fill-color: transparent;
             background-image: linear-gradient(to right, #F8FAFC, #94A3B8);
         }
+
+        /* Logo Animation */
+        .logo-draw-1, .logo-draw-2 {
+            stroke-dasharray: 100;
+            stroke-dashoffset: 100;
+            animation: draw-logo 1.5s ease-out forwards;
+        }
+        .logo-draw-2 {
+            animation-delay: 0.3s;
+        }
+        @keyframes draw-logo {
+            to { stroke-dashoffset: 0; }
+        }
     </style>
 </head>
 
@@ -69,8 +82,11 @@
 
     <!-- Header -->
     <header class="w-full max-w-7xl mx-auto px-6 py-6 flex justify-between items-center relative z-10">
-        <div class="flex items-center gap-3 text-2xl font-bold tracking-tight cursor-pointer">
-            <span class="text-transparent bg-clip-text bg-gradient-to-br from-blue-400 to-purple-500 drop-shadow-[0_0_8px_rgba(96,165,250,0.6)] text-3xl">C</span>
+        <div class="flex items-center gap-3 text-2xl font-bold tracking-tight cursor-pointer group">
+            <svg class="w-8 h-8 text-blue-400 drop-shadow-[0_0_8px_rgba(96,165,250,0.8)]" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <path class="logo-draw-1" d="M22 10 C 16 2, 6 6, 6 16" />
+                <path class="logo-draw-2" d="M6 16 C 6 26, 16 30, 22 22" />
+            </svg>
             <span class="text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-400">ClarityCart AI</span>
         </div>
         <a href="#pricing"
@@ -186,52 +202,70 @@
 
         <!-- Pricing Section -->
         <section id="pricing" class="py-24 bg-saas-card text-center">
-            <h2 class="text-3xl font-bold mb-12">Simple, transparent pricing.</h2>
+            <h2 class="text-3xl font-bold mb-6">Simple, transparent pricing.</h2>
+            
+            <!-- Pricing Toggle -->
+            <div class="flex justify-center items-center gap-4 mb-12">
+                <span class="text-white font-medium transition-colors" id="monthly-label">Monthly</span>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="pricing-toggle" class="sr-only peer">
+                    <div class="w-14 h-7 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-saas-accent"></div>
+                </label>
+                <span class="text-slate-400 font-medium transition-colors" id="yearly-label">Yearly <span class="text-green-400 text-sm ml-1">(Save 25%)</span></span>
+            </div>
+
             <div class="max-w-6xl mx-auto px-4 text-left grid grid-cols-1 md:grid-cols-3 gap-8">
                 <!-- Starter Plan -->
-                <div data-aos="fade-up" data-aos-delay="100" class="bg-saas-bg p-8 rounded-2xl shadow-lg border border-slate-800 relative flex flex-col transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_10px_30px_rgba(59,130,246,0.2)]">
-                    <h3 class="text-xl font-bold mb-2 text-slate-100">Starter</h3>
-                    <div class="text-4xl font-extrabold mb-1 text-slate-100">$9.99<span class="text-lg text-slate-400 font-medium">/mo</span></div>
-                    <div class="text-sm text-slate-500 mb-4">or $89/yr (Save 25%)</div>
-                    <ul class="text-slate-400 mb-8 flex-grow space-y-3">
-                        <li class="flex items-center gap-3"><svg class="w-5 h-5 text-saas-accent flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>Up to 500 AI responses/mo</li>
-                        <li class="flex items-center gap-3"><svg class="w-5 h-5 text-saas-accent flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>Standard design</li>
-                        <li class="flex items-center gap-3"><svg class="w-5 h-5 text-saas-accent flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>ClarityCart branding</li>
-                    </ul>
-                    <button class="open-modal-btn w-full py-3 rounded-lg bg-saas-card border border-slate-700 text-white hover:bg-blue-600 hover:scale-105 transition-all duration-300 font-semibold flex items-center justify-center">
-                        Start 7-Day Trial
-                    </button>
+                <div data-aos="fade-up" data-aos-delay="100">
+                    <div class="bg-saas-bg p-8 rounded-2xl shadow-lg border border-slate-800 relative flex flex-col h-full transition-transform duration-300 hover:-translate-y-2 hover:shadow-xl">
+                        <h3 class="text-xl font-bold mb-2 text-slate-100">Starter</h3>
+                        <div class="text-4xl font-extrabold mb-1 text-slate-100"><span id="price-starter">$9.99</span><span class="text-lg text-slate-400 font-medium">/mo</span></div>
+                        <div class="text-sm text-slate-500 mb-4 h-5" id="billed-starter"></div>
+                        <ul class="text-slate-400 mb-8 flex-grow space-y-3">
+                            <li class="flex items-center gap-3"><svg class="w-5 h-5 text-saas-accent flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>Up to 500 AI responses/mo</li>
+                            <li class="flex items-center gap-3"><svg class="w-5 h-5 text-saas-accent flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>Speaks 50+ Languages</li>
+                            <li class="flex items-center gap-3"><svg class="w-5 h-5 text-saas-accent flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>Standard Design</li>
+                            <li class="flex items-center gap-3"><svg class="w-5 h-5 text-saas-accent flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>ClarityCart branding</li>
+                        </ul>
+                        <button class="open-modal-btn w-full py-3 rounded-lg bg-saas-card border border-slate-700 text-white hover:bg-blue-600 hover:scale-105 transition-all duration-300 font-semibold flex items-center justify-center">
+                            Start 7-Day Trial
+                        </button>
+                    </div>
                 </div>
                 <!-- Growth Plan (Highlighted) -->
-                <div data-aos="fade-up" data-aos-delay="200" class="bg-saas-bg p-8 rounded-2xl shadow-lg border border-slate-800 ring-2 ring-saas-accent relative flex flex-col transform md:-translate-y-4 transition-all duration-300 hover:-translate-y-2 md:hover:-translate-y-6 hover:shadow-[0_10px_30px_rgba(59,130,246,0.2)]">
-                    <div class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-saas-accent text-white px-4 py-1 rounded-full text-sm font-bold tracking-wide">MOST POPULAR</div>
-                    <h3 class="text-xl font-bold mb-2 text-slate-100">Pro</h3>
-                    <div class="text-4xl font-extrabold mb-1 text-slate-100">$29.99<span class="text-lg text-slate-400 font-medium">/mo</span></div>
-                    <div class="text-sm text-slate-500 mb-4">or $249/yr (Save 30%)</div>
-                    <ul class="text-slate-400 mb-8 flex-grow space-y-3">
-                        <li class="flex items-center gap-3"><svg class="w-5 h-5 text-saas-accent flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>Everything in Starter, plus:</li>
-                        <li class="flex items-center gap-3"><svg class="w-5 h-5 text-saas-accent flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>Up to 2,500 AI responses/mo</li>
-                        <li class="flex items-center gap-3"><svg class="w-5 h-5 text-saas-accent flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>Custom Brand Voice</li>
-                        <li class="flex items-center gap-3"><svg class="w-5 h-5 text-saas-accent flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>Priority Support</li>
-                    </ul>
-                    <button class="open-modal-btn w-full py-3 rounded-lg bg-saas-accent text-white hover:bg-blue-600 hover:shadow-[0_0_15px_rgba(59,130,246,0.4)] hover:scale-105 transition-all duration-300 font-semibold flex items-center justify-center">
-                        Start 7-Day Trial
-                    </button>
+                <div data-aos="fade-up" data-aos-delay="200">
+                    <div class="bg-saas-bg p-8 rounded-2xl shadow-lg border border-slate-800 ring-2 ring-saas-accent relative flex flex-col h-full transform md:-translate-y-4 transition-transform duration-300 hover:-translate-y-2 hover:shadow-xl">
+                        <div class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-saas-accent text-white px-4 py-1 rounded-full text-sm font-bold tracking-wide">MOST POPULAR</div>
+                        <h3 class="text-xl font-bold mb-2 text-slate-100">Pro</h3>
+                        <div class="text-4xl font-extrabold mb-1 text-slate-100"><span id="price-pro">$29.99</span><span class="text-lg text-slate-400 font-medium">/mo</span></div>
+                        <div class="text-sm text-slate-500 mb-4 h-5" id="billed-pro"></div>
+                        <ul class="text-slate-400 mb-8 flex-grow space-y-3">
+                            <li class="flex items-center gap-3"><svg class="w-5 h-5 text-saas-accent flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>Everything in Starter, plus:</li>
+                            <li class="flex items-center gap-3"><svg class="w-5 h-5 text-saas-accent flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>Up to 2,500 AI responses/mo</li>
+                            <li class="flex items-center gap-3"><svg class="w-5 h-5 text-saas-accent flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>Custom Brand Voice</li>
+                            <li class="flex items-center gap-3"><svg class="w-5 h-5 text-saas-accent flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>Smart Exit-Intent Pop-up</li>
+                        </ul>
+                        <button class="open-modal-btn w-full py-3 rounded-lg bg-saas-accent text-white hover:bg-blue-600 hover:shadow-[0_0_15px_rgba(59,130,246,0.4)] hover:scale-105 transition-all duration-300 font-semibold flex items-center justify-center">
+                            Start 7-Day Trial
+                        </button>
+                    </div>
                 </div>
                 <!-- Agency Plan -->
-                <div data-aos="fade-up" data-aos-delay="300" class="bg-saas-bg p-8 rounded-2xl shadow-lg border border-slate-800 relative flex flex-col transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_10px_30px_rgba(59,130,246,0.2)]">
-                    <h3 class="text-xl font-bold mb-2 text-slate-100">Business</h3>
-                    <div class="text-4xl font-extrabold mb-1 text-slate-100">$79.99<span class="text-lg text-slate-400 font-medium">/mo</span></div>
-                    <div class="text-sm text-slate-500 mb-4">or $699/yr (Save 27%)</div>
-                    <ul class="text-slate-400 mb-8 flex-grow space-y-3">
-                        <li class="flex items-center gap-3"><svg class="w-5 h-5 text-saas-accent flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>Everything in Pro, plus:</li>
-                        <li class="flex items-center gap-3"><svg class="w-5 h-5 text-saas-accent flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>Up to 10,000 AI responses</li>
-                        <li class="flex items-center gap-3"><svg class="w-5 h-5 text-saas-accent flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>Custom Widget Colors</li>
-                        <li class="flex items-center gap-3"><svg class="w-5 h-5 text-saas-accent flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>White-label (No branding)</li>
-                    </ul>
-                    <button class="open-modal-btn w-full py-3 rounded-lg bg-saas-card border border-slate-700 text-white hover:bg-blue-600 hover:scale-105 transition-all duration-300 font-semibold flex items-center justify-center">
-                        Start 7-Day Trial
-                    </button>
+                <div data-aos="fade-up" data-aos-delay="300">
+                    <div class="bg-saas-bg p-8 rounded-2xl shadow-lg border border-slate-800 relative flex flex-col h-full transition-transform duration-300 hover:-translate-y-2 hover:shadow-xl">
+                        <h3 class="text-xl font-bold mb-2 text-slate-100">Business</h3>
+                        <div class="text-4xl font-extrabold mb-1 text-slate-100"><span id="price-business">$79.99</span><span class="text-lg text-slate-400 font-medium">/mo</span></div>
+                        <div class="text-sm text-slate-500 mb-4 h-5" id="billed-business"></div>
+                        <ul class="text-slate-400 mb-8 flex-grow space-y-3">
+                            <li class="flex items-center gap-3"><svg class="w-5 h-5 text-saas-accent flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>Everything in Pro, plus:</li>
+                            <li class="flex items-center gap-3"><svg class="w-5 h-5 text-saas-accent flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>Up to 10,000 AI responses</li>
+                            <li class="flex items-center gap-3"><svg class="w-5 h-5 text-saas-accent flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>Remove Branding (White-label)</li>
+                            <li class="flex items-center gap-3"><svg class="w-5 h-5 text-saas-accent flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>Weekly Customer Insights</li>
+                        </ul>
+                        <button class="open-modal-btn w-full py-3 rounded-lg bg-saas-card border border-slate-700 text-white hover:bg-blue-600 hover:scale-105 transition-all duration-300 font-semibold flex items-center justify-center">
+                            Start 7-Day Trial
+                        </button>
+                    </div>
                 </div>
             </div>
         </section>
@@ -349,6 +383,48 @@
                 }, 3000);
             }
         });
+    </script>
+    <script>
+        // Pricing Toggle Logic
+        const pricingToggle = document.getElementById('pricing-toggle');
+        const priceStarter = document.getElementById('price-starter');
+        const pricePro = document.getElementById('price-pro');
+        const priceBusiness = document.getElementById('price-business');
+        const billedStarter = document.getElementById('billed-starter');
+        const billedPro = document.getElementById('billed-pro');
+        const billedBusiness = document.getElementById('billed-business');
+        const monthlyLabel = document.getElementById('monthly-label');
+        const yearlyLabel = document.getElementById('yearly-label');
+
+        if (pricingToggle) {
+            pricingToggle.addEventListener('change', (e) => {
+                if (e.target.checked) {
+                    // Yearly
+                    priceStarter.textContent = '$7.49';
+                    pricePro.textContent = '$20.75';
+                    priceBusiness.textContent = '$58.25';
+                    billedStarter.textContent = 'billed $89 yearly';
+                    billedPro.textContent = 'billed $249 yearly';
+                    billedBusiness.textContent = 'billed $699 yearly';
+                    monthlyLabel.classList.remove('text-white');
+                    monthlyLabel.classList.add('text-slate-400');
+                    yearlyLabel.classList.remove('text-slate-400');
+                    yearlyLabel.classList.add('text-white');
+                } else {
+                    // Monthly
+                    priceStarter.textContent = '$9.99';
+                    pricePro.textContent = '$29.99';
+                    priceBusiness.textContent = '$79.99';
+                    billedStarter.textContent = '';
+                    billedPro.textContent = '';
+                    billedBusiness.textContent = '';
+                    monthlyLabel.classList.add('text-white');
+                    monthlyLabel.classList.remove('text-slate-400');
+                    yearlyLabel.classList.add('text-slate-400');
+                    yearlyLabel.classList.remove('text-white');
+                }
+            });
+        }
     </script>
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script>AOS.init({ duration: 800, once: true });</script>
