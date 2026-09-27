@@ -1,10 +1,16 @@
+let savedConfig = {};
+try {
+    const saved = localStorage.getItem('clarity_user_config');
+    if (saved) savedConfig = JSON.parse(saved);
+} catch(e) {}
+
 window.ClarityCartConfig = window.ClarityCartConfig || {
-    intentDiscountEnabled: false,
-    promoCode: "",
-    discountAmount: "",
-    whiteLabel: false,
-    tone: "friendly",
-    customTonePrompt: ""
+    intentDiscountEnabled: savedConfig.intentDiscountEnabled || false,
+    promoCode: savedConfig.promoCode || "",
+    discountAmount: savedConfig.discountAmount || "",
+    whiteLabel: savedConfig.whiteLabel || false,
+    tone: savedConfig.tone || "friendly",
+    customTonePrompt: savedConfig.customTonePrompt || ""
 };
 
 (function() {
@@ -514,9 +520,9 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                                 <span class="dot"></span>
                                 AI &bull; Instant Answer
                             </div>
-                            <button class="reset-btn" id="settings-btn" aria-label="Settings" title="Settings" style="display:flex;">
+                            ${window.location.search.includes('admin=1') ? `<button class="reset-btn" id="settings-btn" aria-label="Settings" title="Settings" style="display:flex;">
                                 ⚙️
-                            </button>
+                            </button>` : ''}
                             <button class="reset-btn" id="reset-btn" aria-label="Reset Chat" title="Reset Chat">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -560,7 +566,7 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                     <div style="text-align: center; padding-top: 12px;">
                         <div style="font-size: 10px; color: #64748b; margin-bottom: 6px;">AI responses may vary. Verify with store staff.</div>
                         <div class="footer" id="clarity-footer" style="${window.ClarityCartConfig.whiteLabel ? 'display:none;' : ''}">
-                            ⚡ Powered by <span style="color:#4a90e2; font-weight:600;">ClarityCart</span>
+                            ⚡ Powered by <a href="https://claritycart-landing.vercel.app" target="_blank" class="hover:underline text-blue-400" style="color: #60a5fa; text-decoration: none; font-weight: 600;">ClarityCart</a>
                         </div>
                     </div>
                     
@@ -572,11 +578,11 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                         </div>
                         <div class="settings-group">
                             <label>Promo Code</label>
-                            <input type="text" id="stg-promo">
+                            <input type="text" id="stg-promo" placeholder="e.g. SAVE10">
                         </div>
                         <div class="settings-group">
                             <label>Discount Text</label>
-                            <input type="text" id="stg-amount">
+                            <input type="text" id="stg-amount" placeholder="e.g. 10% OFF">
                         </div>
                         <div class="settings-group">
                             <label>AI Tone</label>
@@ -589,7 +595,7 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                         </div>
                         <div class="settings-group" id="stg-custom-wrap" style="display:none;">
                             <label>Custom Tone Prompt</label>
-                            <input type="text" id="stg-custom">
+                            <input type="text" id="stg-custom" placeholder="e.g. Talk like a friendly local barista">
                         </div>
                         <div class="settings-group" style="flex-direction:row; align-items:center;">
                             <input type="checkbox" id="stg-whitelabel">
@@ -649,9 +655,9 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
 
                 const cfg = window.ClarityCartConfig;
                 let tonePrompt = "";
-                if (cfg.tone === "friendly") tonePrompt = "Tone: Warm, welcoming, helpful, use 1-2 friendly emojis.";
-                else if (cfg.tone === "professional") tonePrompt = "Tone: Concise, strictly professional, formal, no emojis.";
-                else if (cfg.tone === "sales") tonePrompt = "Tone: Persuasive, highlight product benefits, actively guide towards purchase.";
+                if (cfg.tone === "friendly") tonePrompt = "Tone: Very warm, casual, and enthusiastic. Start with a friendly greeting ('Hey there! 👋' or 'Great pick! ✨'). Use 1-2 positive emojis per message. Keep it conversational.";
+                else if (cfg.tone === "professional") tonePrompt = "Tone: Highly concise, objective, bullet-point oriented. Absolutely zero emojis. No marketing fluff. State technical specifications and facts only.";
+                else if (cfg.tone === "sales") tonePrompt = "Tone: Persuasive, confident sales closer. Highlight premium value, reassurance on quality, and subtly urge the user to click Add to Cart.";
                 else if (cfg.tone === "custom") tonePrompt = "Tone: " + cfg.customTonePrompt;
                 
                 const intentRule = "ONLY append [INTENT: HIGH] if user asks about discounts, coupons, shipping costs, or checkout hesitation. Otherwise append [INTENT: LOW].";
@@ -705,12 +711,7 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                     sendBtn.disabled = false;
                     input.focus();
                     
-                    const errMsg = (err.message || err.toString()).toLowerCase();
-                    if (errMsg.includes('503') || errMsg.includes('high demand') || errMsg.includes('overloaded')) {
-                        addMessage("Our AI advisor is experiencing a brief traffic spike. Please click your question again in a few seconds.", 'ai');
-                    } else {
-                        addMessage("Произошла ошибка при соединении с сервером. Пожалуйста, попробуйте еще раз.", 'ai');
-                    }
+                    addMessage("Our AI advisor is taking a quick breath due to high traffic! Please tap your question again in a few seconds. ⚡", 'ai');
                 });
             };
 
@@ -737,28 +738,24 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
 
             // Settings Modal Logic
             const stgBtn = shadow.getElementById('settings-btn');
-            
-            const isAdmin = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.search.includes('admin=1');
-            if (!isAdmin && stgBtn) {
-                stgBtn.style.display = 'none';
-            }
-
             const stgModal = shadow.getElementById('settings-modal');
             const stgSave = shadow.getElementById('stg-save');
             const stgTone = shadow.getElementById('stg-tone');
             const stgCustomWrap = shadow.getElementById('stg-custom-wrap');
             
-            stgBtn.addEventListener('click', () => {
-                stgModal.classList.toggle('active');
-                const cfg = window.ClarityCartConfig;
-                shadow.getElementById('stg-intent').checked = cfg.intentDiscountEnabled;
-                shadow.getElementById('stg-promo').value = cfg.promoCode;
-                shadow.getElementById('stg-amount').value = cfg.discountAmount;
-                shadow.getElementById('stg-tone').value = cfg.tone;
-                shadow.getElementById('stg-custom').value = cfg.customTonePrompt;
-                shadow.getElementById('stg-whitelabel').checked = cfg.whiteLabel;
-                stgCustomWrap.style.display = cfg.tone === 'custom' ? 'flex' : 'none';
-            });
+            if (stgBtn) {
+                stgBtn.addEventListener('click', () => {
+                    stgModal.classList.toggle('active');
+                    const cfg = window.ClarityCartConfig;
+                    shadow.getElementById('stg-intent').checked = cfg.intentDiscountEnabled;
+                    shadow.getElementById('stg-promo').value = cfg.promoCode;
+                    shadow.getElementById('stg-amount').value = cfg.discountAmount;
+                    shadow.getElementById('stg-tone').value = cfg.tone;
+                    shadow.getElementById('stg-custom').value = cfg.customTonePrompt;
+                    shadow.getElementById('stg-whitelabel').checked = cfg.whiteLabel;
+                    stgCustomWrap.style.display = cfg.tone === 'custom' ? 'flex' : 'none';
+                });
+            }
             
             stgTone.addEventListener('change', () => {
                 stgCustomWrap.style.display = stgTone.value === 'custom' ? 'flex' : 'none';
@@ -772,6 +769,10 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                 window.ClarityCartConfig.customTonePrompt = shadow.getElementById('stg-custom').value;
                 window.ClarityCartConfig.whiteLabel = shadow.getElementById('stg-whitelabel').checked;
                 
+                try {
+                    localStorage.setItem('clarity_user_config', JSON.stringify(window.ClarityCartConfig));
+                } catch(e) {}
+
                 shadow.getElementById('clarity-footer').style.display = window.ClarityCartConfig.whiteLabel ? 'none' : 'block';
                 stgModal.classList.remove('active');
             });
