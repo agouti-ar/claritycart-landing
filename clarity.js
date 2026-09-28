@@ -5,6 +5,7 @@ try {
 } catch(e) {}
 
 window.ClarityCartConfig = window.ClarityCartConfig || {
+    activeTier: localStorage.getItem('clarity_active_tier') || 'Starter',
     intentDiscountEnabled: savedConfig.intentDiscountEnabled || false,
     promoCode: savedConfig.promoCode || "",
     discountAmount: savedConfig.discountAmount || "",
@@ -136,24 +137,18 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
         }
 
         render(shadow) {
-            const descLower = (this.productData.description || '').toLowerCase();
-            const isShoe = descLower.includes('size') || descLower.includes('shoe') || descLower.includes('sneaker') || descLower.includes('running');
+            const questions = [
+                'What are the key features?',
+                "What's the return policy?",
+                'Is delivery fast?',
+                'What is included in the box?',
+                'Is there a warranty?'
+            ];
+            const remaining = questions.slice(2);
+            const randomThird = remaining[Math.floor(Math.random() * remaining.length)];
+            const selectedQuestions = [questions[0], questions[1], randomThird];
 
-            let chipsHtml = '';
-            if (isShoe) {
-                chipsHtml = `
-                    <button class="chip" data-q="Does it run true to size?">Does it run true to size?</button>
-                    <button class="chip" data-q="What is the return policy?">What is the return policy?</button>
-                    <button class="chip" data-q="Is it good for daily running?">Is it good for daily running?</button>
-                    <button class="chip" data-q="Help me pick my size">👟 Help me pick my size</button>
-                `;
-            } else {
-                chipsHtml = `
-                    <button class="chip" data-q="What are the key features?">What are the key features?</button>
-                    <button class="chip" data-q="What's the return policy?">What's the return policy?</button>
-                    <button class="chip" data-q="Is delivery fast?">Is delivery fast?</button>
-                `;
-            }
+            let chipsHtml = selectedQuestions.map(q => `<button class="chip" data-q="${q}">${q}</button>`).join('');
 
             const styles = `
                 :host {
@@ -565,13 +560,21 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                     
                     <div style="text-align: center; padding-top: 12px;">
                         <div style="font-size: 10px; color: #64748b; margin-bottom: 6px;">AI responses may vary. Verify with store staff.</div>
-                        <div class="footer" id="clarity-footer" style="${window.ClarityCartConfig.whiteLabel ? 'display:none;' : ''}">
+                        <div class="footer" id="clarity-footer" style="${(window.ClarityCartConfig.activeTier === 'Business' && window.ClarityCartConfig.whiteLabel) ? 'display:none;' : ''}">
                             ⚡ Powered by <a href="https://claritycart-landing.vercel.app" target="_blank" class="hover:underline text-blue-400" style="color: #60a5fa; text-decoration: none; font-weight: 600;">ClarityCart</a>
                         </div>
                     </div>
                     
                     <div class="settings-modal" id="settings-modal">
                         <h4 style="margin:0 0 12px 0; color:#1a1a1a;">Widget Settings (Test)</h4>
+                        <div class="settings-group">
+                            <label>Simulate Plan</label>
+                            <select id="stg-tier">
+                                <option value="Starter">Starter</option>
+                                <option value="Pro">Pro</option>
+                                <option value="Business">Business</option>
+                            </select>
+                        </div>
                         <div class="settings-group" style="flex-direction:row; align-items:center;">
                             <input type="checkbox" id="stg-intent">
                             <label for="stg-intent" style="margin:0;">Enable Intent Discounts</label>
@@ -654,11 +657,14 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                 const extractedContext = this.extractProductContext();
 
                 const cfg = window.ClarityCartConfig;
+                let currentTone = cfg.activeTier === 'Starter' ? 'friendly' : cfg.tone;
+                if (cfg.activeTier === 'Pro' && currentTone === 'custom') currentTone = 'friendly';
+
                 let tonePrompt = "";
-                if (cfg.tone === "friendly") tonePrompt = "Tone: Extremely warm, enthusiastic, and conversational. You MUST start your response with a friendly greeting and use at least 2 emojis in your response.";
-                else if (cfg.tone === "professional") tonePrompt = "Tone: Highly concise, objective, bullet-point oriented. Absolutely zero emojis. No marketing fluff. State technical specifications and facts only.";
-                else if (cfg.tone === "sales") tonePrompt = "Tone: Persuasive, confident sales closer. Highlight premium value, reassurance on quality, and subtly urge the user to click Add to Cart.";
-                else if (cfg.tone === "custom") tonePrompt = "Tone: " + cfg.customTonePrompt;
+                if (currentTone === "friendly") tonePrompt = "FORMAT RULE: Start with a warm greeting ('Hey there! 👋'). Write in a cheerful conversational paragraph. Include 2 relevant emojis.";
+                else if (currentTone === "professional") tonePrompt = "FORMAT RULE: Output MUST be a concise bulleted list (•). Zero greetings, zero emojis, zero conversational filler. State technical facts only.";
+                else if (currentTone === "sales") tonePrompt = "FORMAT RULE: High energy. Highlight why this product is a must-buy. End strictly with a closing call to action: 'Ready to order? Click Add to Cart above!'";
+                else if (currentTone === "custom") tonePrompt = "Tone: " + cfg.customTonePrompt;
                 
                 const intentRule = "CRITICAL RULE: If the user's message contains any of these words: 'discount', 'coupon', 'promo', 'expensive', 'price', or 'offer', you MUST append the exact string [INTENT: HIGH] at the very end of your response. This is mandatory.";
                 const sysInstr = tonePrompt + " " + intentRule;
@@ -687,16 +693,13 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                     
                     let response = data.answer || "Sorry, I received an empty response.";
                     
-                    if (response.includes("No available models") || response.includes("error:") || response.includes("high demand") || response.includes("503")) {
-                        response = "Our AI advisor is taking a quick breath due to high traffic! Please tap your question again in a few seconds. ⚡";
-                    }
-
                     const isHighIntent = response.includes('[INTENT: HIGH]');
                     response = response.replace(/\[INTENT: HIGH\]/g, '').replace(/\[INTENT: LOW\]/g, '').trim();
                     
                     addMessage(response, 'ai');
 
-                    if (cfg.intentDiscountEnabled && isHighIntent && !sessionStorage.getItem('clarity_promo_seen')) {
+                    const canDiscount = cfg.activeTier !== 'Starter' && cfg.intentDiscountEnabled;
+                    if (canDiscount && isHighIntent && !sessionStorage.getItem('clarity_promo_seen')) {
                         sessionStorage.setItem('clarity_promo_seen', 'true');
                         shadow.getElementById('discount-code-val').textContent = cfg.promoCode;
                         shadow.getElementById('discount-amount-val').textContent = cfg.discountAmount;
@@ -746,18 +749,53 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
             const stgSave = shadow.getElementById('stg-save');
             const stgTone = shadow.getElementById('stg-tone');
             const stgCustomWrap = shadow.getElementById('stg-custom-wrap');
+            const stgTier = shadow.getElementById('stg-tier');
+            const stgIntent = shadow.getElementById('stg-intent');
+            const stgWhitelabel = shadow.getElementById('stg-whitelabel');
+
+            const applyTierConstraints = (tier) => {
+                if (tier === 'Starter') {
+                    stgIntent.disabled = true;
+                    stgTone.disabled = true;
+                    stgWhitelabel.disabled = true;
+                    stgWhitelabel.checked = false;
+                } else if (tier === 'Pro') {
+                    stgIntent.disabled = false;
+                    stgTone.disabled = false;
+                    stgWhitelabel.disabled = true;
+                    stgWhitelabel.checked = false;
+                } else if (tier === 'Business') {
+                    stgIntent.disabled = false;
+                    stgTone.disabled = false;
+                    stgWhitelabel.disabled = false;
+                }
+                
+                Array.from(stgTone.options).forEach(opt => {
+                    if (opt.value === 'custom') opt.disabled = (tier !== 'Business');
+                });
+                
+                if (tier !== 'Business' && stgTone.value === 'custom') {
+                    stgTone.value = 'friendly';
+                }
+                stgCustomWrap.style.display = stgTone.value === 'custom' ? 'flex' : 'none';
+            };
+
+            if (stgTier) {
+                stgTier.addEventListener('change', (e) => applyTierConstraints(e.target.value));
+            }
             
             if (stgBtn) {
                 stgBtn.addEventListener('click', () => {
                     stgModal.classList.toggle('active');
                     const cfg = window.ClarityCartConfig;
-                    shadow.getElementById('stg-intent').checked = cfg.intentDiscountEnabled;
+                    if (stgTier) stgTier.value = cfg.activeTier || 'Starter';
+                    stgIntent.checked = cfg.intentDiscountEnabled;
                     shadow.getElementById('stg-promo').value = cfg.promoCode;
                     shadow.getElementById('stg-amount').value = cfg.discountAmount;
-                    shadow.getElementById('stg-tone').value = cfg.tone;
+                    stgTone.value = cfg.tone;
                     shadow.getElementById('stg-custom').value = cfg.customTonePrompt;
-                    shadow.getElementById('stg-whitelabel').checked = cfg.whiteLabel;
-                    stgCustomWrap.style.display = cfg.tone === 'custom' ? 'flex' : 'none';
+                    stgWhitelabel.checked = cfg.whiteLabel;
+                    applyTierConstraints(cfg.activeTier || 'Starter');
                 });
             }
             
@@ -766,18 +804,26 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
             });
             
             stgSave.addEventListener('click', () => {
-                window.ClarityCartConfig.intentDiscountEnabled = shadow.getElementById('stg-intent').checked;
+                const tier = stgTier ? stgTier.value : 'Starter';
+                localStorage.setItem('clarity_active_tier', tier);
+                window.ClarityCartConfig.activeTier = tier;
+                
+                window.ClarityCartConfig.intentDiscountEnabled = tier !== 'Starter' ? stgIntent.checked : false;
                 window.ClarityCartConfig.promoCode = shadow.getElementById('stg-promo').value;
                 window.ClarityCartConfig.discountAmount = shadow.getElementById('stg-amount').value;
-                window.ClarityCartConfig.tone = shadow.getElementById('stg-tone').value;
+                
+                let selectedTone = tier !== 'Starter' ? stgTone.value : 'friendly';
+                if (tier === 'Pro' && selectedTone === 'custom') selectedTone = 'friendly';
+                window.ClarityCartConfig.tone = selectedTone;
+                
                 window.ClarityCartConfig.customTonePrompt = shadow.getElementById('stg-custom').value;
-                window.ClarityCartConfig.whiteLabel = shadow.getElementById('stg-whitelabel').checked;
+                window.ClarityCartConfig.whiteLabel = tier === 'Business' ? stgWhitelabel.checked : false;
                 
                 try {
                     localStorage.setItem('clarity_user_config', JSON.stringify(window.ClarityCartConfig));
                 } catch(e) {}
 
-                shadow.getElementById('clarity-footer').style.display = window.ClarityCartConfig.whiteLabel ? 'none' : 'block';
+                shadow.getElementById('clarity-footer').style.display = (tier === 'Business' && window.ClarityCartConfig.whiteLabel) ? 'none' : 'block';
                 stgModal.classList.remove('active');
             });
 
