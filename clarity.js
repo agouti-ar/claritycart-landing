@@ -655,12 +655,12 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
 
                 const cfg = window.ClarityCartConfig;
                 let tonePrompt = "";
-                if (cfg.tone === "friendly") tonePrompt = "Tone: Very warm, casual, and enthusiastic. Start with a friendly greeting ('Hey there! 👋' or 'Great pick! ✨'). Use 1-2 positive emojis per message. Keep it conversational.";
+                if (cfg.tone === "friendly") tonePrompt = "Tone: Extremely warm, enthusiastic, and conversational. You MUST start your response with a friendly greeting and use at least 2 emojis in your response.";
                 else if (cfg.tone === "professional") tonePrompt = "Tone: Highly concise, objective, bullet-point oriented. Absolutely zero emojis. No marketing fluff. State technical specifications and facts only.";
                 else if (cfg.tone === "sales") tonePrompt = "Tone: Persuasive, confident sales closer. Highlight premium value, reassurance on quality, and subtly urge the user to click Add to Cart.";
                 else if (cfg.tone === "custom") tonePrompt = "Tone: " + cfg.customTonePrompt;
                 
-                const intentRule = "ONLY append [INTENT: HIGH] if user asks about discounts, coupons, shipping costs, or checkout hesitation. Otherwise append [INTENT: LOW].";
+                const intentRule = "CRITICAL RULE: If the user's message contains any of these words: 'discount', 'coupon', 'promo', 'expensive', 'price', or 'offer', you MUST append the exact string [INTENT: HIGH] at the very end of your response. This is mandatory.";
                 const sysInstr = tonePrompt + " " + intentRule;
 
                 // Call our Vercel backend instead of direct Google API
@@ -687,6 +687,10 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                     
                     let response = data.answer || "Sorry, I received an empty response.";
                     
+                    if (response.includes("No available models") || response.includes("error:") || response.includes("high demand") || response.includes("503")) {
+                        response = "Our AI advisor is taking a quick breath due to high traffic! Please tap your question again in a few seconds. ⚡";
+                    }
+
                     const isHighIntent = response.includes('[INTENT: HIGH]');
                     response = response.replace(/\[INTENT: HIGH\]/g, '').replace(/\[INTENT: LOW\]/g, '').trim();
                     
