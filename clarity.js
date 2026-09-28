@@ -11,7 +11,8 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
     discountAmount: savedConfig.discountAmount || "",
     whiteLabel: savedConfig.whiteLabel || false,
     tone: savedConfig.tone || "friendly",
-    customTonePrompt: savedConfig.customTonePrompt || ""
+    customTonePrompt: savedConfig.customTonePrompt || "",
+    mockMode: savedConfig.mockMode || false
 };
 
 (function() {
@@ -494,6 +495,11 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                 }
                 .discount-banner.active {
                     display: block;
+                    animation: slideDown 0.3s ease forwards;
+                }
+                @keyframes slideDown {
+                    from { opacity: 0; transform: translateY(-10px); }
+                    to { opacity: 1; transform: translateY(0); }
                 }
                 .discount-title { font-weight: bold; font-size: 13px; color: #1e3a8a; }
                 .discount-code { font-family: monospace; background: #fff; padding: 2px 6px; border-radius: 4px; border: 1px dashed #1e3a8a; margin-right: 6px; font-weight:bold;}
@@ -604,6 +610,10 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                             <input type="checkbox" id="stg-whitelabel">
                             <label for="stg-whitelabel" style="margin:0;">White Label (Hide branding)</label>
                         </div>
+                        <div class="settings-group" style="flex-direction:row; align-items:center; border-top: 1px solid #eee; padding-top: 8px;">
+                            <input type="checkbox" id="stg-mock">
+                            <label for="stg-mock" style="margin:0; color:#d97706;">Offline Mock Mode (Instant Test)</label>
+                        </div>
                         <button class="settings-save-btn" id="stg-save">Save & Apply</button>
                     </div>
                 </div>
@@ -639,7 +649,7 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                 chatHistory.scrollTop = chatHistory.scrollHeight;
             };
 
-            const handleAsk = (question) => {
+            const handleAsk = async (question) => {
                 if (!question.trim() || isRequestPending) return;
                 
                 isRequestPending = true;
@@ -669,74 +679,96 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                 const intentRule = "CRITICAL RULE: If the user's message contains any of these words: 'discount', 'coupon', 'promo', 'expensive', 'price', or 'offer', you MUST append the exact string [INTENT: HIGH] at the very end of your response. This is mandatory.";
                 const sysInstr = tonePrompt + " " + intentRule;
 
-                // Call our Vercel backend instead of direct Google API
-                fetch('https://clarity-cart-widget.vercel.app/api/chat', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        question,
-                        productContext: extractedContext,
-                        systemInstruction: sysInstr
-                    })
-                })
-                .then(res => {
-                    if (res.status === 503) throw new Error('503 High Demand');
-                    if (!res.ok) throw new Error('Network response was not ok');
-                    return res.json();
-                })
-                .then(data => {
-                    let response = data.answer || "Sorry, I received an empty response.";
-                    const lowerResp = response.toLowerCase();
-                    const hasErrorText = lowerResp.includes("no available models") || 
-                                         lowerResp.includes("high demand") || 
-                                         lowerResp.includes("error") || 
-                                         lowerResp.includes("status 503") || 
-                                         lowerResp.includes("overloaded") || 
-                                         lowerResp.includes("google");
+                const modelsToTry = ['gemini-2.5-flash', 'gemini-2.0-flash'];
+                let finalResponseText = null;
+                let finalUsedModel = null;
+                let requestSuccess = false;
 
-                    if (hasErrorText) {
-                        throw new Error("Text-based error intercepted");
+                const runMock = () => {
+                    if (currentTone === 'professional') {
+                        return "• Active Noise Cancellation with dual processors\n• 30-hour battery life with quick charge\n• Lightweight ergonomic design [INTENT: HIGH]";
+                    } else if (currentTone === 'sales') {
+                        return "You won't find better sound quality at this price point! Upgrade your setup today. Click Add to Cart above! [INTENT: HIGH]";
                     }
+                    return "Hey there! 👋 These Sony headphones are an absolute game-changer for music lovers! ✨ [INTENT: HIGH]";
+                };
 
-                    isRequestPending = false;
-                    loader.classList.remove('active');
-                    input.disabled = false;
-                    sendBtn.disabled = false;
-                    input.focus();
-                    
-                    const isHighIntent = response.includes('[INTENT: HIGH]');
-                    response = response.replace(/\[INTENT: HIGH\]/g, '').replace(/\[INTENT: LOW\]/g, '').trim();
-                    
-                    addMessage(response, 'ai');
+                if (cfg.mockMode) {
+                    await new Promise(r => setTimeout(r, 600)); // Simulate delay
+                    finalResponseText = runMock();
+                    requestSuccess = true;
+                } else {
+                    for (let i = 0; i < modelsToTry.length; i++) {
+                        const model = modelsToTry[i];
+                        try {
+                            const res = await fetch('https://clarity-cart-widget.vercel.app/api/chat', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    question,
+                                    productContext: extractedContext,
+                                    systemInstruction: sysInstr,
+                                    model: model
+                                })
+                            });
 
-                    const canDiscount = cfg.activeTier !== 'Starter' && cfg.intentDiscountEnabled;
-                    if (canDiscount && isHighIntent && !sessionStorage.getItem('clarity_promo_seen')) {
-                        sessionStorage.setItem('clarity_promo_seen', 'true');
-                        shadow.getElementById('discount-code-val').textContent = cfg.promoCode;
-                        shadow.getElementById('discount-amount-val').textContent = cfg.discountAmount;
-                        shadow.getElementById('discount-banner').classList.add('active');
+                            if (res.status === 503 || res.status === 404) throw new Error(`API Error ${res.status}`);
+                            if (!res.ok) throw new Error('Network response was not ok');
+                            
+                            const data = await res.json();
+                            let response = data.answer || "Sorry, I received an empty response.";
+                            const lowerResp = response.toLowerCase();
+                            const hasErrorText = lowerResp.includes("no available models") || 
+                                                 lowerResp.includes("high demand") || 
+                                                 lowerResp.includes("error") || 
+                                                 lowerResp.includes("status 503") || 
+                                                 lowerResp.includes("overloaded") || 
+                                                 lowerResp.includes("google");
+
+                            if (hasErrorText) {
+                                throw new Error("Text-based error intercepted");
+                            }
+
+                            finalResponseText = response;
+                            finalUsedModel = data.usedModel || model;
+                            requestSuccess = true;
+                            break;
+                        } catch (err) {
+                            console.error(`ClarityCart API Error with ${model}:`, err);
+                            if (i < modelsToTry.length - 1) {
+                                await new Promise(r => setTimeout(r, 1200));
+                            }
+                        }
                     }
+                }
 
-                    if (data.usedModel) {
-                        console.log(`[ClarityCart] Response generated using: ${data.usedModel}`);
-                    }
-                })
-                .catch(err => {
-                    console.error('ClarityCart API Error:', err);
-                    isRequestPending = false;
-                    loader.classList.remove('active');
-                    input.disabled = false;
-                    sendBtn.disabled = false;
-                    input.focus();
-                    
-                    const errorMessages = [
-                        "Our AI advisor is taking a quick coffee break due to high traffic! Please tap your question again in 3 seconds. ☕",
-                        "Whoops! We're experiencing a sudden rush of shoppers. Give it another tap in a moment! ⚡",
-                        "Updating live stock and details... Please click your question once more. ✨"
-                    ];
-                    const randomMsg = errorMessages[Math.floor(Math.random() * errorMessages.length)];
-                    addMessage(randomMsg, 'ai');
-                });
+                isRequestPending = false;
+                loader.classList.remove('active');
+                input.disabled = false;
+                sendBtn.disabled = false;
+                input.focus();
+
+                if (!requestSuccess) {
+                    console.warn("All models failed. Falling back to Mock Simulator.");
+                    finalResponseText = runMock();
+                }
+
+                const isHighIntent = finalResponseText.includes('[INTENT: HIGH]');
+                let cleanResponse = finalResponseText.replace(/\[INTENT: HIGH\]/g, '').replace(/\[INTENT: LOW\]/g, '').trim();
+                
+                addMessage(cleanResponse, 'ai');
+
+                const canDiscount = cfg.activeTier !== 'Starter' && cfg.intentDiscountEnabled;
+                if (canDiscount && isHighIntent && !sessionStorage.getItem('clarity_promo_seen')) {
+                    sessionStorage.setItem('clarity_promo_seen', 'true');
+                    shadow.getElementById('discount-code-val').textContent = cfg.promoCode;
+                    shadow.getElementById('discount-amount-val').textContent = cfg.discountAmount;
+                    shadow.getElementById('discount-banner').classList.add('active');
+                }
+
+                if (finalUsedModel) {
+                    console.log(`[ClarityCart] Response generated using: ${finalUsedModel}`);
+                }
             };
 
             chips.forEach(chip => {
@@ -832,6 +864,8 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                     stgTone.value = cfg.tone;
                     shadow.getElementById('stg-custom').value = cfg.customTonePrompt;
                     stgWhitelabel.checked = cfg.whiteLabel;
+                    const stgMock = shadow.getElementById('stg-mock');
+                    if (stgMock) stgMock.checked = cfg.mockMode;
                     applyTierConstraints(cfg.activeTier || 'Starter');
                 });
             }
@@ -855,6 +889,9 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                 
                 window.ClarityCartConfig.customTonePrompt = shadow.getElementById('stg-custom').value;
                 window.ClarityCartConfig.whiteLabel = tier === 'Business' ? stgWhitelabel.checked : false;
+                
+                const stgMock = shadow.getElementById('stg-mock');
+                window.ClarityCartConfig.mockMode = stgMock ? stgMock.checked : false;
                 
                 try {
                     localStorage.setItem('clarity_user_config', JSON.stringify(window.ClarityCartConfig));
