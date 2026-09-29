@@ -138,16 +138,22 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
         }
 
         render(shadow) {
-            const questions = [
+            const fixedQuestions = [
                 'What are the key features?',
                 "What's the return policy?",
-                'Is delivery fast?',
+                'Is delivery fast?'
+            ];
+            const poolQuestions = [
                 'What is in the box?',
                 'Is warranty included?',
-                'Do you have discounts?'
+                'Are there bundle discounts?',
+                'Do you offer international shipping?',
+                'Can I pay in installments?',
+                'Is it compatible with all devices?'
             ];
-            const shuffled = questions.slice().sort(() => 0.5 - Math.random());
-            const selectedQuestions = shuffled.slice(0, 3);
+            const shuffledPool = poolQuestions.slice().sort(() => 0.5 - Math.random());
+            const selectedPoolQuestions = shuffledPool.slice(0, 3);
+            const selectedQuestions = [...fixedQuestions, ...selectedPoolQuestions];
 
             let chipsHtml = selectedQuestions.map(q => `<button class="chip" data-q="${q}">${q}</button>`).join('');
 
@@ -223,6 +229,33 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                     0% { box-shadow: 0 0 0 0 rgba(74, 144, 226, 0.4); }
                     70% { box-shadow: 0 0 0 4px rgba(74, 144, 226, 0); }
                     100% { box-shadow: 0 0 0 0 rgba(74, 144, 226, 0); }
+                }
+
+                .tier-badge {
+                    font-size: 12px;
+                    padding: 2px 8px;
+                    border-radius: 4px;
+                    font-weight: 600;
+                    letter-spacing: 0.5px;
+                    margin-left: 8px;
+                    display: inline-block;
+                }
+                .tier-badge.starter {
+                    color: #94a3b8;
+                    background: #1e293b;
+                    border: 1px solid #334155;
+                }
+                .tier-badge.pro {
+                    color: #60a5fa;
+                    background: rgba(59, 130, 246, 0.1);
+                    border: 1px solid rgba(59, 130, 246, 0.3);
+                    box-shadow: 0 0 8px rgba(59, 130, 246, 0.2);
+                }
+                .tier-badge.business {
+                    color: #fcd34d;
+                    background: rgba(245, 158, 11, 0.1);
+                    border: 1px solid rgba(245, 158, 11, 0.3);
+                    box-shadow: 0 0 8px rgba(245, 158, 11, 0.2);
                 }
 
                 .header-right {
@@ -521,7 +554,11 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                                 <span class="dot"></span>
                                 AI &bull; Instant Answer
                             </div>
-                            ${window.location.search.includes('admin=1') ? `<button class="reset-btn" id="settings-btn" aria-label="Settings" title="Settings" style="display:flex;">
+                            ${window.location.search.includes('admin=1') ? `
+                            <div id="tier-badge-container">
+                                <div class="tier-badge ${window.ClarityCartConfig.activeTier.toLowerCase()}">${window.ClarityCartConfig.activeTier.toUpperCase()}</div>
+                            </div>
+                            <button class="reset-btn" id="settings-btn" aria-label="Settings" title="Settings" style="display:flex;">
                                 ⚙️
                             </button>` : ''}
                             <button class="reset-btn" id="reset-btn" aria-label="Reset Chat" title="Reset Chat">
@@ -673,9 +710,9 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                 const coreDirective = "CORE DIRECTIVE: You are an elite, highly empathetic e-commerce sales assistant. DO NOT just robotically recite product specs. You MUST weave product benefits organically into your answers. Adapt your language to sound like a real human expert. If the user is hesitant, be reassuring. Vary your sentence structures so no two responses sound identical.";
 
                 let tonePrompt = "";
-                if (currentTone === "friendly") tonePrompt = "Tone: Warm and highly conversational. Act like a helpful friend. YOU DECIDE when and where to use emojis based on the context, but keep it natural.";
-                else if (currentTone === "professional") tonePrompt = "ROLE: You are an executive spec sheet. Output MUST be ONLY a concise bulleted list (•). Zero greetings, zero emojis, zero fluff. State raw facts only.";
-                else if (currentTone === "sales") tonePrompt = "Tone: Confident closer. Naturally pivot from answering the question to highlighting a killer feature that justifies the price.";
+                if (currentTone === "friendly") tonePrompt = "ROLE: You are an approachable, friendly store assistant. Speak casually, warmly, and naturally integrate 1-2 emojis where relevant.";
+                else if (currentTone === "professional") tonePrompt = "ROLE: Technical specialist. Output facts, specs, and details in clean bullet points (•). No greetings or conversational filler.";
+                else if (currentTone === "sales") tonePrompt = "ROLE: Persuasive sales consultant. Highlight value, overcome hesitations, and suggest proceeding to checkout.";
                 else if (currentTone === "custom") tonePrompt = "Tone: " + cfg.customTonePrompt;
                 
                 const intentRule = "CRITICAL RULE: If the user's message contains any of these words: 'discount', 'coupon', 'promo', 'expensive', 'price', or 'offer', you MUST append the exact string [INTENT: HIGH] at the very end of your response. This is mandatory.";
@@ -713,7 +750,8 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                                     question,
                                     productContext: extractedContext,
                                     systemInstruction: sysInstr,
-                                    model: model
+                                    model: model,
+                                    temperature: currentTone === 'professional' ? 0.2 : 0.7
                                 })
                             });
 
@@ -903,6 +941,10 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                 } catch(e) {}
 
                 shadow.getElementById('clarity-footer').style.display = (tier === 'Business' && window.ClarityCartConfig.whiteLabel) ? 'none' : 'block';
+                const badgeContainer = shadow.getElementById('tier-badge-container');
+                if (badgeContainer) {
+                    badgeContainer.innerHTML = `<div class="tier-badge ${tier.toLowerCase()}">${tier.toUpperCase()}</div>`;
+                }
                 stgModal.classList.remove('active');
             });
 
