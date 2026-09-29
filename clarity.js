@@ -728,11 +728,11 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                     const hasDiscountTrigger = lowerQ.includes('discount') || lowerQ.includes('price') || lowerQ.includes('expensive');
                     const intentTag = hasDiscountTrigger ? ' [INTENT: HIGH]' : '';
                     if (currentTone === 'professional') {
-                        return "• Active Noise Cancellation with dual processors\n• 30-hour battery life with quick charge\n• Lightweight ergonomic design" + intentTag;
+                        return "• [Offline Mode]\n• API connection failed or mock enabled\n• Standard 30-hour battery life" + intentTag;
                     } else if (currentTone === 'sales') {
-                        return "You won't find better sound quality at this price point! Upgrade your setup today. Click Add to Cart above!" + intentTag;
+                        return "[Offline Demo] We are experiencing high demand! Don't wait, upgrade your setup today. Click Add to Cart above!" + intentTag;
                     }
-                    return "Hey there! 👋 These Sony headphones are an absolute game-changer for music lovers! ✨" + intentTag;
+                    return "[Offline Demo] Hey there! 👋 The AI server is currently sleeping/unreachable, but this is a mock response to show how it looks! ✨" + intentTag;
                 };
 
                 if (cfg.mockMode) {
