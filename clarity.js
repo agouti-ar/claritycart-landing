@@ -670,14 +670,16 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                 let currentTone = cfg.activeTier === 'Starter' ? 'friendly' : cfg.tone;
                 if (cfg.activeTier === 'Pro' && currentTone === 'custom') currentTone = 'friendly';
 
+                const coreDirective = "CORE DIRECTIVE: You are an elite, highly empathetic e-commerce sales assistant. DO NOT just robotically recite product specs. You MUST weave product benefits organically into your answers. Adapt your language to sound like a real human expert. If the user is hesitant, be reassuring. Vary your sentence structures so no two responses sound identical.";
+
                 let tonePrompt = "";
-                if (currentTone === "friendly") tonePrompt = "ROLE: You are an enthusiastic, warm retail friend. ALWAYS start with a cheerful greeting like 'Hey there! 👋' or 'Awesome choice! ✨'. Speak casually and naturally include 2 friendly emojis.";
+                if (currentTone === "friendly") tonePrompt = "Tone: Warm and highly conversational. Act like a helpful friend. YOU DECIDE when and where to use emojis based on the context, but keep it natural.";
                 else if (currentTone === "professional") tonePrompt = "ROLE: You are an executive spec sheet. Output MUST be ONLY a concise bulleted list (•). Zero greetings, zero emojis, zero fluff. State raw facts only.";
-                else if (currentTone === "sales") tonePrompt = "ROLE: High-energy sales closer. Highlight premium quality, exclusive feel, and end with an actionable CTA: 'Ready to upgrade your sound? Click Add to Cart above!'";
+                else if (currentTone === "sales") tonePrompt = "Tone: Confident closer. Naturally pivot from answering the question to highlighting a killer feature that justifies the price.";
                 else if (currentTone === "custom") tonePrompt = "Tone: " + cfg.customTonePrompt;
                 
                 const intentRule = "CRITICAL RULE: If the user's message contains any of these words: 'discount', 'coupon', 'promo', 'expensive', 'price', or 'offer', you MUST append the exact string [INTENT: HIGH] at the very end of your response. This is mandatory.";
-                const sysInstr = tonePrompt + " " + intentRule;
+                const sysInstr = coreDirective + " " + tonePrompt + " " + intentRule;
 
                 const modelsToTry = ['gemini-2.5-flash', 'gemini-2.0-flash'];
                 let finalResponseText = null;
@@ -685,12 +687,15 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                 let requestSuccess = false;
 
                 const runMock = () => {
+                    const lowerQ = question.toLowerCase();
+                    const hasDiscountTrigger = lowerQ.includes('discount') || lowerQ.includes('price') || lowerQ.includes('expensive');
+                    const intentTag = hasDiscountTrigger ? ' [INTENT: HIGH]' : '';
                     if (currentTone === 'professional') {
-                        return "• Active Noise Cancellation with dual processors\n• 30-hour battery life with quick charge\n• Lightweight ergonomic design [INTENT: HIGH]";
+                        return "• Active Noise Cancellation with dual processors\n• 30-hour battery life with quick charge\n• Lightweight ergonomic design" + intentTag;
                     } else if (currentTone === 'sales') {
-                        return "You won't find better sound quality at this price point! Upgrade your setup today. Click Add to Cart above! [INTENT: HIGH]";
+                        return "You won't find better sound quality at this price point! Upgrade your setup today. Click Add to Cart above!" + intentTag;
                     }
-                    return "Hey there! 👋 These Sony headphones are an absolute game-changer for music lovers! ✨ [INTENT: HIGH]";
+                    return "Hey there! 👋 These Sony headphones are an absolute game-changer for music lovers! ✨" + intentTag;
                 };
 
                 if (cfg.mockMode) {
