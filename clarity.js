@@ -139,24 +139,24 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
 
         render(shadow) {
             const fixedQuestions = [
-                'What are the key features?',
-                "What's the return policy?",
-                'Is delivery fast?'
+                '✨ What are the key features?',
+                "🔄 What's the return policy?",
+                '🚚 Is delivery fast?'
             ].sort(() => 0.5 - Math.random()); // Shuffle the fixed questions among themselves
 
             const poolQuestions = [
-                'What is included in the package?',
-                'Is warranty included?',
-                'Are there bundle discounts?',
-                'Do you offer international shipping?',
-                'Can I pay in installments?',
-                'What are the exact dimensions?',
-                'What materials is this made of?',
-                'Is customer support available 24/7?',
-                'Do you price match?',
-                'Can I return it if I change my mind?',
-                'Is this item currently in stock?',
-                'Are there any hidden fees or taxes?'
+                '📦 What is included in the package?',
+                '🛡️ Is warranty included?',
+                '💰 Are there bundle discounts?',
+                '🌍 Do you offer international shipping?',
+                '💳 Can I pay in installments?',
+                '📏 What are the exact dimensions?',
+                '🧵 What materials is this made of?',
+                '🎧 Is customer support available 24/7?',
+                '🤝 Do you price match?',
+                '↩️ Can I return it if I change my mind?',
+                '✅ Is this item currently in stock?',
+                '🧾 Are there any hidden fees or taxes?'
             ];
             const shuffledPool = poolQuestions.slice().sort(() => 0.5 - Math.random());
             const selectedPoolQuestions = shuffledPool.slice(0, 3);
