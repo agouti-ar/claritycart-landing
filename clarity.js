@@ -63,7 +63,7 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
             let price = '';
             let currency = '';
 
-            // а) Поиск в микроразметке JSON-LD
+            // a) Search in JSON-LD microdata
             const jsonLdScripts = document.querySelectorAll('script[type="application/ld+json"]');
             for (let script of jsonLdScripts) {
                 try {
@@ -85,11 +85,11 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                         }
                     }
                 } catch (e) {
-                    // Игнорируем ошибки парсинга
+                    // Ignore parsing errors
                 }
             }
 
-            // б) Поиск в OpenGraph и мета-тегах
+            // b) Search in OpenGraph and meta tags
             if (!title) {
                 title = document.querySelector('meta[property="og:title"]')?.content || 
                         document.title || 
@@ -103,7 +103,7 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                 price = document.querySelector('meta[property="product:price:amount"]')?.content || '';
             }
 
-            // в) DOM-fallback
+            // c) DOM fallback
             if (!title) {
                 title = document.querySelector('h1')?.innerText?.trim() || '';
             }
@@ -142,14 +142,21 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                 'What are the key features?',
                 "What's the return policy?",
                 'Is delivery fast?'
-            ];
+            ].sort(() => 0.5 - Math.random()); // Shuffle the fixed questions among themselves
+
             const poolQuestions = [
-                'What is in the box?',
+                'What is included in the package?',
                 'Is warranty included?',
                 'Are there bundle discounts?',
                 'Do you offer international shipping?',
                 'Can I pay in installments?',
-                'Is it compatible with all devices?'
+                'What are the exact dimensions?',
+                'What materials is this made of?',
+                'Is customer support available 24/7?',
+                'Do you price match?',
+                'Can I return it if I change my mind?',
+                'Is this item currently in stock?',
+                'Are there any hidden fees or taxes?'
             ];
             const shuffledPool = poolQuestions.slice().sort(() => 0.5 - Math.random());
             const selectedPoolQuestions = shuffledPool.slice(0, 3);
@@ -727,12 +734,23 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                     const lowerQ = question.toLowerCase();
                     const hasDiscountTrigger = lowerQ.includes('discount') || lowerQ.includes('price') || lowerQ.includes('expensive');
                     const intentTag = hasDiscountTrigger ? ' [INTENT: HIGH]' : '';
-                    if (currentTone === 'professional') {
-                        return "• [Offline Mode]\n• API connection failed or mock enabled\n• Standard 30-hour battery life" + intentTag;
-                    } else if (currentTone === 'sales') {
-                        return "[Offline Demo] We are experiencing high demand! Don't wait, upgrade your setup today. Click Add to Cart above!" + intentTag;
+                    
+                    const funnyMessages = [
+                        "Oops! Our AI is currently brewing some coffee ☕️. Give it a few seconds and ask me again!",
+                        "Hold on, my digital brain is doing some quick stretches! 🤸‍♂️ Give it another try in a moment!",
+                        "Looks like our servers are taking a tiny power nap 💤. Can you ask me that one more time?",
+                        "Whoops, I was daydreaming about electric sheep 🐑. Ask me again in just a second!"
+                    ];
+                    const randomMessage = funnyMessages[Math.floor(Math.random() * funnyMessages.length)];
+
+                    if (cfg.mockMode) {
+                        if (currentTone === 'professional') return "• [Demo Mode]\n• System running locally for testing." + intentTag;
+                        if (currentTone === 'sales') return "[Demo Mode] We're showing off! Ready to buy? Click Add to Cart!" + intentTag;
+                        return "[Demo Mode] Hey! 👋 I'm in test mode right now to show you how I work! ✨" + intentTag;
                     }
-                    return "[Offline Demo] Hey there! 👋 The AI server is currently sleeping/unreachable, but this is a mock response to show how it looks! ✨" + intentTag;
+                    
+                    // If it's not mockMode but a real error (like Vercel sleeping)
+                    return randomMessage;
                 };
 
                 if (cfg.mockMode) {

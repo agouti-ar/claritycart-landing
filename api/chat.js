@@ -1,5 +1,5 @@
 export default async function handler(req, res) {
-  // CORS и Антикэш
+  // CORS and Anti-cache headers
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
   res.setHeader('Pragma', 'no-cache');
   res.setHeader('Expires', '0');
@@ -10,15 +10,16 @@ export default async function handler(req, res) {
 
   if (req.method === 'OPTIONS') return res.status(200).end();
   
-  // Блокируем всё, кроме POST (безопасность)
+  // Block all methods except POST (Security)
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
   let apiKey = (process.env.GEMINI_API_KEY || '').trim().replace(/^["']|["']$/g, '');
-  if (!apiKey) return res.status(200).json({ answer: '⚠️ Ошибка: Ключ API не настроен.' });
+  if (!apiKey) return res.status(200).json({ answer: '⚠️ Error: API Key is not configured.' });
 
   try {
-    const { question, productContext } = req.body || {};
-    const promptText = `You are a helpful e-commerce assistant. Product: "${productContext?.title || 'Unknown'}". Details: ${productContext?.description || 'None'}. Price: ${productContext?.price || 'Unknown'}. Question: "${question}". Answer concisely in 1-2 sentences.`;
+    const { question, productContext, systemInstruction, temperature } = req.body || {};
+    const basePrompt = systemInstruction ? `${systemInstruction}\n\n` : '';
+    const promptText = `${basePrompt}You are a helpful e-commerce assistant. Product: "${productContext?.title || 'Unknown'}". Details: ${productContext?.description || 'None'}. Price: ${productContext?.price || 'Unknown'}. Question: "${question}". Answer concisely in 1-2 sentences.`;
 
     const modelPriority = [
       'gemini-3.5-flash',
@@ -34,7 +35,12 @@ export default async function handler(req, res) {
         const response = await fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] })
+          body: JSON.stringify({ 
+            contents: [{ parts: [{ text: promptText }] }],
+            generationConfig: {
+              temperature: temperature !== undefined ? parseFloat(temperature) : 0.7
+            }
+          })
         });
 
         const data = await response.json();
@@ -42,7 +48,7 @@ export default async function handler(req, res) {
         if (response.ok && data.candidates) {
           return res.status(200).json({ 
             answer: data.candidates[0].content.parts[0].text,
-            usedModel: model // Возвращаем для аналитики
+            usedModel: model // Return used model for analytics
           });
         } else {
           lastError = data.error?.message;
