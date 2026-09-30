@@ -83,33 +83,36 @@
     <main class="relative z-10">
 
         <!-- Hero Section -->
-        <section class="py-24 text-center px-6 relative overflow-hidden">
+        <section class="py-12 md:py-24 px-6 relative overflow-hidden">
             <!-- Glowing Orbs -->
-            <div
-                class="absolute -top-20 -left-20 w-96 h-96 bg-blue-600/20 rounded-full mix-blend-screen filter blur-[100px] opacity-70 animate-pulse pointer-events-none">
-            </div>
-            <div
-                class="absolute -bottom-20 -right-20 w-96 h-96 bg-purple-600/20 rounded-full mix-blend-screen filter blur-[100px] opacity-70 animate-pulse pointer-events-none">
-            </div>
+            <div class="absolute top-0 left-0 w-[500px] h-[500px] bg-blue-600/20 rounded-full mix-blend-screen filter blur-[120px] opacity-60 animate-pulse pointer-events-none"></div>
+            <div class="absolute bottom-0 right-0 w-[500px] h-[500px] bg-purple-600/20 rounded-full mix-blend-screen filter blur-[120px] opacity-60 animate-pulse pointer-events-none"></div>
 
-            <div class="relative z-10">
-                <h1 data-aos="fade-up"
-                    class="text-5xl md:text-7xl font-extrabold max-w-5xl mx-auto leading-tight tracking-tight text-gradient">
-                    Stop Losing Customers to Unanswered Questions.
-                </h1>
-                <p class="max-w-2xl mx-auto mt-6 text-slate-400 text-lg md:text-xl leading-relaxed">
-                    An autonomous AI product advisor that embeds into your e-commerce store in 1 minute. Increases
-                    conversion by answering sizing, material, and policy questions instantly.
-                </p>
-                <div data-aos="fade-up" class="mt-10 flex flex-col sm:flex-row justify-center gap-4">
-                    <button
-                        class="open-modal-btn px-8 py-3.5 bg-saas-accent text-white rounded-lg font-semibold hover:bg-blue-600 hover:shadow-[0_0_20px_rgba(59,130,246,0.4)] hover:scale-105 transition-all duration-300 flex items-center justify-center">
-                        Start 7-Day Free Trial
-                    </button>
-                    <a href="#demo-section"
-                        class="px-8 py-3.5 bg-saas-card text-white rounded-lg font-semibold border border-slate-600 hover:border-slate-400 hover:bg-slate-800 transition-all duration-300 flex items-center justify-center">
-                        View Demo
-                    </a>
+            <div class="max-w-7xl mx-auto relative z-10 flex flex-col lg:flex-row items-center gap-12">
+                <!-- Left: Text Content -->
+                <div class="flex-1 text-center lg:text-left pt-10 lg:pt-0">
+                    <h1 data-aos="fade-up" class="text-5xl md:text-6xl lg:text-7xl font-extrabold leading-tight tracking-tight text-gradient">
+                        Stop Losing Customers to Unanswered Questions.
+                    </h1>
+                    <p data-aos="fade-up" data-aos-delay="100" class="mt-6 text-slate-400 text-lg md:text-xl leading-relaxed max-w-2xl mx-auto lg:mx-0">
+                        An autonomous AI product advisor that embeds into your e-commerce store in 1 minute. Increases
+                        conversion by answering sizing, material, and policy questions instantly.
+                    </p>
+                    <div data-aos="fade-up" data-aos-delay="200" class="mt-10 flex flex-col sm:flex-row justify-center lg:justify-start gap-4">
+                        <button class="open-modal-btn px-8 py-3.5 bg-saas-accent text-white rounded-lg font-semibold hover:bg-blue-600 hover:shadow-[0_0_20px_rgba(59,130,246,0.4)] hover:scale-105 transition-all duration-300 flex items-center justify-center">
+                            Start 7-Day Free Trial
+                        </button>
+                        <a href="#demo-section" class="px-8 py-3.5 bg-saas-card text-white rounded-lg font-semibold border border-slate-600 hover:border-slate-400 hover:bg-slate-800 transition-all duration-300 flex items-center justify-center">
+                            View Demo
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Right: 3D Spline Animation -->
+                <div class="flex-1 w-full h-[400px] md:h-[600px] relative" data-aos="fade-left" data-aos-delay="300">
+                    <!-- Spline Web Component -->
+                    <script type="module" src="https://unpkg.com/@splinetool/viewer@1.9.28/build/spline-viewer.js"></script>
+                    <spline-viewer url="https://prod.spline.design/6Wq1Q7YGyM-iab9i/scene.splinecode" class="w-full h-full" style="background: transparent;"></spline-viewer>
                 </div>
             </div>
         </section>
