@@ -70,13 +70,19 @@
     <!-- Header -->
     <header class="w-full max-w-7xl mx-auto px-6 py-6 flex justify-between items-center relative z-10">
         <div class="flex items-center gap-3 text-2xl font-bold tracking-tight cursor-pointer group">
-            <span class="text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-500 drop-shadow-[0_0_10px_rgba(96,165,250,0.8)]">C</span>
-            <span class="text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-400">ClarityCart AI</span>
+            <div class="w-10 h-10 rounded bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-2xl shadow-[0_0_15px_rgba(59,130,246,0.5)]">C</div>
+            <span class="text-2xl"><span class="text-slate-100">Clarity</span><span class="text-saas-accent">Cart</span></span>
         </div>
-        <a href="#pricing"
-            class="px-6 py-2.5 rounded-full border border-saas-accent text-saas-accent hover:bg-blue-600 hover:text-white hover:scale-105 transition-all duration-300 font-medium flex items-center justify-center">
-            Get Started
-        </a>
+        <div class="flex items-center gap-4">
+            <a href="login.html"
+                class="px-6 py-2.5 text-slate-300 hover:text-white transition-colors font-medium">
+                Log in
+            </a>
+            <a href="register.html"
+                class="px-6 py-2.5 rounded-full border border-saas-accent text-saas-accent hover:bg-blue-600 hover:text-white hover:scale-105 transition-all duration-300 font-medium flex items-center justify-center">
+                Get Started
+            </a>
+        </div>
     </header>
 
     <!-- Main Content -->
@@ -99,9 +105,9 @@
                         conversion by answering sizing, material, and policy questions instantly.
                     </p>
                     <div data-aos="fade-up" data-aos-delay="200" class="mt-10 flex flex-col sm:flex-row justify-center lg:justify-start gap-4">
-                        <button class="open-modal-btn px-8 py-3.5 bg-saas-accent text-white rounded-lg font-semibold hover:bg-blue-600 hover:shadow-[0_0_20px_rgba(59,130,246,0.4)] hover:scale-105 transition-all duration-300 flex items-center justify-center">
+                        <a href="register.html" class="px-8 py-3.5 bg-saas-accent text-white rounded-lg font-semibold hover:bg-blue-600 hover:shadow-[0_0_20px_rgba(59,130,246,0.4)] hover:scale-105 transition-all duration-300 flex items-center justify-center">
                             Start 7-Day Free Trial
-                        </button>
+                        </a>
                         <a href="#demo-section" class="px-8 py-3.5 bg-saas-card text-white rounded-lg font-semibold border border-slate-600 hover:border-slate-400 hover:bg-slate-800 transition-all duration-300 flex items-center justify-center">
                             View Demo
                         </a>
@@ -525,62 +531,128 @@
     <script>
         const container = document.getElementById('canvas-container');
         if (container) {
+
             const scene = new THREE.Scene();
+            // Fog for depth fading
+            scene.fog = new THREE.FogExp2(0x0b1120, 0.12);
+
             const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
-            const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+            const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: "high-performance" });
             
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Optimize for high DPI
             renderer.setSize(container.clientWidth, container.clientHeight);
             container.appendChild(renderer.domElement);
 
-            // Create a tech-looking geometry (Icosahedron / AI Brain)
-            const geometry = new THREE.IcosahedronGeometry(2.2, 1);
+            const group = new THREE.Group();
+            scene.add(group);
+
+            // 1. Inner Core (Pulsating glowing sphere)
+            const coreGeometry = new THREE.IcosahedronGeometry(1.2, 2);
+            const coreMaterial = new THREE.MeshBasicMaterial({
+                color: 0x8b5cf6, // Purple
+                transparent: true,
+                opacity: 0.15,
+                wireframe: false
+            });
+            const core = new THREE.Mesh(coreGeometry, coreMaterial);
+            group.add(core);
+
+            // 2. Outer Network (Wireframe + Nodes)
+            const outerGeometry = new THREE.IcosahedronGeometry(2.2, 1);
             
-            // Wireframe material
-            const material = new THREE.MeshBasicMaterial({ 
-                color: 0x3b82f6, 
+            // Wireframe
+            const wireMaterial = new THREE.MeshBasicMaterial({ 
+                color: 0x3b82f6, // Blue
                 wireframe: true,
                 transparent: true,
-                opacity: 0.2
+                opacity: 0.25
             });
-            
-            // Particles material (vertices)
+            const sphere = new THREE.Mesh(outerGeometry, wireMaterial);
+            group.add(sphere);
+
+            // Nodes (Vertices)
             const pointsMaterial = new THREE.PointsMaterial({
-                color: 0x8b5cf6,
+                color: 0x06b6d4, // Cyan
                 size: 0.08,
                 transparent: true,
-                opacity: 0.9
+                opacity: 0.9,
+                sizeAttenuation: true
             });
-
-            const sphere = new THREE.Mesh(geometry, material);
-            const points = new THREE.Points(geometry, pointsMaterial);
-            
-            const group = new THREE.Group();
-            group.add(sphere);
+            const points = new THREE.Points(outerGeometry, pointsMaterial);
             group.add(points);
-            scene.add(group);
+
+            // 3. Floating Particles (Data Streams)
+            const particleCount = 300;
+            const particlesGeometry = new THREE.BufferGeometry();
+            const particlePositions = new Float32Array(particleCount * 3);
+            
+            for(let i = 0; i < particleCount * 3; i++) {
+                // Spread particles in a wider volume
+                particlePositions[i] = (Math.random() - 0.5) * 12;
+            }
+            
+            particlesGeometry.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+            const particlesMaterial = new THREE.PointsMaterial({
+                color: 0xffffff,
+                size: 0.03,
+                transparent: true,
+                opacity: 0.3
+            });
+            const particles = new THREE.Points(particlesGeometry, particlesMaterial);
+            scene.add(particles);
 
             camera.position.z = 5;
 
             let mouseX = 0;
             let mouseY = 0;
+            let targetX = 0;
+            let targetY = 0;
             const windowHalfX = window.innerWidth / 2;
             const windowHalfY = window.innerHeight / 2;
 
             document.addEventListener('mousemove', (event) => {
-                mouseX = (event.clientX - windowHalfX) * 0.0005;
-                mouseY = (event.clientY - windowHalfY) * 0.0005;
+                mouseX = (event.clientX - windowHalfX);
+                mouseY = (event.clientY - windowHalfY);
             });
+
+            document.addEventListener('touchmove', (event) => {
+                if (event.touches.length > 0) {
+                    mouseX = (event.touches[0].clientX - windowHalfX);
+                    mouseY = (event.touches[0].clientY - windowHalfY);
+                }
+            }, { passive: true });
+
+            const clock = new THREE.Clock();
 
             function animate() {
                 requestAnimationFrame(animate);
+                
+                const time = clock.getElapsedTime();
+
+                // Smooth mouse target calculation
+                targetX = mouseX * 0.001;
+                targetY = mouseY * 0.001;
 
                 // Base rotation
-                group.rotation.x += 0.001;
-                group.rotation.y += 0.002;
+                group.rotation.x += 0.002;
+                group.rotation.y += 0.003;
 
-                // Parallax effect based on mouse
-                group.rotation.x += (mouseY - group.rotation.x) * 0.05;
-                group.rotation.y += (mouseX - group.rotation.y) * 0.05;
+                // Pulsating effect for the inner core
+                const scale = 1 + Math.sin(time * 2) * 0.08;
+                core.scale.set(scale, scale, scale);
+
+                // Ambient particle movement
+                particles.rotation.y = time * 0.05;
+                particles.rotation.x = time * 0.02;
+
+                // Smooth Parallax effect (Model)
+                group.position.x += (targetX - group.position.x) * 0.05;
+                group.position.y += (-targetY - group.position.y) * 0.05;
+
+                // Smooth Parallax effect (Camera)
+                camera.position.x += (targetX * 2 - camera.position.x) * 0.05;
+                camera.position.y += (-targetY * 2 - camera.position.y) * 0.05;
+                camera.lookAt(scene.position);
 
                 renderer.render(scene, camera);
             }

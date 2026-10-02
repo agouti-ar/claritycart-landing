@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClarityCart Dashboard - Merchant Portal</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        'brand-bg': '#0B0F19',
+                        'brand-surface': '#1A233A',
+                        'brand-accent': '#3B82F6',
+                        'brand-text': '#F8FAFC',
+                        'brand-muted': '#94A3B8'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0B0F19;
+            color: #F8FAFC;
+        }
+
+        .glass-panel {
+            background: rgba(26, 35, 58, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .gradient-text {
+            background: linear-gradient(to right, #3B82F6, #8B5CF6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+    </style>
+</head>
+
+<body class="flex h-screen overflow-hidden">
+
+    <!-- Sidebar -->
+    <aside class="w-64 glass-panel border-r border-gray-800 flex flex-col justify-between hidden md:flex">
+        <div>
+            <div class="h-16 flex items-center px-6 border-b border-gray-800 gap-3">
+                <div class="w-8 h-8 rounded bg-gradient-to-br from-brand-accent to-purple-600 flex items-center justify-center text-white font-bold text-xl shadow-[0_0_15px_rgba(59,130,246,0.5)]">C</div>
+                <span class="text-xl font-bold tracking-tight"><span class="text-slate-100">Clarity</span><span class="text-brand-accent">Cart</span></span>
+            </div>
+            <nav class="p-4 space-y-2">
+                <a href="#"
+                    class="flex items-center px-4 py-3 bg-brand-accent/10 text-brand-accent rounded-lg font-medium transition-colors">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6">
+                        </path>
+                    </svg>
+                    Overview
+                </a>
+                <a href="#"
+                    class="flex items-center px-4 py-3 text-brand-muted hover:text-white hover:bg-gray-800 rounded-lg font-medium transition-colors">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
+                        </path>
+                    </svg>
+                    Insights
+                </a>
+                <a href="#"
+                    class="flex items-center px-4 py-3 text-brand-muted hover:text-white hover:bg-gray-800 rounded-lg font-medium transition-colors">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z">
+                        </path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                    Settings
+                </a>
+            </nav>
+        </div>
+        <div class="p-4">
+            <div class="bg-gradient-to-r from-blue-600 to-indigo-600 p-4 rounded-xl shadow-lg">
+                <p class="text-sm font-semibold mb-1">Upgrade to PRO</p>
+                <p class="text-xs text-blue-100 mb-3">Get unlimited AI answers and premium analytics.</p>
+                <button
+                    class="w-full bg-white text-blue-600 text-sm font-bold py-2 rounded-lg hover:bg-gray-100 transition">View
+                    Plans</button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col h-screen overflow-y-auto bg-[#0B0F19]">
+        <!-- Header -->
+        <header
+            class="h-16 glass-panel border-b border-gray-800 flex items-center justify-between px-8 sticky top-0 z-10">
+            <h2 class="text-xl font-semibold">Dashboard</h2>
+            <div class="flex items-center space-x-4">
+                <span class="text-sm text-brand-muted">mystore.com</span>
+                <div
+                    class="w-8 h-8 rounded-full bg-gradient-to-tr from-brand-accent to-purple-500 border-2 border-brand-surface cursor-pointer">
+                </div>
+            </div>
+        </header>
+
+        <div class="p-8 max-w-7xl mx-auto w-full space-y-8">
+
+            <!-- Plan Usage -->
+            <div class="glass-panel p-6 rounded-2xl">
+                <div class="flex justify-between items-end mb-4">
+                    <div>
+                        <h3 class="text-lg font-semibold">AI Answers Usage</h3>
+                        <p class="text-sm text-brand-muted">Starter Plan Limits</p>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-2xl font-bold" id="total-usage">0</span>
+                        <span class="text-brand-muted"> / 500</span>
+                    </div>
+                </div>
+                <div class="w-full bg-gray-800 rounded-full h-3 mb-2 overflow-hidden">
+                    <div id="usage-progress" class="bg-gradient-to-r from-brand-accent to-purple-500 h-3 rounded-full" style="width: 0%">
+                    </div>
+                </div>
+                <p class="text-xs text-brand-muted mt-2">Resets in 12 days. <a href="#"
+                        class="text-brand-accent hover:underline">Upgrade</a> to increase limits.</p>
+            </div>
+
+            <!-- Metrics -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="glass-panel p-6 rounded-2xl">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-brand-muted text-sm font-medium">Questions Answered</h3>
+                        <div class="p-2 bg-blue-500/10 rounded-lg text-blue-400">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z">
+                                </path>
+                            </svg>
+                        </div>
+                    </div>
+                    <p class="text-3xl font-bold" id="total-questions">0</p>
+                    <p class="text-xs text-green-400 mt-2 flex items-center">
+                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
+                        </svg>
+                        +12% this week
+                    </p>
+                </div>
+
+                <div class="glass-panel p-6 rounded-2xl">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-brand-muted text-sm font-medium">Estimated Time Saved</h3>
+                        <div class="p-2 bg-purple-500/10 rounded-lg text-purple-400">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <p class="text-3xl font-bold" id="time-saved">0 hrs</p>
+                    <p class="text-xs text-brand-muted mt-2">Based on 2.5 mins per ticket</p>
+                </div>
+
+                <div class="glass-panel p-6 rounded-2xl">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-brand-muted text-sm font-medium">Top Intent</h3>
+                        <div class="p-2 bg-green-500/10 rounded-lg text-green-400">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <p class="text-xl font-bold mt-1 truncate" id="top-intent">No data</p>
+                    <p class="text-xs text-brand-muted mt-3" id="top-intent-percent">0% of all queries</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Top Questions -->
+                <div class="lg:col-span-2 glass-panel p-6 rounded-2xl">
+                    <h3 class="text-lg font-semibold mb-6">Top Customer Queries</h3>
+                    <div class="space-y-4" id="queries-container">
+                        <div class="flex items-center justify-between p-4 bg-gray-800/50 rounded-xl">
+                            <div class="flex items-center space-x-4">
+                                <div
+                                    class="w-8 h-8 rounded bg-gray-700 flex items-center justify-center font-bold text-sm">
+                                    1</div>
+                                <div>
+                                    <p class="font-medium text-sm">How long does shipping take to Europe?</p>
+                                    <p class="text-xs text-brand-muted">Asked 45 times</p>
+                                </div>
+                            </div>
+                            <span
+                                class="px-3 py-1 bg-green-500/10 text-green-400 rounded-full text-xs font-medium">Answered</span>
+                        </div>
+                        <div class="flex items-center justify-between p-4 bg-gray-800/50 rounded-xl">
+                            <div class="flex items-center space-x-4">
+                                <div
+                                    class="w-8 h-8 rounded bg-gray-700 flex items-center justify-center font-bold text-sm">
+                                    2</div>
+                                <div>
+                                    <p class="font-medium text-sm">Do these shoes run true to size?</p>
+                                    <p class="text-xs text-brand-muted">Asked 28 times</p>
+                                </div>
+                            </div>
+                            <span
+                                class="px-3 py-1 bg-green-500/10 text-green-400 rounded-full text-xs font-medium">Answered</span>
+                        </div>
+                        <div
+                            class="flex items-center justify-between p-4 bg-gray-800/50 rounded-xl border border-yellow-500/30">
+                            <div class="flex items-center space-x-4">
+                                <div
+                                    class="w-8 h-8 rounded bg-gray-700 flex items-center justify-center font-bold text-sm">
+                                    3</div>
+                                <div>
+                                    <p class="font-medium text-sm">Will you restock the red jacket?</p>
+                                    <p class="text-xs text-brand-muted">Asked 15 times</p>
+                                </div>
+                            </div>
+                            <span
+                                class="px-3 py-1 bg-yellow-500/10 text-yellow-400 rounded-full text-xs font-medium">Escalated</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Widget Settings -->
+                <div class="glass-panel p-6 rounded-2xl flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-lg font-semibold mb-6">Widget Settings</h3>
+
+                        <div class="space-y-6">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="font-medium text-sm">Friendly Tone</p>
+                                    <p class="text-xs text-brand-muted">AI uses warm, conversational language</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" value="" class="sr-only peer" checked>
+                                    <div
+                                        class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-accent">
+                                    </div>
+                                </label>
+                            </div>
+
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="font-medium text-sm">Use Emojis</p>
+                                    <p class="text-xs text-brand-muted">Allow AI to use emojis in responses</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" value="" class="sr-only peer" checked>
+                                    <div
+                                        class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-accent">
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-8 pt-6 border-t border-gray-800">
+                        <h4 class="text-sm font-semibold mb-2">Installation Snippet</h4>
+                        <p class="text-xs text-brand-muted mb-3">Copy and paste this before the closing &lt;/body&gt;
+                            tag.</p>
+                        <div class="relative bg-black rounded-lg p-3 group">
+                            <code class="text-xs text-green-400 break-all">
+                                &lt;script src="https://claritycart.ai/clarity.js" data-id="store_12345"&gt;&lt;/script&gt;
+                            </code>
+                            <button
+                                class="absolute top-2 right-2 p-1.5 bg-gray-800 rounded text-gray-400 hover:text-white opacity-0 group-hover:opacity-100 transition">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z">
+                                    </path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        const SUPABASE_URL = 'https://vzmpwstfddznsvypudhj.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ6bXB3c3RmZGR6bnN2eXB1ZGhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3NzMyMTksImV4cCI6MjEwNjM0OTIxOX0.Qz0TGEDy1TOekLrqTrfspT8gnnfGy5_BjMtJRlz-PaI';
+
+        async function fetchDashboardData() {
+            try {
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/questions?select=*`, {
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                    }
+                });
+                const data = await res.json();
+
+                // Update Totals
+                const totalQuestions = data.length;
+                const totalEl = document.getElementById('total-questions');
+                const usageEl = document.getElementById('total-usage');
+                const progressEl = document.getElementById('usage-progress');
+                const timeSavedEl = document.getElementById('time-saved');
+
+                if (totalEl) totalEl.textContent = totalQuestions;
+                if (usageEl) usageEl.textContent = totalQuestions;
+                
+                if (progressEl) {
+                    const percent = Math.min((totalQuestions / 500) * 100, 100);
+                    progressEl.style.width = percent + '%';
+                }
+
+                if (timeSavedEl) {
+                    const mins = totalQuestions * 2.5;
+                    const hrs = (mins / 60).toFixed(1);
+                    // if less than 1 hour, show mins, otherwise show hours
+                    if (hrs < 1) {
+                        timeSavedEl.textContent = mins + ' mins';
+                    } else {
+                        timeSavedEl.textContent = hrs + ' hrs';
+                    }
+                }
+
+                // Group by question
+                const counts = {};
+                data.forEach(q => {
+                    counts[q.question_text] = (counts[q.question_text] || 0) + 1;
+                });
+
+                // Sort by frequency
+                const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+
+                // Update Top Intent
+                const topIntentEl = document.getElementById('top-intent');
+                const topIntentPercentEl = document.getElementById('top-intent-percent');
+                if (sorted.length > 0 && topIntentEl && topIntentPercentEl) {
+                    const topQuestion = sorted[0][0];
+                    const topCount = sorted[0][1];
+                    const percent = Math.round((topCount / totalQuestions) * 100);
+                    
+                    topIntentEl.textContent = topQuestion;
+                    topIntentPercentEl.textContent = percent + '% of all queries';
+                }
+
+                // Render Top Queries
+                const container = document.getElementById('queries-container');
+                if (!container) return;
+
+                container.innerHTML = ''; // clear mock data
+
+                if (sorted.length === 0) {
+                    container.innerHTML = '<p class="text-brand-muted text-sm p-4">No questions yet. Install the widget to get started!</p>';
+                    return;
+                }
+
+                sorted.slice(0, 5).forEach((item, index) => {
+                    const question = item[0];
+                    const count = item[1];
+                    const html = `
+                        <div class="flex items-center justify-between p-4 bg-gray-800/50 rounded-xl">
+                            <div class="flex items-center space-x-4">
+                                <div class="w-8 h-8 rounded bg-gray-700 flex items-center justify-center font-bold text-sm">${index + 1}</div>
+                                <div>
+                                    <p class="font-medium text-sm">${question}</p>
+                                    <p class="text-xs text-brand-muted">Asked ${count} time${count > 1 ? 's' : ''}</p>
+                                </div>
+                            </div>
+                            <span class="px-3 py-1 bg-green-500/10 text-green-400 rounded-full text-xs font-medium">Captured</span>
+                        </div>
+                    `;
+                    container.innerHTML += html;
+                });
+
+            } catch (e) {
+                console.error("Dashboard error:", e);
+            }
+        }
+
+        fetchDashboardData();
+    </script>
+</body>
+
+</html>

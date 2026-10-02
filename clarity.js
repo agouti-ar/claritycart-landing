@@ -2,7 +2,7 @@ let savedConfig = {};
 try {
     const saved = localStorage.getItem('clarity_user_config');
     if (saved) savedConfig = JSON.parse(saved);
-} catch(e) {}
+} catch (e) { }
 
 window.ClarityCartConfig = window.ClarityCartConfig || {
     activeTier: localStorage.getItem('clarity_active_tier') || 'Starter',
@@ -15,11 +15,13 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
     mockMode: savedConfig.mockMode || false
 };
 
-(function() {
+(function () {
+    const SUPABASE_URL = 'https://vzmpwstfddznsvypudhj.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ6bXB3c3RmZGR6bnN2eXB1ZGhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3NzMyMTksImV4cCI6MjEwNjM0OTIxOX0.Qz0TGEDy1TOekLrqTrfspT8gnnfGy5_BjMtJRlz-PaI';
     const API_URL = document.currentScript?.getAttribute('data-api') || '/api/chat';
     class ClarityCartWidget {
         constructor() {
-            this.targetSelector = '#add-to-cart'; 
+            this.targetSelector = '#add-to-cart';
             this.init();
         }
 
@@ -35,7 +37,7 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
             const targetElement = document.querySelector(this.targetSelector);
             const hostElement = document.createElement('div');
             hostElement.id = 'clarity-cart-widget-root';
-            
+
             if (targetElement && targetElement.parentNode) {
                 targetElement.parentNode.insertBefore(hostElement, targetElement.nextSibling);
             } else {
@@ -63,13 +65,13 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
             let price = '';
             let currency = '';
 
-            // a) Search in JSON-LD microdata
+            // a) Parse JSON-LD microdata
             const jsonLdScripts = document.querySelectorAll('script[type="application/ld+json"]');
             for (let script of jsonLdScripts) {
                 try {
                     const data = JSON.parse(script.innerText);
                     const items = Array.isArray(data) ? data : [data];
-                    
+
                     for (let item of items) {
                         const graphItems = item['@graph'] ? item['@graph'] : [item];
                         for (let gItem of graphItems) {
@@ -85,25 +87,25 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                         }
                     }
                 } catch (e) {
-                    // Ignore parsing errors
+                    // Silently fail on parse errors
                 }
             }
 
-            // b) Search in OpenGraph and meta tags
+            // b) Fallback to OpenGraph and meta tags
             if (!title) {
-                title = document.querySelector('meta[property="og:title"]')?.content || 
-                        document.title || 
-                        document.querySelector('h1')?.innerText?.trim() || '';
+                title = document.querySelector('meta[property="og:title"]')?.content ||
+                    document.title ||
+                    document.querySelector('h1')?.innerText?.trim() || '';
             }
             if (!description) {
-                description = document.querySelector('meta[name="description"]')?.content || 
-                              document.querySelector('meta[property="og:description"]')?.content || '';
+                description = document.querySelector('meta[name="description"]')?.content ||
+                    document.querySelector('meta[property="og:description"]')?.content || '';
             }
             if (!price) {
                 price = document.querySelector('meta[property="product:price:amount"]')?.content || '';
             }
 
-            // c) DOM fallback
+            // c) Fallback to DOM traversal
             if (!title) {
                 title = document.querySelector('h1')?.innerText?.trim() || '';
             }
@@ -139,24 +141,25 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
 
         render(shadow) {
             const fixedQuestions = [
-                '✨ What are the key features?',
-                "🔄 What's the return policy?",
-                '🚚 Is delivery fast?'
-            ].sort(() => 0.5 - Math.random()); // Shuffle the fixed questions among themselves
-
+                'What are the key features?',
+                "What's the return policy?",
+                'Is delivery fast?'
+            ];
             const poolQuestions = [
-                '📦 What is included in the package?',
-                '🛡️ Is warranty included?',
-                '💰 Are there bundle discounts?',
-                '🌍 Do you offer international shipping?',
-                '💳 Can I pay in installments?',
-                '📏 What are the exact dimensions?',
-                '🧵 What materials is this made of?',
-                '🎧 Is customer support available 24/7?',
-                '🤝 Do you price match?',
-                '↩️ Can I return it if I change my mind?',
-                '✅ Is this item currently in stock?',
-                '🧾 Are there any hidden fees or taxes?'
+                'What is in the box?',
+                'Is warranty included?',
+                'Are there bundle discounts?',
+                'Do you offer international shipping?',
+                'Can I pay in installments?',
+                'Is it compatible with all devices?',
+                'What colors are available?',
+                'How long does the battery last?',
+                'Are they water-resistant?',
+                'Is customer support 24/7?',
+                'Do you price match?',
+                'Can I return it if I don’t like it?',
+                'Is it easy to set up?',
+                'Are there any hidden fees?'
             ];
             const shuffledPool = poolQuestions.slice().sort(() => 0.5 - Math.random());
             const selectedPoolQuestions = shuffledPool.slice(0, 3);
@@ -674,7 +677,7 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
             const input = shadow.getElementById('chat-input');
             const sendBtn = shadow.getElementById('send-btn');
             const resetBtn = shadow.getElementById('reset-btn');
-            
+
             let isChatOpen = false;
             let isRequestPending = false;
 
@@ -695,20 +698,38 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
 
             const handleAsk = async (question) => {
                 if (!question.trim() || isRequestPending) return;
-                
+
                 isRequestPending = true;
                 openChat();
                 addMessage(question, 'user');
                 input.value = '';
-                
+
                 // Show loader
                 loader.classList.add('active');
                 chatHistory.scrollTop = chatHistory.scrollHeight;
-                
+
                 input.disabled = true;
                 sendBtn.disabled = true;
 
                 const extractedContext = this.extractProductContext();
+
+                // Send to Supabase in the background (invisible to the user)
+                if (SUPABASE_ANON_KEY !== 'YOUR_ANON_KEY_HERE') {
+                    fetch(`${SUPABASE_URL}/rest/v1/questions`, {
+                        method: 'POST',
+                        headers: {
+                            'apikey': SUPABASE_ANON_KEY,
+                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                            'Content-Type': 'application/json',
+                            'Prefer': 'return=minimal'
+                        },
+                        body: JSON.stringify({
+                            store_domain: window.location.hostname || 'unknown',
+                            question_text: question,
+                            product_context: extractedContext ? extractedContext.title : ''
+                        })
+                    }).catch(e => console.error("Supabase sync failed", e));
+                }
 
                 const cfg = window.ClarityCartConfig;
                 let currentTone = cfg.activeTier === 'Starter' ? 'friendly' : cfg.tone;
@@ -721,7 +742,7 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                 else if (currentTone === "professional") tonePrompt = "ROLE: Technical specialist. Output facts, specs, and details in clean bullet points (•). No greetings or conversational filler.";
                 else if (currentTone === "sales") tonePrompt = "ROLE: Persuasive sales consultant. Highlight value, overcome hesitations, and suggest proceeding to checkout.";
                 else if (currentTone === "custom") tonePrompt = "Tone: " + cfg.customTonePrompt;
-                
+
                 const intentRule = "CRITICAL RULE: If the user's message contains any of these words: 'discount', 'coupon', 'promo', 'expensive', 'price', or 'offer', you MUST append the exact string [INTENT: HIGH] at the very end of your response. This is mandatory.";
                 const sysInstr = coreDirective + " " + tonePrompt + " " + intentRule;
 
@@ -734,7 +755,7 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                     const lowerQ = question.toLowerCase();
                     const hasDiscountTrigger = lowerQ.includes('discount') || lowerQ.includes('price') || lowerQ.includes('expensive');
                     const intentTag = hasDiscountTrigger ? ' [INTENT: HIGH]' : '';
-                    
+
                     const funnyMessages = [
                         "Oops! Our AI is currently brewing some coffee ☕️. Give it a few seconds and ask me again!",
                         "Hold on, my digital brain is doing some quick stretches! 🤸‍♂️ Give it another try in a moment!",
@@ -748,7 +769,7 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                         if (currentTone === 'sales') return "[Demo Mode] We're showing off! Ready to buy? Click Add to Cart!" + intentTag;
                         return "[Demo Mode] Hey! 👋 I'm in test mode right now to show you how I work! ✨" + intentTag;
                     }
-                    
+
                     // If it's not mockMode but a real error (like Vercel sleeping)
                     return randomMessage;
                 };
@@ -775,16 +796,16 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
 
                             if (res.status === 503 || res.status === 404) throw new Error(`API Error ${res.status}`);
                             if (!res.ok) throw new Error('Network response was not ok');
-                            
+
                             const data = await res.json();
                             let response = data.answer || "Sorry, I received an empty response.";
                             const lowerResp = response.toLowerCase();
-                            const hasErrorText = lowerResp.includes("no available models") || 
-                                                 lowerResp.includes("high demand") || 
-                                                 lowerResp.includes("error") || 
-                                                 lowerResp.includes("status 503") || 
-                                                 lowerResp.includes("overloaded") || 
-                                                 lowerResp.includes("google");
+                            const hasErrorText = lowerResp.includes("no available models") ||
+                                lowerResp.includes("high demand") ||
+                                lowerResp.includes("error") ||
+                                lowerResp.includes("status 503") ||
+                                lowerResp.includes("overloaded") ||
+                                lowerResp.includes("google");
 
                             if (hasErrorText) {
                                 throw new Error("Text-based error intercepted");
@@ -816,7 +837,7 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
 
                 const isHighIntent = finalResponseText.includes('[INTENT: HIGH]');
                 let cleanResponse = finalResponseText.replace(/\[INTENT: HIGH\]/g, '').replace(/\[INTENT: LOW\]/g, '').trim();
-                
+
                 addMessage(cleanResponse, 'ai');
 
                 const canDiscount = cfg.activeTier !== 'Starter' && cfg.intentDiscountEnabled;
@@ -846,7 +867,7 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
             resetBtn.addEventListener('click', () => {
                 resetBtn.classList.remove('visible');
                 isChatOpen = false;
-                
+
                 // Clear chat history messages, keeping the loader
                 const messages = chatHistory.querySelectorAll('.message');
                 messages.forEach(m => m.remove());
@@ -862,7 +883,7 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
             const stgTier = shadow.getElementById('stg-tier');
             const stgIntent = shadow.getElementById('stg-intent');
             const stgWhitelabel = shadow.getElementById('stg-whitelabel');
-            
+
             const stgIntentWrap = shadow.getElementById('stg-intent-wrap');
             const stgPromoWrap = shadow.getElementById('stg-promo-wrap');
             const stgAmountWrap = shadow.getElementById('stg-amount-wrap');
@@ -874,7 +895,7 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                     stgPromoWrap.style.display = 'none';
                     stgAmountWrap.style.display = 'none';
                     stgWhitelabelWrap.style.display = 'none';
-                    
+
                     stgIntent.disabled = true;
                     stgTone.disabled = true;
                     stgWhitelabel.disabled = true;
@@ -884,7 +905,7 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                     stgPromoWrap.style.display = 'flex';
                     stgAmountWrap.style.display = 'flex';
                     stgWhitelabelWrap.style.display = 'none';
-                    
+
                     stgIntent.disabled = false;
                     stgTone.disabled = false;
                     stgWhitelabel.disabled = true;
@@ -894,16 +915,16 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                     stgPromoWrap.style.display = 'flex';
                     stgAmountWrap.style.display = 'flex';
                     stgWhitelabelWrap.style.display = 'flex';
-                    
+
                     stgIntent.disabled = false;
                     stgTone.disabled = false;
                     stgWhitelabel.disabled = false;
                 }
-                
+
                 Array.from(stgTone.options).forEach(opt => {
                     if (opt.value === 'custom') opt.disabled = (tier !== 'Business');
                 });
-                
+
                 if (tier !== 'Business' && stgTone.value === 'custom') {
                     stgTone.value = 'friendly';
                 }
@@ -913,7 +934,7 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
             if (stgTier) {
                 stgTier.addEventListener('change', (e) => applyTierConstraints(e.target.value));
             }
-            
+
             if (stgBtn) {
                 stgBtn.addEventListener('click', () => {
                     stgModal.classList.toggle('active');
@@ -930,33 +951,33 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                     applyTierConstraints(cfg.activeTier || 'Starter');
                 });
             }
-            
+
             stgTone.addEventListener('change', () => {
                 stgCustomWrap.style.display = stgTone.value === 'custom' ? 'flex' : 'none';
             });
-            
+
             stgSave.addEventListener('click', () => {
                 const tier = stgTier ? stgTier.value : 'Starter';
                 localStorage.setItem('clarity_active_tier', tier);
                 window.ClarityCartConfig.activeTier = tier;
-                
+
                 window.ClarityCartConfig.intentDiscountEnabled = tier !== 'Starter' ? stgIntent.checked : false;
                 window.ClarityCartConfig.promoCode = shadow.getElementById('stg-promo').value;
                 window.ClarityCartConfig.discountAmount = shadow.getElementById('stg-amount').value;
-                
+
                 let selectedTone = tier !== 'Starter' ? stgTone.value : 'friendly';
                 if (tier === 'Pro' && selectedTone === 'custom') selectedTone = 'friendly';
                 window.ClarityCartConfig.tone = selectedTone;
-                
+
                 window.ClarityCartConfig.customTonePrompt = shadow.getElementById('stg-custom').value;
                 window.ClarityCartConfig.whiteLabel = tier === 'Business' ? stgWhitelabel.checked : false;
-                
+
                 const stgMock = shadow.getElementById('stg-mock');
                 window.ClarityCartConfig.mockMode = stgMock ? stgMock.checked : false;
-                
+
                 try {
                     localStorage.setItem('clarity_user_config', JSON.stringify(window.ClarityCartConfig));
-                } catch(e) {}
+                } catch (e) { }
 
                 shadow.getElementById('clarity-footer').style.display = (tier === 'Business' && window.ClarityCartConfig.whiteLabel) ? 'none' : 'block';
                 const badgeContainer = shadow.getElementById('tier-badge-container');
