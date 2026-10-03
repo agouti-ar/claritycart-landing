@@ -57,8 +57,11 @@
     <aside class="w-64 glass-panel border-r border-gray-800 flex flex-col justify-between hidden md:flex">
         <div>
             <div class="h-16 flex items-center px-6 border-b border-gray-800 gap-3">
-                <div class="w-8 h-8 rounded bg-gradient-to-br from-brand-accent to-purple-600 flex items-center justify-center text-white font-bold text-xl shadow-[0_0_15px_rgba(59,130,246,0.5)]">C</div>
-                <span class="text-xl font-bold tracking-tight"><span class="text-slate-100">Clarity</span><span class="text-brand-accent">Cart</span></span>
+                <div
+                    class="w-8 h-8 rounded bg-gradient-to-br from-brand-accent to-purple-600 flex items-center justify-center text-white font-bold text-xl shadow-[0_0_15px_rgba(59,130,246,0.5)]">
+                    C</div>
+                <span class="text-xl font-bold tracking-tight"><span class="text-slate-100">Clarity</span><span
+                        class="text-brand-accent">Cart</span></span>
             </div>
             <nav class="p-4 space-y-2">
                 <a href="#"
@@ -132,7 +135,8 @@
                     </div>
                 </div>
                 <div class="w-full bg-gray-800 rounded-full h-3 mb-2 overflow-hidden">
-                    <div id="usage-progress" class="bg-gradient-to-r from-brand-accent to-purple-500 h-3 rounded-full" style="width: 0%">
+                    <div id="usage-progress" class="bg-gradient-to-r from-brand-accent to-purple-500 h-3 rounded-full"
+                        style="width: 0%">
                     </div>
                 </div>
                 <p class="text-xs text-brand-muted mt-2">Resets in 12 days. <a href="#"
@@ -251,7 +255,7 @@
                                     <p class="text-xs text-brand-muted">AI uses warm, conversational language</p>
                                 </div>
                                 <label class="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" value="" class="sr-only peer" checked>
+                                    <input type="checkbox" id="tone-toggle" value="" class="sr-only peer" checked>
                                     <div
                                         class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-accent">
                                     </div>
@@ -264,7 +268,7 @@
                                     <p class="text-xs text-brand-muted">Allow AI to use emojis in responses</p>
                                 </div>
                                 <label class="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" value="" class="sr-only peer" checked>
+                                    <input type="checkbox" id="emoji-toggle" value="" class="sr-only peer" checked>
                                     <div
                                         class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-accent">
                                     </div>
@@ -297,19 +301,36 @@
         </div>
     </main>
 
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
         const SUPABASE_URL = 'https://vzmpwstfddznsvypudhj.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ6bXB3c3RmZGR6bnN2eXB1ZGhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3NzMyMTksImV4cCI6MjEwNjM0OTIxOX0.Qz0TGEDy1TOekLrqTrfspT8gnnfGy5_BjMtJRlz-PaI';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         async function fetchDashboardData() {
             try {
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/questions?select=*`, {
-                    headers: {
-                        'apikey': SUPABASE_ANON_KEY,
-                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-                    }
-                });
-                const data = await res.json();
+                // 1. Проверяем сессию (вошел ли пользователь)
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                if (!session) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                // 2. Берем домен из метаданных пользователя
+                const storeDomain = session.user.user_metadata?.store_domain || 'mystore.com';
+                
+                // 3. Меняем надпись mystore.com в шапке на реальный домен
+                const domainEl = document.querySelector('header .text-sm.text-brand-muted');
+                if (domainEl) domainEl.textContent = storeDomain;
+
+                // 4. Загружаем данные из Supabase ТОЛЬКО для этого домена
+                const { data, error } = await supabaseClient
+                    .from('questions')
+                    .select('*')
+                    .eq('store_domain', storeDomain);
+
+                if (error) throw error;
 
                 // Update Totals
                 const totalQuestions = data.length;
@@ -320,7 +341,7 @@
 
                 if (totalEl) totalEl.textContent = totalQuestions;
                 if (usageEl) usageEl.textContent = totalQuestions;
-                
+
                 if (progressEl) {
                     const percent = Math.min((totalQuestions / 500) * 100, 100);
                     progressEl.style.width = percent + '%';
@@ -353,7 +374,7 @@
                     const topQuestion = sorted[0][0];
                     const topCount = sorted[0][1];
                     const percent = Math.round((topCount / totalQuestions) * 100);
-                    
+
                     topIntentEl.textContent = topQuestion;
                     topIntentPercentEl.textContent = percent + '% of all queries';
                 }
@@ -386,6 +407,29 @@
                     `;
                     container.innerHTML += html;
                 });
+
+                // Widget Settings Sync
+                const toneToggle = document.getElementById('tone-toggle');
+                const emojiToggle = document.getElementById('emoji-toggle');
+                
+                const meta = session.user.user_metadata || {};
+                
+                // Init checkboxes
+                if (toneToggle) toneToggle.checked = meta.friendly_tone !== false; // default true
+                if (emojiToggle) emojiToggle.checked = meta.use_emojis !== false; // default true
+
+                // Sync changes to Supabase Auth Metadata
+                const saveSettings = async () => {
+                    await supabaseClient.auth.updateUser({
+                        data: {
+                            friendly_tone: toneToggle.checked,
+                            use_emojis: emojiToggle.checked
+                        }
+                    });
+                };
+
+                if (toneToggle) toneToggle.addEventListener('change', saveSettings);
+                if (emojiToggle) emojiToggle.addEventListener('change', saveSettings);
 
             } catch (e) {
                 console.error("Dashboard error:", e);

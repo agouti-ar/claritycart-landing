@@ -115,17 +115,45 @@
         </p>
     </div>
 
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        document.getElementById('register-form').addEventListener('submit', function(e) {
+        const SUPABASE_URL = 'https://vzmpwstfddznsvypudhj.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ6bXB3c3RmZGR6bnN2eXB1ZGhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3NzMyMTksImV4cCI6MjEwNjM0OTIxOX0.Qz0TGEDy1TOekLrqTrfspT8gnnfGy5_BjMtJRlz-PaI';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        document.getElementById('register-form').addEventListener('submit', async function(e) {
             e.preventDefault();
             const btn = document.getElementById('register-btn');
+            const originalText = btn.textContent;
             btn.textContent = 'Creating account...';
             btn.disabled = true;
             
-            // В будущем здесь будет код подключения к Supabase Auth.
-            setTimeout(() => {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const storeDomain = document.getElementById('store_domain').value;
+            
+            try {
+                const { data, error } = await supabaseClient.auth.signUp({
+                    email: email,
+                    password: password,
+                    options: {
+                        data: {
+                            store_domain: storeDomain
+                        }
+                    }
+                });
+
+                if (error) throw error;
+
+                // Успешно!
                 window.location.href = 'dashboard.html';
-            }, 1000);
+                
+            } catch (error) {
+                alert("Error: " + error.message);
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
         });
     </script>
 </body>

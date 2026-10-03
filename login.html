@@ -104,22 +104,43 @@
         </button>
 
         <p class="mt-8 text-center text-sm text-brand-muted">
-            Don't have an account? <a href="index.html" class="text-brand-accent hover:underline">Start free trial</a>
+            Don't have an account? <a href="register.html" class="text-brand-accent hover:underline">Start free trial</a>
         </p>
     </div>
 
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        document.getElementById('login-form').addEventListener('submit', function(e) {
+        const SUPABASE_URL = 'https://vzmpwstfddznsvypudhj.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ6bXB3c3RmZGR6bnN2eXB1ZGhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3NzMyMTksImV4cCI6MjEwNjM0OTIxOX0.Qz0TGEDy1TOekLrqTrfspT8gnnfGy5_BjMtJRlz-PaI';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        document.getElementById('login-form').addEventListener('submit', async function(e) {
             e.preventDefault();
             const btn = document.getElementById('login-btn');
+            const originalText = btn.textContent;
             btn.textContent = 'Authenticating...';
             btn.disabled = true;
             
-            // В будущем здесь будет код подключения к Supabase Auth.
-            // Пока что мы просто делаем имитацию и перекидываем пользователя в дашборд.
-            setTimeout(() => {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const { data, error } = await supabaseClient.auth.signInWithPassword({
+                    email: email,
+                    password: password,
+                });
+
+                if (error) throw error;
+
+                // Успешно!
                 window.location.href = 'dashboard.html';
-            }, 1000);
+                
+            } catch (error) {
+                alert("Error: " + error.message);
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
         });
     </script>
 </body>
