@@ -418,14 +418,36 @@
                 if (toneToggle) toneToggle.checked = meta.friendly_tone !== false; // default true
                 if (emojiToggle) emojiToggle.checked = meta.use_emojis !== false; // default true
 
-                // Sync changes to Supabase Auth Metadata
+                // Sync changes to Supabase Auth Metadata and store_settings table
                 const saveSettings = async () => {
+                    const tone = toneToggle.checked;
+                    const emoji = emojiToggle.checked;
+
+                    // 1. Save to Auth Metadata (for dashboard UI state)
                     await supabaseClient.auth.updateUser({
                         data: {
-                            friendly_tone: toneToggle.checked,
-                            use_emojis: emojiToggle.checked
+                            friendly_tone: tone,
+                            use_emojis: emoji
                         }
                     });
+
+                    // 2. Save to public store_settings (for widget to read)
+                    const { data: existing } = await supabaseClient
+                        .from('store_settings')
+                        .select('id')
+                        .eq('store_domain', storeDomain)
+                        .maybeSingle();
+
+                    if (existing) {
+                        await supabaseClient
+                            .from('store_settings')
+                            .update({ friendly_tone: tone, use_emojis: emoji })
+                            .eq('store_domain', storeDomain);
+                    } else {
+                        await supabaseClient
+                            .from('store_settings')
+                            .insert([{ store_domain: storeDomain, friendly_tone: tone, use_emojis: emoji }]);
+                    }
                 };
 
                 if (toneToggle) toneToggle.addEventListener('change', saveSettings);

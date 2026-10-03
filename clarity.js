@@ -11,6 +11,7 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
     discountAmount: savedConfig.discountAmount || "",
     whiteLabel: savedConfig.whiteLabel || false,
     tone: savedConfig.tone || "friendly",
+    use_emojis: savedConfig.use_emojis !== false,
     customTonePrompt: savedConfig.customTonePrompt || "",
     mockMode: savedConfig.mockMode || false
 };
@@ -57,6 +58,29 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
 
             this.render(shadow);
             this.bindEvents(shadow);
+            
+            // Fetch live settings from Supabase
+            this.fetchStoreSettings();
+        }
+
+        async fetchStoreSettings() {
+            try {
+                const domain = window.location.hostname || 'unknown';
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/store_settings?store_domain=eq.${domain}&select=friendly_tone,use_emojis`, {
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                    }
+                });
+                const data = await response.json();
+                if (data && data.length > 0) {
+                    const settings = data[0];
+                    window.ClarityCartConfig.tone = settings.friendly_tone ? 'friendly' : 'professional';
+                    window.ClarityCartConfig.use_emojis = settings.use_emojis;
+                }
+            } catch (e) {
+                console.error("ClarityCart: Failed to load settings", e);
+            }
         }
 
         extractProductContext() {
@@ -738,10 +762,16 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                 const coreDirective = "CORE DIRECTIVE: You are an elite, highly empathetic e-commerce sales assistant. DO NOT just robotically recite product specs. You MUST weave product benefits organically into your answers. Adapt your language to sound like a real human expert. If the user is hesitant, be reassuring. Vary your sentence structures so no two responses sound identical.";
 
                 let tonePrompt = "";
-                if (currentTone === "friendly") tonePrompt = "ROLE: You are an approachable, friendly store assistant. Speak casually, warmly, and naturally integrate 1-2 emojis where relevant.";
+                if (currentTone === "friendly") tonePrompt = "ROLE: You are an approachable, friendly store assistant. Speak casually, warmly, and naturally.";
                 else if (currentTone === "professional") tonePrompt = "ROLE: Technical specialist. Output facts, specs, and details in clean bullet points (•). No greetings or conversational filler.";
                 else if (currentTone === "sales") tonePrompt = "ROLE: Persuasive sales consultant. Highlight value, overcome hesitations, and suggest proceeding to checkout.";
                 else if (currentTone === "custom") tonePrompt = "Tone: " + cfg.customTonePrompt;
+
+                if (cfg.use_emojis) {
+                    tonePrompt += " Integrate 1-2 emojis where relevant.";
+                } else {
+                    tonePrompt += " DO NOT USE ANY EMOJIS UNDER ANY CIRCUMSTANCES.";
+                }
 
                 const intentRule = "CRITICAL RULE: If the user's message contains any of these words: 'discount', 'coupon', 'promo', 'expensive', 'price', or 'offer', you MUST append the exact string [INTENT: HIGH] at the very end of your response. This is mandatory.";
                 const sysInstr = coreDirective + " " + tonePrompt + " " + intentRule;
