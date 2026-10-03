@@ -768,13 +768,17 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                 else if (currentTone === "custom") tonePrompt = "Tone: " + cfg.customTonePrompt;
 
                 if (cfg.use_emojis) {
-                    tonePrompt += " Integrate 1-2 emojis where relevant.";
+                    tonePrompt += " CRITICAL: You MUST include at least 2-3 emojis (like 🚀🔥😊) in your response, even if answering in Russian or other languages! Emojis are MANDATORY.";
                 } else {
                     tonePrompt += " DO NOT USE ANY EMOJIS UNDER ANY CIRCUMSTANCES.";
                 }
 
                 const intentRule = "CRITICAL RULE: If the user's message contains any of these words: 'discount', 'coupon', 'promo', 'expensive', 'price', or 'offer', you MUST append the exact string [INTENT: HIGH] at the very end of your response. This is mandatory.";
                 const sysInstr = coreDirective + " " + tonePrompt + " " + intentRule;
+                
+                console.log("🛒 [ClarityCart] Sending API Request:");
+                console.log("➡️ Use Emojis Toggle is:", cfg.use_emojis);
+                console.log("➡️ System Instruction:", sysInstr);
 
                 const modelsToTry = ['gemini-2.5-flash', 'gemini-2.0-flash'];
                 let finalResponseText = null;
