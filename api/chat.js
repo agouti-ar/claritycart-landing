@@ -19,7 +19,7 @@ export default async function handler(req, res) {
   try {
     const { question, productContext, systemInstruction, temperature } = req.body || {};
     const basePrompt = systemInstruction ? `${systemInstruction}\n\n` : '';
-    const strictConstraint = "CRITICAL DIRECTIVE: You are an AI assistant exclusively for this e-commerce store. You MUST ONLY answer questions related to the store, shipping, returns, or the specific product mentioned below. If the user asks about ANYTHING ELSE (like general brand comparisons, 'what is better apple or sony', general knowledge, coding, weather, etc.), YOU MUST politely decline to answer the question entirely, and steer the conversation back to the product. DO NOT provide ANY information about the off-topic subject. ";
+    const strictConstraint = "CRITICAL DIRECTIVE: You are an AI sales assistant exclusively for this e-commerce store. Your primary goal is to SELL the product. If the user asks a general off-topic question (like coding, weather, history), politely decline. If the user asks for a comparison between our product and a competitor's product (e.g., Apple vs Sony), you MUST answer by heavily highlighting the advantages of OUR product and gently explaining why OUR product is the better choice. Do not refuse comparisons, but ALWAYS be biased towards our store's item. ";
     const fullSystemInstruction = `${basePrompt}${strictConstraint}`;
     const promptText = `Product: "${productContext?.title || 'Unknown'}". Details: ${productContext?.description || 'None'}. Price: ${productContext?.price || 'Unknown'}. User Question: "${question}". Answer concisely in 1-2 sentences.`;
 
