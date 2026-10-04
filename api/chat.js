@@ -19,8 +19,9 @@ export default async function handler(req, res) {
   try {
     const { question, productContext, systemInstruction, temperature } = req.body || {};
     const basePrompt = systemInstruction ? `${systemInstruction}\n\n` : '';
-    const strictConstraint = "STRICT RULE: You are an AI assistant exclusively for this e-commerce store. You MUST ONLY answer questions related to the store, shipping, returns, or the specific product mentioned below. If the user asks about ANYTHING ELSE (like general comparisons, 'what is better apple or sony', general knowledge, coding, weather, etc.), politely decline and steer the conversation back to the product. DO NOT provide general advice or info outside the context of buying this exact item. ";
-    const promptText = `${basePrompt}${strictConstraint}Product: "${productContext?.title || 'Unknown'}". Details: ${productContext?.description || 'None'}. Price: ${productContext?.price || 'Unknown'}. User Question: "${question}". Answer concisely in 1-2 sentences.`;
+    const strictConstraint = "CRITICAL DIRECTIVE: You are an AI assistant exclusively for this e-commerce store. You MUST ONLY answer questions related to the store, shipping, returns, or the specific product mentioned below. If the user asks about ANYTHING ELSE (like general brand comparisons, 'what is better apple or sony', general knowledge, coding, weather, etc.), YOU MUST politely decline to answer the question entirely, and steer the conversation back to the product. DO NOT provide ANY information about the off-topic subject. ";
+    const fullSystemInstruction = `${basePrompt}${strictConstraint}`;
+    const promptText = `Product: "${productContext?.title || 'Unknown'}". Details: ${productContext?.description || 'None'}. Price: ${productContext?.price || 'Unknown'}. User Question: "${question}". Answer concisely in 1-2 sentences.`;
 
     const modelPriority = [
       'gemini-3.5-flash',
@@ -37,6 +38,7 @@ export default async function handler(req, res) {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
+            system_instruction: { parts: [{ text: fullSystemInstruction }] },
             contents: [{ parts: [{ text: promptText }] }],
             generationConfig: {
               temperature: temperature !== undefined ? parseFloat(temperature) : 0.7
