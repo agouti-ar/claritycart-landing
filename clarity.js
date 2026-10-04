@@ -816,7 +816,7 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                     for (let i = 0; i < modelsToTry.length; i++) {
                         const model = modelsToTry[i];
                         try {
-                            const res = await fetch('https://clarity-cart-widget.vercel.app/api/chat', {
+                            const res = await fetch('https://claritycart-landing.vercel.app/api/chat', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({
