@@ -66,7 +66,13 @@
             <p class="text-brand-muted">Start your 7-day free trial. No credit card required.</p>
         </div>
 
-        <form id="register-form" class="space-y-5">
+        <form id="register-form" class="space-y-5" novalidate>
+            <!-- Custom error message container -->
+            <div id="error-message" class="hidden bg-red-500/10 border border-red-500/50 text-red-400 text-sm p-3 rounded-lg flex items-center shadow-[0_0_10px_rgba(239,68,68,0.2)] transition-all duration-300">
+                <svg class="w-5 h-5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <span id="error-text"></span>
+            </div>
+
             <div>
                 <label for="store_domain" class="block text-sm font-medium text-brand-muted mb-1.5">Store Domain</label>
                 <input type="text" id="store_domain" required
@@ -100,7 +106,7 @@
             <div class="border-t border-gray-700 flex-grow"></div>
         </div>
 
-        <button class="w-full mt-6 py-3 px-4 bg-gray-800 hover:bg-gray-700 text-white font-medium rounded-lg border border-gray-700 transition-colors flex items-center justify-center space-x-2">
+        <button id="google-register-btn" class="w-full mt-6 py-3 px-4 bg-gray-800 hover:bg-gray-700 text-white font-medium rounded-lg border border-gray-700 transition-colors flex items-center justify-center space-x-2">
             <svg class="w-5 h-5" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                 <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -122,18 +128,62 @@
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ6bXB3c3RmZGR6bnN2eXB1ZGhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3NzMyMTksImV4cCI6MjEwNjM0OTIxOX0.Qz0TGEDy1TOekLrqTrfspT8gnnfGy5_BjMtJRlz-PaI';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+        function showError(message) {
+            const errorBox = document.getElementById('error-message');
+            const errorText = document.getElementById('error-text');
+            errorText.textContent = message;
+            errorBox.classList.remove('hidden');
+        }
+
+        function hideError() {
+            const errorBox = document.getElementById('error-message');
+            errorBox.classList.add('hidden');
+        }
+
         document.getElementById('register-form').addEventListener('submit', async function(e) {
             e.preventDefault();
+            hideError();
+            
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const storeDomain = document.getElementById('store_domain').value.trim();
+            
+            // Custom validations
+            if (!storeDomain) {
+                return showError('Please enter your store domain.');
+            }
+            if (!email) {
+                return showError('Please enter your email address.');
+            }
+            if (!email.includes('@')) {
+                return showError('Please enter a valid email address.');
+            }
+            if (password.length < 6) {
+                return showError('Password must be at least 6 characters long.');
+            }
+
             const btn = document.getElementById('register-btn');
             const originalText = btn.textContent;
-            btn.textContent = 'Creating account...';
+            btn.textContent = 'Validating domain...';
             btn.disabled = true;
             
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const storeDomain = document.getElementById('store_domain').value;
-            
             try {
+                // 1. Verify Domain via Node.js Backend
+                const validateRes = await fetch('http://localhost:3000/api/validate-domain', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ domain: storeDomain })
+                });
+                
+                const validateData = await validateRes.json();
+                
+                if (!validateData.valid) {
+                    throw new Error(validateData.error || 'Invalid domain');
+                }
+
+                btn.textContent = 'Creating account...';
+
+                // 2. Proceed with Supabase Auth
                 const { data, error } = await supabaseClient.auth.signUp({
                     email: email,
                     password: password,
@@ -150,9 +200,23 @@
                 window.location.href = 'dashboard.html';
                 
             } catch (error) {
-                alert("Error: " + error.message);
+                showError(error.message);
                 btn.textContent = originalText;
                 btn.disabled = false;
+            }
+        });
+
+        document.getElementById('google-register-btn').addEventListener('click', async function() {
+            try {
+                const { data, error } = await supabaseClient.auth.signInWithOAuth({
+                    provider: 'google',
+                    options: {
+                        redirectTo: window.location.origin + '/dashboard.html'
+                    }
+                });
+                if (error) throw error;
+            } catch (error) {
+                showError("Google login error: " + error.message);
             }
         });
     </script>

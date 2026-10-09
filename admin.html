@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClarityAdmin - Control Panel</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        outfit: ['Outfit', 'sans-serif'],
+                    },
+                    colors: {
+                        'brand-bg': '#0B0F19',
+                        'brand-surface': '#1A233A',
+                        'brand-accent': '#3B82F6',
+                        'brand-text': '#F8FAFC',
+                        'brand-muted': '#94A3B8'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0B0F19;
+            color: #F8FAFC;
+        }
+        .glass-panel {
+            background: rgba(26, 35, 58, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        /* Toast notification animation */
+        @keyframes slideUp {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .toast {
+            animation: slideUp 0.3s ease-out forwards;
+        }
+        /* Search Animation */
+        tbody tr {
+            transition: opacity 0.3s ease, transform 0.3s ease, display 0.3s allow-discrete;
+            opacity: 1;
+            transform: translateY(0);
+        }
+        tbody tr.hidden-row {
+            opacity: 0;
+            transform: translateY(10px);
+            display: none;
+        }
+    </style>
+</head>
+
+<body class="flex flex-col min-h-screen">
+    
+    <header class="h-16 glass-panel border-b border-gray-800 flex items-center justify-between px-8 relative z-20">
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded bg-gradient-to-br from-red-600 to-orange-500 flex items-center justify-center text-white font-bold text-xl shadow-[0_0_15px_rgba(220,38,38,0.5)]">A</div>
+            <span class="text-2xl font-outfit font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">ClarityAdmin</span>
+        </div>
+        <a href="index.html" class="group flex items-center gap-2 px-4 py-2 bg-gray-800/50 hover:bg-gray-700/50 border border-gray-700 rounded-lg text-sm text-gray-300 hover:text-white transition-all duration-300 shadow-[0_0_10px_rgba(0,0,0,0.5)]">
+            <svg class="w-4 h-4 transform group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+            Exit to Main Site
+        </a>
+    </header>
+
+    <main class="flex-1 p-8 max-w-7xl mx-auto w-full space-y-8">
+        <div>
+            <h1 class="text-4xl font-bold font-outfit bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500">Platform Overview</h1>
+            <p class="text-brand-muted mt-2">Manage users, domains, and API limits across the entire ClarityCart platform.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-6">
+            <div class="glass-panel p-6 rounded-xl border-l-4 border-l-blue-500 relative overflow-hidden group">
+                <div class="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <p class="text-gray-300 text-sm font-medium">Total Registered Users</p>
+                <p class="text-3xl font-bold mt-2">2</p>
+            </div>
+            <div class="glass-panel p-6 rounded-xl border-l-4 border-l-green-500 relative overflow-hidden group">
+                <div class="absolute inset-0 bg-gradient-to-r from-green-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <p class="text-gray-300 text-sm font-medium">Active Subscriptions</p>
+                <p class="text-3xl font-bold mt-2">1</p>
+            </div>
+            <div class="glass-panel p-6 rounded-xl border-l-4 border-l-purple-500 relative overflow-hidden group">
+                <div class="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <p class="text-gray-300 text-sm font-medium">AI Queries (Today)</p>
+                <p class="text-3xl font-bold mt-2">14</p>
+                <p class="text-xs text-purple-400 mt-1">Total across all stores</p>
+            </div>
+            <div class="glass-panel p-6 rounded-xl border-l-4 border-l-pink-500 relative overflow-hidden group">
+                <div class="absolute inset-0 bg-gradient-to-r from-pink-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <p class="text-gray-300 text-sm font-medium">AI Queries (All Time)</p>
+                <p class="text-3xl font-bold mt-2">1,842</p>
+                <p class="text-xs text-pink-400 mt-1">Since platform launch</p>
+            </div>
+            <div class="glass-panel p-6 rounded-xl border-l-4 border-l-orange-500 relative overflow-hidden group">
+                <div class="absolute inset-0 bg-gradient-to-r from-orange-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <p class="text-gray-300 text-sm font-medium">MRR (Revenue)</p>
+                <p class="text-3xl font-bold mt-2">$29.00</p>
+            </div>
+        </div>
+
+        <!-- Users Table -->
+        <div class="glass-panel rounded-2xl overflow-hidden mt-8">
+            <div class="p-6 border-b border-gray-800 flex justify-between items-center bg-gray-900/30">
+                <h2 class="text-xl font-semibold font-outfit text-white">User Management</h2>
+                <div class="flex gap-3">
+                    <select id="sort-filter" class="bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-sm text-gray-300 focus:outline-none focus:border-brand-accent transition-colors appearance-none cursor-pointer">
+                        <option value="default">Sort: Default</option>
+                        <option value="email-az">Email (A-Z)</option>
+                        <option value="email-za">Email (Z-A)</option>
+                        <option value="domain-az">Domain (A-Z)</option>
+                        <option value="domain-za">Domain (Z-A)</option>
+                    </select>
+                    <select id="plan-filter" class="bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-sm text-gray-300 focus:outline-none focus:border-brand-accent transition-colors appearance-none cursor-pointer">
+                        <option value="all">All Plans</option>
+                        <option value="pro">Pro</option>
+                        <option value="business">Business</option>
+                        <option value="starter">Starter</option>
+                    </select>
+                    <input type="text" id="search-input" placeholder="Search email or domain..." class="bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-brand-accent w-64 transition-colors">
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-gray-800/80 text-gray-300 text-xs uppercase tracking-wider font-bold">
+                            <th class="px-6 py-4">User Email</th>
+                            <th class="px-6 py-4">Store Domain</th>
+                            <th class="px-6 py-4">Plan & Status</th>
+                            <th class="px-6 py-4">Token Usage</th>
+                            <th class="px-6 py-4 text-right">Admin Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-800 text-sm">
+                        <!-- Row 1: Lordlymonk (Real) -->
+                        <tr class="hover:bg-gray-800/30 transition-colors group" id="user-row-1">
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold">L</div>
+                                    <span class="font-medium text-white">lordlymonk@gmail.com</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 text-gray-300">my-super-shoes.com</td>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-2">
+                                    <span class="px-3 py-1 bg-purple-500/10 text-purple-400 rounded-full text-xs font-medium border border-purple-500/20 shadow-[0_0_10px_rgba(168,85,247,0.2)]">Pro</span>
+                                    <span class="status-pill px-2 py-0.5 bg-green-500/10 text-green-400 rounded text-[10px] font-bold uppercase tracking-wide border border-green-500/20">Active</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="w-32 bg-gray-800 rounded-full h-1.5 mt-1 relative overflow-hidden">
+                                    <div class="usage-bar bg-purple-500 h-1.5 rounded-full transition-all duration-500" style="width: 0%" id="bar-lordly"></div>
+                                </div>
+                                <span class="usage-text text-xs text-brand-muted mt-1 inline-block" id="usage-lordly">Loading...</span>
+                            </td>
+                            <td class="px-6 py-4 text-right space-x-1">
+                                <button class="edit-btn px-2 py-1.5 text-gray-400 hover:text-white transition-colors" title="Edit User">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                </button>
+                                <button class="add-time-btn px-2 py-1.5 bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 border border-orange-500/30 rounded text-xs font-medium transition-colors" data-days="-30">- 30D</button>
+                                <button class="add-time-btn px-2 py-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 rounded text-xs font-medium transition-colors" data-days="30">+ 30D</button>
+                                <button class="add-time-btn px-2 py-1.5 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 border border-purple-500/30 rounded text-xs font-medium transition-colors" data-days="365">+ 1Y</button>
+                                <button class="block-btn px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 rounded text-xs font-medium transition-colors w-20">Block</button>
+                            </td>
+                        </tr>
+
+                        <!-- Row 2: Test1 -->
+                        <tr class="hover:bg-gray-800/30 transition-colors group" id="user-row-2">
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-full bg-gray-500/20 text-gray-400 flex items-center justify-center font-bold">T</div>
+                                    <span class="font-medium text-white">test1@fake.com</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 text-gray-300">test-store.com</td>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-2">
+                                    <span class="px-3 py-1 bg-gray-700 text-gray-300 rounded-full text-xs font-medium">Starter</span>
+                                    <span class="status-pill px-2 py-0.5 bg-green-500/10 text-green-400 rounded text-[10px] font-bold uppercase tracking-wide border border-green-500/20">Active</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="w-32 bg-gray-800 rounded-full h-1.5 mt-1 relative overflow-hidden">
+                                    <div class="usage-bar bg-blue-500 h-1.5 rounded-full transition-all duration-500" style="width: 2%"></div>
+                                </div>
+                                <span class="usage-text text-xs text-brand-muted mt-1 inline-block">10 / 500 queries</span>
+                            </td>
+                            <td class="px-6 py-4 text-right space-x-1">
+                                <button class="edit-btn px-2 py-1.5 text-gray-400 hover:text-white transition-colors" title="Edit User">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                </button>
+                                <button class="add-time-btn px-2 py-1.5 bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 border border-orange-500/30 rounded text-xs font-medium transition-colors" data-days="-30">- 30D</button>
+                                <button class="add-time-btn px-2 py-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 rounded text-xs font-medium transition-colors" data-days="30">+ 30D</button>
+                                <button class="add-time-btn px-2 py-1.5 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 border border-purple-500/30 rounded text-xs font-medium transition-colors" data-days="365">+ 1Y</button>
+                                <button class="block-btn px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 rounded text-xs font-medium transition-colors w-20">Block</button>
+                            </td>
+                        </tr>
+
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed bottom-4 right-4 flex flex-col gap-2 z-50 pointer-events-none"></div>
+
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // Real-time Search & Filter Functionality
+        document.addEventListener('DOMContentLoaded', () => {
+            const searchInput = document.getElementById('search-input');
+            const planFilter = document.getElementById('plan-filter');
+            const sortFilter = document.getElementById('sort-filter');
+            let rows = Array.from(document.querySelectorAll('tbody tr'));
+            const tbody = document.querySelector('tbody');
+
+            function applyFilters() {
+                const term = searchInput.value.toLowerCase();
+                const selectedPlan = planFilter.value.toLowerCase();
+                const sortType = sortFilter.value;
+                
+                // 1. Sort Rows
+                rows.sort((a, b) => {
+                    const emailA = a.querySelector('td:first-child span').textContent.toLowerCase();
+                    const emailB = b.querySelector('td:first-child span').textContent.toLowerCase();
+                    const domainA = a.querySelector('td:nth-child(2)').textContent.toLowerCase();
+                    const domainB = b.querySelector('td:nth-child(2)').textContent.toLowerCase();
+                    
+                    if (sortType === 'email-az') return emailA.localeCompare(emailB);
+                    if (sortType === 'email-za') return emailB.localeCompare(emailA);
+                    if (sortType === 'domain-az') return domainA.localeCompare(domainB);
+                    if (sortType === 'domain-za') return domainB.localeCompare(domainA);
+                    return 0; // default
+                });
+
+                // Re-append to DOM in sorted order
+                rows.forEach(row => tbody.appendChild(row));
+
+                // 2. Filter Rows
+                rows.forEach(row => {
+                    const email = row.querySelector('td:first-child span').textContent.toLowerCase();
+                    const domain = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
+                    const planText = row.querySelector('td:nth-child(3) span:first-child').textContent.toLowerCase();
+                    
+                    const matchesSearch = email.includes(term) || domain.includes(term);
+                    const matchesPlan = selectedPlan === 'all' || planText.includes(selectedPlan);
+                    
+                    if (matchesSearch && matchesPlan) {
+                        row.classList.remove('hidden-row');
+                    } else {
+                        row.classList.add('hidden-row');
+                    }
+                });
+            }
+
+            searchInput.addEventListener('input', applyFilters);
+            planFilter.addEventListener('change', applyFilters);
+            sortFilter.addEventListener('change', applyFilters);
+        });
+
+        // Supabase Data Fetching & Real-time Polling
+        const SUPABASE_URL = 'https://vzmpwstfddznsvypudhj.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ6bXB3c3RmZGR6bnN2eXB1ZGhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3NzMyMTksImV4cCI6MjEwNjM0OTIxOX0.Qz0TGEDy1TOekLrqTrfspT8gnnfGy5_BjMtJRlz-PaI';
+        const supabaseAdmin = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        async function fetchRealTimeData() {
+            try {
+                // 1. Fetch All-Time Queries Count
+                const { count: allTimeCount, error: err1 } = await supabaseAdmin
+                    .from('questions')
+                    .select('*', { count: 'exact', head: true });
+                
+                if (!err1 && allTimeCount !== null) {
+                    const allTimeEl = document.querySelector('.border-l-pink-500 p.text-3xl');
+                    if (allTimeEl) allTimeEl.textContent = allTimeCount.toLocaleString();
+                }
+
+                // 2. Fetch Usage for lordlymonk@gmail.com (my-super-shoes.com)
+                const { count: lordlyCount, error: err2 } = await supabaseAdmin
+                    .from('questions')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('store_domain', 'my-super-shoes.com');
+                    
+                const lordlyUsageEl = document.getElementById('usage-lordly');
+                const lordlyBarEl = document.getElementById('bar-lordly');
+                if (!err2 && lordlyCount !== null) {
+                    const limit = 5000; // Pro limit
+                    const percent = Math.min((lordlyCount / limit) * 100, 100);
+                    if (lordlyBarEl) lordlyBarEl.style.width = percent + '%';
+                    if (lordlyUsageEl) lordlyUsageEl.textContent = `${lordlyCount} / ${limit.toLocaleString()} queries`;
+                } else if (lordlyUsageEl) {
+                    lordlyUsageEl.textContent = `0 / 5,000 queries`;
+                }
+
+                // 3. Fetch Usage for test1@fake.com (test-store.com)
+                const { count: testCount, error: err3 } = await supabaseAdmin
+                    .from('questions')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('store_domain', 'test-store.com');
+                    
+                const testRow = document.getElementById('user-row-2');
+                if (testRow && !err3 && testCount !== null) {
+                    const limit = 500; // Starter limit
+                    const percent = Math.min((testCount / limit) * 100, 100);
+                    const bar = testRow.querySelector('.usage-bar');
+                    const text = testRow.querySelector('.usage-text');
+                    
+                    if (bar) bar.style.width = percent + '%';
+                    if (text) text.textContent = `${testCount} / ${limit} queries`;
+                }
+            } catch (e) {
+                console.error("Admin real-time fetch error:", e);
+            }
+        }
+
+        // Fetch immediately on load
+        fetchRealTimeData();
+        
+        // Poll every 3 seconds to keep data updated without page refresh!
+        setInterval(fetchRealTimeData, 3000);
+
+        // Interactive Admin Logic
+        
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            const bgColor = type === 'success' ? 'bg-green-500/20 border-green-500/50 text-green-400' : 'bg-red-500/20 border-red-500/50 text-red-400';
+            const icon = type === 'success' 
+                ? `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`
+                : `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>`;
+
+            toast.className = `toast flex items-center gap-3 px-4 py-3 rounded-lg border backdrop-blur-md shadow-lg ${bgColor}`;
+            toast.innerHTML = `${icon} <span class="font-medium text-sm">${message}</span>`;
+            
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(10px)';
+                toast.style.transition = 'all 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Handle Add Time Buttons
+        document.querySelectorAll('.add-time-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const daysStr = e.target.getAttribute('data-days');
+                const days = parseInt(daysStr);
+                const row = e.target.closest('tr');
+                const email = row.querySelector('td:first-child span').textContent;
+                
+                if (days > 0) {
+                    showToast(`Added ${days} days to ${email}'s subscription`, 'success');
+                } else {
+                    showToast(`Removed ${Math.abs(days)} days from ${email}'s subscription`, 'error');
+                }
+            });
+        });
+
+        // Handle Edit Buttons
+        document.querySelectorAll('.edit-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const row = e.target.closest('tr');
+                const emailSpan = row.querySelector('td:first-child span');
+                const currentEmail = emailSpan.textContent;
+                
+                const newEmail = prompt(`Edit user email for this account:`, currentEmail);
+                if (newEmail && newEmail !== currentEmail) {
+                    emailSpan.textContent = newEmail;
+                    showToast(`Updated user email to ${newEmail}`, 'success');
+                }
+            });
+        });
+
+        // Handle Block Buttons
+        document.querySelectorAll('.block-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const row = e.target.closest('tr');
+                const email = row.querySelector('td:first-child span').textContent;
+                const statusPill = row.querySelector('.status-pill');
+                const btnEl = e.target;
+                
+                const isBlocked = btnEl.textContent === 'Unblock';
+                
+                if (isBlocked) {
+                    // Unblock action
+                    btnEl.textContent = 'Block';
+                    btnEl.className = 'block-btn px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 rounded text-xs font-medium transition-colors w-20';
+                    
+                    statusPill.textContent = 'Active';
+                    statusPill.className = 'status-pill px-2 py-0.5 bg-green-500/10 text-green-400 rounded text-[10px] font-bold uppercase tracking-wide border border-green-500/20';
+                    
+                    row.classList.remove('opacity-50');
+                    showToast(`Unblocked ${email}`, 'success');
+                } else {
+                    // Block action
+                    btnEl.textContent = 'Unblock';
+                    btnEl.className = 'block-btn px-3 py-1.5 bg-green-500/10 hover:bg-green-500/20 text-green-400 border border-green-500/30 rounded text-xs font-medium transition-colors w-20';
+                    
+                    statusPill.textContent = 'Blocked';
+                    statusPill.className = 'status-pill px-2 py-0.5 bg-red-500/10 text-red-400 rounded text-[10px] font-bold uppercase tracking-wide border border-red-500/20';
+                    
+                    row.classList.add('opacity-50');
+                    showToast(`Blocked ${email}. API access revoked.`, 'error');
+                }
+            });
+        });
+
+    </script>
+</body>
+</html>

@@ -73,7 +73,7 @@
                     </svg>
                     Overview
                 </a>
-                <a href="#"
+                <a href="insights.html"
                     class="flex items-center px-4 py-3 text-brand-muted hover:text-white hover:bg-gray-800 rounded-lg font-medium transition-colors">
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -81,17 +81,6 @@
                         </path>
                     </svg>
                     Insights
-                </a>
-                <a href="#"
-                    class="flex items-center px-4 py-3 text-brand-muted hover:text-white hover:bg-gray-800 rounded-lg font-medium transition-colors">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z">
-                        </path>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                    </svg>
-                    Settings
                 </a>
             </nav>
         </div>
@@ -113,10 +102,14 @@
             class="h-16 glass-panel border-b border-gray-800 flex items-center justify-between px-8 sticky top-0 z-10">
             <h2 class="text-xl font-semibold">Dashboard</h2>
             <div class="flex items-center space-x-4">
-                <span class="text-sm text-brand-muted">mystore.com</span>
-                <div
-                    class="w-8 h-8 rounded-full bg-gradient-to-tr from-brand-accent to-purple-500 border-2 border-brand-surface cursor-pointer">
+                <span class="text-sm text-brand-muted" id="header-domain">mystore.com</span>
+                <div class="w-8 h-8 rounded-full bg-gray-800 border-2 border-gray-700 flex items-center justify-center text-gray-400">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
                 </div>
+                <button id="logout-btn" class="ml-4 px-4 py-2 bg-gray-800 hover:bg-red-500/20 text-sm font-medium rounded-lg text-gray-300 hover:text-red-400 transition-all border border-gray-700 hover:border-red-500/50 flex items-center gap-2 shadow-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                    Log out
+                </button>
             </div>
         </header>
 
@@ -176,7 +169,7 @@
                             </svg>
                         </div>
                     </div>
-                    <p class="text-3xl font-bold" id="time-saved">0 hrs</p>
+                    <p class="text-3xl font-bold" id="time-saved">0 mins</p>
                     <p class="text-xs text-brand-muted mt-2">Based on 2.5 mins per ticket</p>
                 </div>
 
@@ -200,46 +193,7 @@
                 <div class="lg:col-span-2 glass-panel p-6 rounded-2xl">
                     <h3 class="text-lg font-semibold mb-6">Top Customer Queries</h3>
                     <div class="space-y-4" id="queries-container">
-                        <div class="flex items-center justify-between p-4 bg-gray-800/50 rounded-xl">
-                            <div class="flex items-center space-x-4">
-                                <div
-                                    class="w-8 h-8 rounded bg-gray-700 flex items-center justify-center font-bold text-sm">
-                                    1</div>
-                                <div>
-                                    <p class="font-medium text-sm">How long does shipping take to Europe?</p>
-                                    <p class="text-xs text-brand-muted">Asked 45 times</p>
-                                </div>
-                            </div>
-                            <span
-                                class="px-3 py-1 bg-green-500/10 text-green-400 rounded-full text-xs font-medium">Answered</span>
-                        </div>
-                        <div class="flex items-center justify-between p-4 bg-gray-800/50 rounded-xl">
-                            <div class="flex items-center space-x-4">
-                                <div
-                                    class="w-8 h-8 rounded bg-gray-700 flex items-center justify-center font-bold text-sm">
-                                    2</div>
-                                <div>
-                                    <p class="font-medium text-sm">Do these shoes run true to size?</p>
-                                    <p class="text-xs text-brand-muted">Asked 28 times</p>
-                                </div>
-                            </div>
-                            <span
-                                class="px-3 py-1 bg-green-500/10 text-green-400 rounded-full text-xs font-medium">Answered</span>
-                        </div>
-                        <div
-                            class="flex items-center justify-between p-4 bg-gray-800/50 rounded-xl border border-yellow-500/30">
-                            <div class="flex items-center space-x-4">
-                                <div
-                                    class="w-8 h-8 rounded bg-gray-700 flex items-center justify-center font-bold text-sm">
-                                    3</div>
-                                <div>
-                                    <p class="font-medium text-sm">Will you restock the red jacket?</p>
-                                    <p class="text-xs text-brand-muted">Asked 15 times</p>
-                                </div>
-                            </div>
-                            <span
-                                class="px-3 py-1 bg-yellow-500/10 text-yellow-400 rounded-full text-xs font-medium">Escalated</span>
-                        </div>
+                        <!-- Questions will be loaded here dynamically -->
                     </div>
                 </div>
 
@@ -249,6 +203,18 @@
                         <h3 class="text-lg font-semibold mb-6">Widget Settings</h3>
 
                         <div class="space-y-6">
+                            <div class="space-y-2">
+                                <label class="font-medium text-sm">Your Store Domain</label>
+                                <p class="text-xs text-brand-muted">Where will the widget be installed?</p>
+                                <div class="flex gap-2">
+                                    <input type="text" id="store-domain-input" autocomplete="off" maxlength="60" pattern="^[a-zA-Z0-9.-]+$" title="Only letters, numbers, hyphens, and dots allowed" placeholder="e.g. myshop.com" class="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-accent transition-colors">
+                                    <button id="save-domain-btn" class="bg-brand-accent hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition whitespace-nowrap">Save</button>
+                                </div>
+                                <p id="domain-hint" class="text-xs text-red-500 hidden mt-1">Invalid format. Use only letters, numbers, hyphens, and dots (e.g., myshop.com).</p>
+                            </div>
+                            
+                            <hr class="border-gray-800">
+
                             <div class="flex items-center justify-between">
                                 <div>
                                     <p class="font-medium text-sm">Friendly Tone</p>
@@ -319,9 +285,9 @@
 
                 // 2. Берем домен из метаданных пользователя
                 const storeDomain = session.user.user_metadata?.store_domain || 'mystore.com';
-                
+
                 // 3. Меняем надпись mystore.com в шапке на реальный домен
-                const domainEl = document.querySelector('header .text-sm.text-brand-muted');
+                const domainEl = document.getElementById('header-domain');
                 if (domainEl) domainEl.textContent = storeDomain;
 
                 // 4. Загружаем данные из Supabase ТОЛЬКО для этого домена
@@ -381,39 +347,38 @@
 
                 // Render Top Queries
                 const container = document.getElementById('queries-container');
-                if (!container) return;
+                if (container) {
+                    container.innerHTML = ''; // clear mock data
 
-                container.innerHTML = ''; // clear mock data
-
-                if (sorted.length === 0) {
-                    container.innerHTML = '<p class="text-brand-muted text-sm p-4">No questions yet. Install the widget to get started!</p>';
-                    return;
-                }
-
-                sorted.slice(0, 5).forEach((item, index) => {
-                    const question = item[0];
-                    const count = item[1];
-                    const html = `
-                        <div class="flex items-center justify-between p-4 bg-gray-800/50 rounded-xl">
-                            <div class="flex items-center space-x-4">
-                                <div class="w-8 h-8 rounded bg-gray-700 flex items-center justify-center font-bold text-sm">${index + 1}</div>
-                                <div>
-                                    <p class="font-medium text-sm">${question}</p>
-                                    <p class="text-xs text-brand-muted">Asked ${count} time${count > 1 ? 's' : ''}</p>
+                    if (sorted.length === 0) {
+                        container.innerHTML = '<p class="text-brand-muted text-sm p-4">No questions yet. Install the widget to get started!</p>';
+                    } else {
+                        sorted.slice(0, 5).forEach((item, index) => {
+                            const question = item[0];
+                            const count = item[1];
+                            const html = `
+                                <div class="flex items-center justify-between p-4 bg-gray-800/50 rounded-xl">
+                                    <div class="flex items-center space-x-4">
+                                        <div class="w-8 h-8 rounded bg-gray-700 flex items-center justify-center font-bold text-sm">${index + 1}</div>
+                                        <div>
+                                            <p class="font-medium text-sm">${question}</p>
+                                            <p class="text-xs text-brand-muted">Asked ${count} time${count > 1 ? 's' : ''}</p>
+                                        </div>
+                                    </div>
+                                    <span class="px-3 py-1 bg-green-500/10 text-green-400 rounded-full text-xs font-medium">Captured</span>
                                 </div>
-                            </div>
-                            <span class="px-3 py-1 bg-green-500/10 text-green-400 rounded-full text-xs font-medium">Captured</span>
-                        </div>
-                    `;
-                    container.innerHTML += html;
-                });
+                            `;
+                            container.innerHTML += html;
+                        });
+                    }
+                }
 
                 // Widget Settings Sync
                 const toneToggle = document.getElementById('tone-toggle');
                 const emojiToggle = document.getElementById('emoji-toggle');
-                
+
                 const meta = session.user.user_metadata || {};
-                
+
                 // Init checkboxes
                 if (toneToggle) toneToggle.checked = meta.friendly_tone !== false; // default true
                 if (emojiToggle) emojiToggle.checked = meta.use_emojis !== false; // default true
@@ -453,12 +418,108 @@
                 if (toneToggle) toneToggle.addEventListener('change', saveSettings);
                 if (emojiToggle) emojiToggle.addEventListener('change', saveSettings);
 
+                // Store Domain Logic
+                const domainInput = document.getElementById('store-domain-input');
+                const saveDomainBtn = document.getElementById('save-domain-btn');
+                const domainHint = document.getElementById('domain-hint');
+                const domainRegex = /^[a-zA-Z0-9.-]+$/;
+                
+                // Set initial value as placeholder so the input stays clean
+                if (domainInput) {
+                    if (storeDomain !== 'mystore.com') {
+                        domainInput.placeholder = 'Current: ' + storeDomain;
+                    } else {
+                        domainInput.placeholder = 'e.g. myshop.com';
+                    }
+                    domainInput.value = '';
+                }
+
+                if (domainInput) {
+                    domainInput.addEventListener('input', () => {
+                        const val = domainInput.value.trim();
+                        if (val && !domainRegex.test(val)) {
+                            domainInput.classList.add('border-red-500', 'bg-red-500/10');
+                            domainHint.classList.remove('hidden');
+                            saveDomainBtn.disabled = true;
+                            saveDomainBtn.className = 'bg-gray-600 text-gray-400 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap cursor-not-allowed';
+                        } else {
+                            domainInput.classList.remove('border-red-500', 'bg-red-500/10');
+                            domainHint.classList.add('hidden');
+                            saveDomainBtn.disabled = false;
+                            saveDomainBtn.className = 'bg-brand-accent hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition whitespace-nowrap';
+                        }
+                    });
+                }
+
+                if (saveDomainBtn) {
+                    saveDomainBtn.addEventListener('click', async () => {
+                        const newDomain = domainInput.value.trim();
+                        if (!newDomain || !domainRegex.test(newDomain)) return;
+                        
+                        saveDomainBtn.textContent = 'Saving...';
+                        saveDomainBtn.disabled = true;
+
+                        await supabaseClient.auth.updateUser({
+                            data: { store_domain: newDomain }
+                        });
+                        
+                        // We also need to create an empty settings row for this new domain if it doesn't exist
+                        const { data: existing } = await supabaseClient
+                            .from('store_settings')
+                            .select('id')
+                            .eq('store_domain', newDomain)
+                            .maybeSingle();
+                            
+                        if (!existing) {
+                             await supabaseClient
+                                .from('store_settings')
+                                .insert([{ store_domain: newDomain, friendly_tone: true, use_emojis: true }]);
+                        }
+
+                        // Beautiful Success State (instead of alert)
+                        domainInput.value = ''; // Clear input on success!
+                        
+                        const originalBtnClass = 'bg-brand-accent hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition whitespace-nowrap';
+                        saveDomainBtn.textContent = 'Saved!';
+                        saveDomainBtn.className = 'bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition whitespace-nowrap';
+                        
+                        setTimeout(() => {
+                            saveDomainBtn.textContent = 'Save';
+                            saveDomainBtn.className = originalBtnClass;
+                            saveDomainBtn.disabled = false;
+                            window.location.reload(); // Reload to fetch new data
+                        }, 1500);
+                        
+                    });
+                }
+
+                // Copy Snippet Logic
+                const copyBtn = document.getElementById('copy-snippet-btn');
+                const snippetCode = document.getElementById('snippet-code');
+                if (copyBtn && snippetCode) {
+                    copyBtn.addEventListener('click', () => {
+                        navigator.clipboard.writeText(snippetCode.textContent.trim());
+                        const oldHtml = copyBtn.innerHTML;
+                        copyBtn.innerHTML = `<svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`;
+                        setTimeout(() => { copyBtn.innerHTML = oldHtml; }, 2000);
+                    });
+                }
+
             } catch (e) {
                 console.error("Dashboard error:", e);
             }
         }
 
         fetchDashboardData();
+
+        // Logout Logic
+        const logoutBtn = document.getElementById('logout-btn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', async () => {
+                await supabaseClient.auth.signOut();
+                window.location.href = 'login.html';
+            });
+        }
     </script>
 </body>
 
