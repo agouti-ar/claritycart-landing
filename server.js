@@ -326,6 +326,11 @@ app.post('/api/admin/users/:id/block', authenticateAdmin, async (req, res) => {
   const { id } = req.params;
   const { block } = req.body; // true = block, false = unblock
 
+  // Prevent blocking self
+  if (req.adminUser && req.adminUser.id === id && block) {
+    return res.status(400).json({ error: 'You cannot block your own Super-Admin account! Test blocking on another user.' });
+  }
+
   try {
     const updatePayload = {
       ban_duration: block ? '876000h' : 'none',
