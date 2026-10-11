@@ -42,7 +42,6 @@
             backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.05);
         }
-        /* Toast notification animation */
         @keyframes slideUp {
             from { transform: translateY(100%); opacity: 0; }
             to { transform: translateY(0); opacity: 1; }
@@ -50,74 +49,133 @@
         .toast {
             animation: slideUp 0.3s ease-out forwards;
         }
-        /* Search Animation */
         tbody tr {
-            transition: opacity 0.3s ease, transform 0.3s ease, display 0.3s allow-discrete;
-            opacity: 1;
-            transform: translateY(0);
+            transition: opacity 0.3s ease, transform 0.3s ease;
         }
         tbody tr.hidden-row {
             opacity: 0;
             transform: translateY(10px);
             display: none;
         }
+        /* Custom skeleton pulse */
+        .skeleton {
+            background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.03) 75%);
+            background-size: 200% 100%;
+            animation: skeleton-loading 1.5s infinite;
+        }
+        @keyframes skeleton-loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
     </style>
 </head>
 
 <body class="flex flex-col min-h-screen">
     
-    <header class="h-16 glass-panel border-b border-gray-800 flex items-center justify-between px-8 relative z-20">
+    <!-- Top Header -->
+    <header class="h-16 glass-panel border-b border-gray-800 flex items-center justify-between px-6 md:px-8 relative z-20">
         <div class="flex items-center gap-3">
             <div class="w-8 h-8 rounded bg-gradient-to-br from-red-600 to-orange-500 flex items-center justify-center text-white font-bold text-xl shadow-[0_0_15px_rgba(220,38,38,0.5)]">A</div>
             <span class="text-2xl font-outfit font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">ClarityAdmin</span>
+            <span class="px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider bg-red-500/20 text-red-400 border border-red-500/30">Super Admin</span>
         </div>
-        <a href="index.html" class="group flex items-center gap-2 px-4 py-2 bg-gray-800/50 hover:bg-gray-700/50 border border-gray-700 rounded-lg text-sm text-gray-300 hover:text-white transition-all duration-300 shadow-[0_0_10px_rgba(0,0,0,0.5)]">
-            <svg class="w-4 h-4 transform group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-            Exit to Main Site
-        </a>
+
+        <div class="flex items-center gap-4">
+            <!-- Server Status Indicator -->
+            <div id="server-status-pill" class="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium bg-gray-800 border border-gray-700 text-gray-400">
+                <span class="w-2 h-2 rounded-full bg-gray-500 animate-pulse" id="server-status-dot"></span>
+                <span id="server-status-text">Checking API...</span>
+            </div>
+
+            <!-- Admin Profile & Navigation -->
+            <div class="flex items-center gap-3">
+                <div class="hidden md:flex flex-col text-right">
+                    <span id="admin-user-email" class="text-xs font-semibold text-white">Loading...</span>
+                    <span class="text-[10px] text-brand-muted">Administrator</span>
+                </div>
+                <a href="dashboard.html" class="px-3 py-1.5 bg-gray-800/80 hover:bg-gray-700 border border-gray-700 rounded-lg text-xs text-gray-300 hover:text-white transition-all">
+                    Merchant Dashboard
+                </a>
+                <a href="index.html" class="px-3 py-1.5 bg-gray-800/50 hover:bg-gray-700/50 border border-gray-700 rounded-lg text-xs text-gray-300 hover:text-white transition-all">
+                    Exit Site
+                </a>
+                <button id="logout-btn" class="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 rounded-lg text-xs font-medium transition-all" title="Sign Out">
+                    Log out
+                </button>
+            </div>
+        </div>
     </header>
 
-    <main class="flex-1 p-8 max-w-7xl mx-auto w-full space-y-8">
-        <div>
-            <h1 class="text-4xl font-bold font-outfit bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500">Platform Overview</h1>
-            <p class="text-brand-muted mt-2">Manage users, domains, and API limits across the entire ClarityCart platform.</p>
+    <!-- Main Content -->
+    <main id="admin-main" class="flex-1 p-6 md:p-8 max-w-7xl mx-auto w-full space-y-8">
+        <!-- Title & Subtitle -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+                <h1 class="text-3xl sm:text-4xl font-bold font-outfit bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500">Platform Overview</h1>
+                <p class="text-brand-muted mt-1 text-sm sm:text-base">Real-time user monitoring, subscription quotas, and backend metrics powered by Supabase Service Role.</p>
+            </div>
+            <button id="refresh-btn" class="self-start sm:self-auto flex items-center gap-2 px-4 py-2 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 rounded-xl text-sm font-semibold transition-all">
+                <svg id="refresh-icon" class="w-4 h-4 transition-transform duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                Sync Data
+            </button>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-5 gap-6">
+        <!-- Offline Server Warning Banner (Shown if server.js is not running) -->
+        <div id="server-offline-alert" class="hidden bg-amber-500/10 border border-amber-500/30 text-amber-400 p-4 rounded-xl flex items-center justify-between shadow-lg">
+            <div class="flex items-center gap-3">
+                <svg class="w-6 h-6 flex-shrink-0 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                <div>
+                    <p class="font-semibold text-sm">Node.js Server Offline</p>
+                    <p class="text-xs text-amber-300/80">Please start the backend server in your terminal: <code class="bg-black/40 px-2 py-0.5 rounded font-mono text-white">npm start</code> (or <code class="bg-black/40 px-2 py-0.5 rounded font-mono text-white">node server.js</code>) to activate Super-Admin features.</p>
+                </div>
+            </div>
+            <button onclick="fetchAdminData()" class="px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-xs rounded-lg font-medium border border-amber-500/30 transition-colors">
+                Retry Connection
+            </button>
+        </div>
+
+        <!-- Stat Cards Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
             <div class="glass-panel p-6 rounded-xl border-l-4 border-l-blue-500 relative overflow-hidden group">
                 <div class="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 <p class="text-gray-300 text-sm font-medium">Total Registered Users</p>
-                <p class="text-3xl font-bold mt-2">2</p>
+                <p class="text-3xl font-bold mt-2" id="stat-total-users">--</p>
+                <p class="text-xs text-blue-400 mt-1">Supabase Auth Accounts</p>
             </div>
             <div class="glass-panel p-6 rounded-xl border-l-4 border-l-green-500 relative overflow-hidden group">
                 <div class="absolute inset-0 bg-gradient-to-r from-green-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 <p class="text-gray-300 text-sm font-medium">Active Subscriptions</p>
-                <p class="text-3xl font-bold mt-2">1</p>
+                <p class="text-3xl font-bold mt-2 text-green-400" id="stat-active-subs">--</p>
+                <p class="text-xs text-green-400 mt-1">Non-blocked merchants</p>
             </div>
             <div class="glass-panel p-6 rounded-xl border-l-4 border-l-purple-500 relative overflow-hidden group">
                 <div class="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 <p class="text-gray-300 text-sm font-medium">AI Queries (Today)</p>
-                <p class="text-3xl font-bold mt-2">14</p>
+                <p class="text-3xl font-bold mt-2" id="stat-queries-today">--</p>
                 <p class="text-xs text-purple-400 mt-1">Total across all stores</p>
             </div>
             <div class="glass-panel p-6 rounded-xl border-l-4 border-l-pink-500 relative overflow-hidden group">
                 <div class="absolute inset-0 bg-gradient-to-r from-pink-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 <p class="text-gray-300 text-sm font-medium">AI Queries (All Time)</p>
-                <p class="text-3xl font-bold mt-2">1,842</p>
+                <p class="text-3xl font-bold mt-2" id="stat-queries-alltime">--</p>
                 <p class="text-xs text-pink-400 mt-1">Since platform launch</p>
             </div>
             <div class="glass-panel p-6 rounded-xl border-l-4 border-l-orange-500 relative overflow-hidden group">
                 <div class="absolute inset-0 bg-gradient-to-r from-orange-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <p class="text-gray-300 text-sm font-medium">MRR (Revenue)</p>
-                <p class="text-3xl font-bold mt-2">$29.00</p>
+                <p class="text-gray-300 text-sm font-medium">MRR (Est. Revenue)</p>
+                <p class="text-3xl font-bold mt-2 text-orange-400" id="stat-mrr">--</p>
+                <p class="text-xs text-orange-400 mt-1">Monthly Recurring</p>
             </div>
         </div>
 
-        <!-- Users Table -->
-        <div class="glass-panel rounded-2xl overflow-hidden mt-8">
-            <div class="p-6 border-b border-gray-800 flex justify-between items-center bg-gray-900/30">
-                <h2 class="text-xl font-semibold font-outfit text-white">User Management</h2>
-                <div class="flex gap-3">
+        <!-- Users Table Container -->
+        <div class="glass-panel rounded-2xl overflow-hidden mt-8 shadow-2xl">
+            <div class="p-6 border-b border-gray-800 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gray-900/40">
+                <div>
+                    <h2 class="text-xl font-semibold font-outfit text-white">User Management</h2>
+                    <p class="text-xs text-brand-muted">Manage stores, modify limits, adjust billing periods, and restrict abusive accounts.</p>
+                </div>
+                <div class="flex flex-wrap items-center gap-3">
                     <select id="sort-filter" class="bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-sm text-gray-300 focus:outline-none focus:border-brand-accent transition-colors appearance-none cursor-pointer">
                         <option value="default">Sort: Default</option>
                         <option value="email-az">Email (A-Z)</option>
@@ -131,9 +189,10 @@
                         <option value="business">Business</option>
                         <option value="starter">Starter</option>
                     </select>
-                    <input type="text" id="search-input" placeholder="Search email or domain..." class="bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-brand-accent w-64 transition-colors">
+                    <input type="text" id="search-input" placeholder="Search email or domain..." class="bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-brand-accent w-full sm:w-64 transition-colors">
                 </div>
             </div>
+
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
                     <thead>
@@ -145,208 +204,70 @@
                             <th class="px-6 py-4 text-right">Admin Actions</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-800 text-sm">
-                        <!-- Row 1: Lordlymonk (Real) -->
-                        <tr class="hover:bg-gray-800/30 transition-colors group" id="user-row-1">
-                            <td class="px-6 py-4">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-8 h-8 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold">L</div>
-                                    <span class="font-medium text-white">lordlymonk@gmail.com</span>
+                    <tbody id="users-tbody" class="divide-y divide-gray-800 text-sm">
+                        <!-- Skeleton loader while fetching -->
+                        <tr>
+                            <td colspan="5" class="px-6 py-12 text-center text-brand-muted">
+                                <div class="inline-flex items-center gap-3">
+                                    <svg class="animate-spin h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                    <span>Fetching verified users from Supabase...</span>
                                 </div>
-                            </td>
-                            <td class="px-6 py-4 text-gray-300">my-super-shoes.com</td>
-                            <td class="px-6 py-4">
-                                <div class="flex items-center gap-2">
-                                    <span class="px-3 py-1 bg-purple-500/10 text-purple-400 rounded-full text-xs font-medium border border-purple-500/20 shadow-[0_0_10px_rgba(168,85,247,0.2)]">Pro</span>
-                                    <span class="status-pill px-2 py-0.5 bg-green-500/10 text-green-400 rounded text-[10px] font-bold uppercase tracking-wide border border-green-500/20">Active</span>
-                                </div>
-                            </td>
-                            <td class="px-6 py-4">
-                                <div class="w-32 bg-gray-800 rounded-full h-1.5 mt-1 relative overflow-hidden">
-                                    <div class="usage-bar bg-purple-500 h-1.5 rounded-full transition-all duration-500" style="width: 0%" id="bar-lordly"></div>
-                                </div>
-                                <span class="usage-text text-xs text-brand-muted mt-1 inline-block" id="usage-lordly">Loading...</span>
-                            </td>
-                            <td class="px-6 py-4 text-right space-x-1">
-                                <button class="edit-btn px-2 py-1.5 text-gray-400 hover:text-white transition-colors" title="Edit User">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                                </button>
-                                <button class="add-time-btn px-2 py-1.5 bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 border border-orange-500/30 rounded text-xs font-medium transition-colors" data-days="-30">- 30D</button>
-                                <button class="add-time-btn px-2 py-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 rounded text-xs font-medium transition-colors" data-days="30">+ 30D</button>
-                                <button class="add-time-btn px-2 py-1.5 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 border border-purple-500/30 rounded text-xs font-medium transition-colors" data-days="365">+ 1Y</button>
-                                <button class="block-btn px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 rounded text-xs font-medium transition-colors w-20">Block</button>
                             </td>
                         </tr>
-
-                        <!-- Row 2: Test1 -->
-                        <tr class="hover:bg-gray-800/30 transition-colors group" id="user-row-2">
-                            <td class="px-6 py-4">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-8 h-8 rounded-full bg-gray-500/20 text-gray-400 flex items-center justify-center font-bold">T</div>
-                                    <span class="font-medium text-white">test1@fake.com</span>
-                                </div>
-                            </td>
-                            <td class="px-6 py-4 text-gray-300">test-store.com</td>
-                            <td class="px-6 py-4">
-                                <div class="flex items-center gap-2">
-                                    <span class="px-3 py-1 bg-gray-700 text-gray-300 rounded-full text-xs font-medium">Starter</span>
-                                    <span class="status-pill px-2 py-0.5 bg-green-500/10 text-green-400 rounded text-[10px] font-bold uppercase tracking-wide border border-green-500/20">Active</span>
-                                </div>
-                            </td>
-                            <td class="px-6 py-4">
-                                <div class="w-32 bg-gray-800 rounded-full h-1.5 mt-1 relative overflow-hidden">
-                                    <div class="usage-bar bg-blue-500 h-1.5 rounded-full transition-all duration-500" style="width: 2%"></div>
-                                </div>
-                                <span class="usage-text text-xs text-brand-muted mt-1 inline-block">10 / 500 queries</span>
-                            </td>
-                            <td class="px-6 py-4 text-right space-x-1">
-                                <button class="edit-btn px-2 py-1.5 text-gray-400 hover:text-white transition-colors" title="Edit User">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                                </button>
-                                <button class="add-time-btn px-2 py-1.5 bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 border border-orange-500/30 rounded text-xs font-medium transition-colors" data-days="-30">- 30D</button>
-                                <button class="add-time-btn px-2 py-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 rounded text-xs font-medium transition-colors" data-days="30">+ 30D</button>
-                                <button class="add-time-btn px-2 py-1.5 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 border border-purple-500/30 rounded text-xs font-medium transition-colors" data-days="365">+ 1Y</button>
-                                <button class="block-btn px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 rounded text-xs font-medium transition-colors w-20">Block</button>
-                            </td>
-                        </tr>
-
                     </tbody>
                 </table>
             </div>
         </div>
     </main>
 
+    <!-- Access Denied Modal (Shown if logged in with non-admin email) -->
+    <div id="access-denied-view" class="hidden flex-1 flex items-center justify-center p-8">
+        <div class="glass-panel p-8 rounded-2xl max-w-lg w-full text-center space-y-6 border border-red-500/30 shadow-[0_0_50px_rgba(239,68,68,0.2)]">
+            <div class="w-16 h-16 rounded-full bg-red-500/20 text-red-500 flex items-center justify-center mx-auto">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+            </div>
+            <div>
+                <h2 class="text-2xl font-bold font-outfit text-white">Access Denied</h2>
+                <p class="text-brand-muted text-sm mt-2">You are signed in as <strong id="denied-user-email" class="text-white"></strong>, but this account is not registered as a Super Administrator.</p>
+                <p class="text-xs text-gray-500 mt-2">Authorized admin emails: <code class="text-blue-400">darksteel180@gmail.com</code>, <code class="text-blue-400">lordlymonk@gmail.com</code></p>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                <a href="dashboard.html" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold transition-all">Go to My Dashboard</a>
+                <button onclick="handleLogout()" class="px-5 py-2.5 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg text-sm font-semibold transition-all">Sign Out & Switch Account</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast Notification Container -->
     <div id="toast-container" class="fixed bottom-4 right-4 flex flex-col gap-2 z-50 pointer-events-none"></div>
 
-    <!-- Supabase JS -->
+    <!-- Supabase JS Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        // Real-time Search & Filter Functionality
-        document.addEventListener('DOMContentLoaded', () => {
-            const searchInput = document.getElementById('search-input');
-            const planFilter = document.getElementById('plan-filter');
-            const sortFilter = document.getElementById('sort-filter');
-            let rows = Array.from(document.querySelectorAll('tbody tr'));
-            const tbody = document.querySelector('tbody');
-
-            function applyFilters() {
-                const term = searchInput.value.toLowerCase();
-                const selectedPlan = planFilter.value.toLowerCase();
-                const sortType = sortFilter.value;
-                
-                // 1. Sort Rows
-                rows.sort((a, b) => {
-                    const emailA = a.querySelector('td:first-child span').textContent.toLowerCase();
-                    const emailB = b.querySelector('td:first-child span').textContent.toLowerCase();
-                    const domainA = a.querySelector('td:nth-child(2)').textContent.toLowerCase();
-                    const domainB = b.querySelector('td:nth-child(2)').textContent.toLowerCase();
-                    
-                    if (sortType === 'email-az') return emailA.localeCompare(emailB);
-                    if (sortType === 'email-za') return emailB.localeCompare(emailA);
-                    if (sortType === 'domain-az') return domainA.localeCompare(domainB);
-                    if (sortType === 'domain-za') return domainB.localeCompare(domainA);
-                    return 0; // default
-                });
-
-                // Re-append to DOM in sorted order
-                rows.forEach(row => tbody.appendChild(row));
-
-                // 2. Filter Rows
-                rows.forEach(row => {
-                    const email = row.querySelector('td:first-child span').textContent.toLowerCase();
-                    const domain = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
-                    const planText = row.querySelector('td:nth-child(3) span:first-child').textContent.toLowerCase();
-                    
-                    const matchesSearch = email.includes(term) || domain.includes(term);
-                    const matchesPlan = selectedPlan === 'all' || planText.includes(selectedPlan);
-                    
-                    if (matchesSearch && matchesPlan) {
-                        row.classList.remove('hidden-row');
-                    } else {
-                        row.classList.add('hidden-row');
-                    }
-                });
-            }
-
-            searchInput.addEventListener('input', applyFilters);
-            planFilter.addEventListener('change', applyFilters);
-            sortFilter.addEventListener('change', applyFilters);
-        });
-
-        // Supabase Data Fetching & Real-time Polling
         const SUPABASE_URL = 'https://vzmpwstfddznsvypudhj.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ6bXB3c3RmZGR6bnN2eXB1ZGhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3NzMyMTksImV4cCI6MjEwNjM0OTIxOX0.Qz0TGEDy1TOekLrqTrfspT8gnnfGy5_BjMtJRlz-PaI';
-        const supabaseAdmin = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        async function fetchRealTimeData() {
-            try {
-                // 1. Fetch All-Time Queries Count
-                const { count: allTimeCount, error: err1 } = await supabaseAdmin
-                    .from('questions')
-                    .select('*', { count: 'exact', head: true });
-                
-                if (!err1 && allTimeCount !== null) {
-                    const allTimeEl = document.querySelector('.border-l-pink-500 p.text-3xl');
-                    if (allTimeEl) allTimeEl.textContent = allTimeCount.toLocaleString();
-                }
+        // Allowed admin list for frontend check
+        const ALLOWED_ADMINS = ['darksteel180@gmail.com', 'lordlymonk@gmail.com'];
+        const API_BASE = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost' ? 'http://localhost:3000' : '';
 
-                // 2. Fetch Usage for lordlymonk@gmail.com (my-super-shoes.com)
-                const { count: lordlyCount, error: err2 } = await supabaseAdmin
-                    .from('questions')
-                    .select('*', { count: 'exact', head: true })
-                    .eq('store_domain', 'my-super-shoes.com');
-                    
-                const lordlyUsageEl = document.getElementById('usage-lordly');
-                const lordlyBarEl = document.getElementById('bar-lordly');
-                if (!err2 && lordlyCount !== null) {
-                    const limit = 5000; // Pro limit
-                    const percent = Math.min((lordlyCount / limit) * 100, 100);
-                    if (lordlyBarEl) lordlyBarEl.style.width = percent + '%';
-                    if (lordlyUsageEl) lordlyUsageEl.textContent = `${lordlyCount} / ${limit.toLocaleString()} queries`;
-                } else if (lordlyUsageEl) {
-                    lordlyUsageEl.textContent = `0 / 5,000 queries`;
-                }
+        let currentUserSession = null;
+        let cachedUsersList = [];
 
-                // 3. Fetch Usage for test1@fake.com (test-store.com)
-                const { count: testCount, error: err3 } = await supabaseAdmin
-                    .from('questions')
-                    .select('*', { count: 'exact', head: true })
-                    .eq('store_domain', 'test-store.com');
-                    
-                const testRow = document.getElementById('user-row-2');
-                if (testRow && !err3 && testCount !== null) {
-                    const limit = 500; // Starter limit
-                    const percent = Math.min((testCount / limit) * 100, 100);
-                    const bar = testRow.querySelector('.usage-bar');
-                    const text = testRow.querySelector('.usage-text');
-                    
-                    if (bar) bar.style.width = percent + '%';
-                    if (text) text.textContent = `${testCount} / ${limit} queries`;
-                }
-            } catch (e) {
-                console.error("Admin real-time fetch error:", e);
-            }
-        }
-
-        // Fetch immediately on load
-        fetchRealTimeData();
-        
-        // Poll every 3 seconds to keep data updated without page refresh!
-        setInterval(fetchRealTimeData, 3000);
-
-        // Interactive Admin Logic
-        
+        // Toast notifications
         function showToast(message, type = 'success') {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
             
-            const bgColor = type === 'success' ? 'bg-green-500/20 border-green-500/50 text-green-400' : 'bg-red-500/20 border-red-500/50 text-red-400';
+            const bgColor = type === 'success' 
+                ? 'bg-green-500/20 border-green-500/50 text-green-400' 
+                : 'bg-red-500/20 border-red-500/50 text-red-400';
             const icon = type === 'success' 
-                ? `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`
-                : `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>`;
+                ? `<svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`
+                : `<svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>`;
 
-            toast.className = `toast flex items-center gap-3 px-4 py-3 rounded-lg border backdrop-blur-md shadow-lg ${bgColor}`;
+            toast.className = `toast flex items-center gap-3 px-4 py-3 rounded-lg border backdrop-blur-md shadow-lg ${bgColor} pointer-events-auto transition-all`;
             toast.innerHTML = `${icon} <span class="font-medium text-sm">${message}</span>`;
             
             container.appendChild(toast);
@@ -354,76 +275,352 @@
             setTimeout(() => {
                 toast.style.opacity = '0';
                 toast.style.transform = 'translateY(10px)';
-                toast.style.transition = 'all 0.3s ease';
                 setTimeout(() => toast.remove(), 300);
             }, 3000);
         }
 
-        // Handle Add Time Buttons
-        document.querySelectorAll('.add-time-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const daysStr = e.target.getAttribute('data-days');
-                const days = parseInt(daysStr);
-                const row = e.target.closest('tr');
-                const email = row.querySelector('td:first-child span').textContent;
+        // Logout
+        async function handleLogout() {
+            await supabaseClient.auth.signOut();
+            window.location.href = 'login.html';
+        }
+        document.getElementById('logout-btn').addEventListener('click', handleLogout);
+
+        // Update server status indicator UI
+        function setServerStatus(online) {
+            const pill = document.getElementById('server-status-pill');
+            const dot = document.getElementById('server-status-dot');
+            const text = document.getElementById('server-status-text');
+            const offlineAlert = document.getElementById('server-offline-alert');
+
+            pill.classList.remove('hidden');
+            if (online) {
+                dot.className = 'w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.8)]';
+                text.textContent = 'API Online :3000';
+                text.className = 'text-green-400';
+                offlineAlert.classList.add('hidden');
+            } else {
+                dot.className = 'w-2 h-2 rounded-full bg-amber-500 animate-pulse';
+                text.textContent = 'API Offline';
+                text.className = 'text-amber-400';
+                offlineAlert.classList.remove('hidden');
+            }
+        }
+
+        // Fetch Overview Data from Node.js Super-Admin API
+        async function fetchAdminData() {
+            const refreshIcon = document.getElementById('refresh-icon');
+            if (refreshIcon) refreshIcon.classList.add('rotate-180');
+
+            try {
+                if (!currentUserSession) {
+                    const { data: { session } } = await supabaseClient.auth.getSession();
+                    currentUserSession = session;
+                }
+
+                if (!currentUserSession) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                const res = await fetch(`${API_BASE}/api/admin/overview`, {
+                    headers: {
+                        'Authorization': `Bearer ${currentUserSession.access_token}`
+                    }
+                });
+
+                if (!res.ok) {
+                    if (res.status === 403) {
+                        showAccessDenied(currentUserSession.user.email);
+                        return;
+                    }
+                    throw new Error(`Server returned status ${res.status}`);
+                }
+
+                const data = await res.json();
+                setServerStatus(true);
+
+                // Update Stats
+                document.getElementById('stat-total-users').textContent = data.stats.totalUsers;
+                document.getElementById('stat-active-subs').textContent = data.stats.activeSubscriptions;
+                document.getElementById('stat-queries-today').textContent = data.stats.todayQueries.toLocaleString();
+                document.getElementById('stat-queries-alltime').textContent = data.stats.allTimeQueries.toLocaleString();
+                document.getElementById('stat-mrr').textContent = data.stats.mrr;
+
+                cachedUsersList = data.users || [];
+                renderUsersTable(cachedUsersList);
+
+            } catch (err) {
+                console.warn('[Admin] Could not connect to Node API:', err.message);
+                setServerStatus(false);
+                // Fallback: render cached or notice
+                renderFallbackState();
+            } finally {
+                setTimeout(() => {
+                    if (refreshIcon) refreshIcon.classList.remove('rotate-180');
+                }, 500);
+            }
+        }
+
+        // Fallback state when server.js is offline
+        async function renderFallbackState() {
+            // Attempt to fetch public questions count directly through Supabase anon key
+            try {
+                const { count: allTimeCount } = await supabaseClient
+                    .from('questions')
+                    .select('*', { count: 'exact', head: true });
+                if (allTimeCount !== null) {
+                    document.getElementById('stat-queries-alltime').textContent = allTimeCount.toLocaleString();
+                }
+            } catch (e) {}
+
+            const tbody = document.getElementById('users-tbody');
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="5" class="px-6 py-12 text-center">
+                        <div class="max-w-md mx-auto space-y-3">
+                            <div class="w-12 h-12 rounded-full bg-amber-500/10 text-amber-400 flex items-center justify-center mx-auto">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                            </div>
+                            <h3 class="text-base font-semibold text-white">Super-Admin Server Required</h3>
+                            <p class="text-xs text-brand-muted">The user list and token controls are securely handled by the Node.js backend to prevent exposing admin credentials to the browser.</p>
+                            <p class="text-xs text-brand-accent font-mono bg-gray-900/80 p-2 rounded border border-gray-800">npm start</p>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }
+
+        // Render Users in the Table
+        function renderUsersTable(users) {
+            const tbody = document.getElementById('users-tbody');
+            if (!users || users.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-8 text-center text-brand-muted">No registered users found.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = users.map((u, idx) => {
+                const initial = (u.email || 'U').charAt(0).toUpperCase();
+                const isCurrentAdmin = currentUserSession && currentUserSession.user.email.toLowerCase() === u.email.toLowerCase();
+                const percent = Math.min(Math.round((u.query_count / u.query_limit) * 100), 100);
                 
-                if (days > 0) {
-                    showToast(`Added ${days} days to ${email}'s subscription`, 'success');
+                // Color badges for plans
+                let planBadgeClass = 'bg-gray-700 text-gray-300';
+                if (u.plan === 'Pro') planBadgeClass = 'bg-purple-500/10 text-purple-400 border border-purple-500/20 shadow-[0_0_10px_rgba(168,85,247,0.2)]';
+                if (u.plan === 'Business') planBadgeClass = 'bg-amber-500/10 text-amber-400 border border-amber-500/20 shadow-[0_0_10px_rgba(245,158,11,0.2)]';
+
+                // Status badge
+                const statusBadge = u.is_blocked 
+                    ? `<span class="status-pill px-2 py-0.5 bg-red-500/10 text-red-400 rounded text-[10px] font-bold uppercase tracking-wide border border-red-500/20">Blocked</span>`
+                    : `<span class="status-pill px-2 py-0.5 bg-green-500/10 text-green-400 rounded text-[10px] font-bold uppercase tracking-wide border border-green-500/20">Active</span>`;
+
+                const blockBtnText = u.is_blocked ? 'Unblock' : 'Block';
+                const blockBtnClass = u.is_blocked
+                    ? 'block-btn px-3 py-1.5 bg-green-500/10 hover:bg-green-500/20 text-green-400 border border-green-500/30 rounded text-xs font-medium transition-colors w-20'
+                    : 'block-btn px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 rounded text-xs font-medium transition-colors w-20';
+
+                return `
+                    <tr class="hover:bg-gray-800/30 transition-colors group ${u.is_blocked ? 'opacity-50' : ''}" data-user-id="${u.id}" data-email="${u.email}">
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500/30 to-purple-500/30 text-blue-400 flex items-center justify-center font-bold border border-blue-500/20">
+                                    ${initial}
+                                </div>
+                                <div>
+                                    <span class="font-medium text-white flex items-center gap-1.5">
+                                        ${u.email}
+                                        ${isCurrentAdmin ? '<span class="text-[10px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded border border-blue-500/30 font-semibold">You</span>' : ''}
+                                    </span>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-gray-300 font-mono text-xs">
+                            ${u.store_domain}
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-2">
+                                <span class="px-3 py-1 rounded-full text-xs font-medium ${planBadgeClass}">${u.plan}</span>
+                                ${statusBadge}
+                            </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="w-32 bg-gray-800 rounded-full h-1.5 mt-1 relative overflow-hidden">
+                                <div class="usage-bar bg-blue-500 h-1.5 rounded-full transition-all duration-500" style="width: ${percent}%"></div>
+                            </div>
+                            <span class="usage-text text-xs text-brand-muted mt-1 inline-block">
+                                ${u.query_count} / ${u.query_limit.toLocaleString()} queries
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-right space-x-1">
+                            <button class="edit-btn px-2 py-1.5 text-gray-400 hover:text-white transition-colors" title="Edit User" onclick="editUser('${u.id}', '${u.email}', '${u.store_domain}')">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                            </button>
+                            <button class="add-time-btn px-2 py-1.5 bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 border border-orange-500/30 rounded text-xs font-medium transition-colors" onclick="modifySubscription('${u.id}', -30)">- 30D</button>
+                            <button class="add-time-btn px-2 py-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 rounded text-xs font-medium transition-colors" onclick="modifySubscription('${u.id}', 30)">+ 30D</button>
+                            <button class="add-time-btn px-2 py-1.5 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 border border-purple-500/30 rounded text-xs font-medium transition-colors" onclick="modifySubscription('${u.id}', 365)">+ 1Y</button>
+                            <button class="${blockBtnClass}" onclick="toggleBlock('${u.id}', ${!u.is_blocked})">${blockBtnText}</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            applyFilters();
+        }
+
+        // Toggle Block / Unblock User
+        async function toggleBlock(userId, shouldBlock) {
+            try {
+                const res = await fetch(`${API_BASE}/api/admin/users/${userId}/block`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${currentUserSession.access_token}`
+                    },
+                    body: JSON.stringify({ block: shouldBlock })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Failed to update status');
+
+                showToast(data.message, shouldBlock ? 'error' : 'success');
+                fetchAdminData();
+            } catch (err) {
+                showToast(`Action failed: ${err.message}`, 'error');
+            }
+        }
+
+        // Modify Subscription Days (-30, +30, +365)
+        async function modifySubscription(userId, days) {
+            try {
+                const res = await fetch(`${API_BASE}/api/admin/users/${userId}/subscription`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${currentUserSession.access_token}`
+                    },
+                    body: JSON.stringify({ days })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Failed to modify subscription');
+
+                showToast(data.message, days > 0 ? 'success' : 'error');
+                fetchAdminData();
+            } catch (err) {
+                showToast(`Action failed: ${err.message}`, 'error');
+            }
+        }
+
+        // Edit User (Email / Domain)
+        async function editUser(userId, currentEmail, currentDomain) {
+            const newDomain = prompt(`Update store domain for ${currentEmail}:`, currentDomain);
+            if (newDomain === null || newDomain === currentDomain) return;
+
+            try {
+                const res = await fetch(`${API_BASE}/api/admin/users/${userId}/update`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${currentUserSession.access_token}`
+                    },
+                    body: JSON.stringify({ store_domain: newDomain.trim() })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Failed to update user');
+
+                showToast(`Updated store domain to ${newDomain}`, 'success');
+                fetchAdminData();
+            } catch (err) {
+                showToast(`Update error: ${err.message}`, 'error');
+            }
+        }
+
+        // Search & Filter Logic
+        function applyFilters() {
+            const searchInput = document.getElementById('search-input');
+            const planFilter = document.getElementById('plan-filter');
+            const sortFilter = document.getElementById('sort-filter');
+            
+            const term = (searchInput.value || '').toLowerCase();
+            const selectedPlan = (planFilter.value || 'all').toLowerCase();
+            const sortType = sortFilter.value;
+
+            const tbody = document.getElementById('users-tbody');
+            let rows = Array.from(tbody.querySelectorAll('tr[data-user-id]'));
+
+            // Sort
+            rows.sort((a, b) => {
+                const emailA = a.getAttribute('data-email').toLowerCase();
+                const emailB = b.getAttribute('data-email').toLowerCase();
+                const domainA = (a.querySelector('td:nth-child(2)')?.textContent || '').trim().toLowerCase();
+                const domainB = (b.querySelector('td:nth-child(2)')?.textContent || '').trim().toLowerCase();
+
+                if (sortType === 'email-az') return emailA.localeCompare(emailB);
+                if (sortType === 'email-za') return emailB.localeCompare(emailA);
+                if (sortType === 'domain-az') return domainA.localeCompare(domainB);
+                if (sortType === 'domain-za') return domainB.localeCompare(domainA);
+                return 0;
+            });
+
+            rows.forEach(r => tbody.appendChild(r));
+
+            // Filter
+            rows.forEach(row => {
+                const email = row.getAttribute('data-email').toLowerCase();
+                const domain = (row.querySelector('td:nth-child(2)')?.textContent || '').trim().toLowerCase();
+                const planText = (row.querySelector('td:nth-child(3) span:first-child')?.textContent || '').toLowerCase();
+
+                const matchesSearch = email.includes(term) || domain.includes(term);
+                const matchesPlan = selectedPlan === 'all' || planText.includes(selectedPlan);
+
+                if (matchesSearch && matchesPlan) {
+                    row.classList.remove('hidden-row');
                 } else {
-                    showToast(`Removed ${Math.abs(days)} days from ${email}'s subscription`, 'error');
+                    row.classList.add('hidden-row');
                 }
             });
-        });
+        }
 
-        // Handle Edit Buttons
-        document.querySelectorAll('.edit-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const row = e.target.closest('tr');
-                const emailSpan = row.querySelector('td:first-child span');
-                const currentEmail = emailSpan.textContent;
-                
-                const newEmail = prompt(`Edit user email for this account:`, currentEmail);
-                if (newEmail && newEmail !== currentEmail) {
-                    emailSpan.textContent = newEmail;
-                    showToast(`Updated user email to ${newEmail}`, 'success');
+        // Show Access Denied Screen
+        function showAccessDenied(userEmail) {
+            document.getElementById('admin-main').classList.add('hidden');
+            document.getElementById('access-denied-view').classList.remove('hidden');
+            document.getElementById('denied-user-email').textContent = userEmail;
+        }
+
+        // Initialize App & Auth Verification
+        document.addEventListener('DOMContentLoaded', async () => {
+            document.getElementById('refresh-btn').addEventListener('click', fetchAdminData);
+            document.getElementById('search-input').addEventListener('input', applyFilters);
+            document.getElementById('plan-filter').addEventListener('change', applyFilters);
+            document.getElementById('sort-filter').addEventListener('change', applyFilters);
+
+            try {
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                if (!session) {
+                    // Not signed in, redirect to login
+                    window.location.href = 'login.html';
+                    return;
                 }
-            });
-        });
 
-        // Handle Block Buttons
-        document.querySelectorAll('.block-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const row = e.target.closest('tr');
-                const email = row.querySelector('td:first-child span').textContent;
-                const statusPill = row.querySelector('.status-pill');
-                const btnEl = e.target;
-                
-                const isBlocked = btnEl.textContent === 'Unblock';
-                
-                if (isBlocked) {
-                    // Unblock action
-                    btnEl.textContent = 'Block';
-                    btnEl.className = 'block-btn px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 rounded text-xs font-medium transition-colors w-20';
-                    
-                    statusPill.textContent = 'Active';
-                    statusPill.className = 'status-pill px-2 py-0.5 bg-green-500/10 text-green-400 rounded text-[10px] font-bold uppercase tracking-wide border border-green-500/20';
-                    
-                    row.classList.remove('opacity-50');
-                    showToast(`Unblocked ${email}`, 'success');
-                } else {
-                    // Block action
-                    btnEl.textContent = 'Unblock';
-                    btnEl.className = 'block-btn px-3 py-1.5 bg-green-500/10 hover:bg-green-500/20 text-green-400 border border-green-500/30 rounded text-xs font-medium transition-colors w-20';
-                    
-                    statusPill.textContent = 'Blocked';
-                    statusPill.className = 'status-pill px-2 py-0.5 bg-red-500/10 text-red-400 rounded text-[10px] font-bold uppercase tracking-wide border border-red-500/20';
-                    
-                    row.classList.add('opacity-50');
-                    showToast(`Blocked ${email}. API access revoked.`, 'error');
+                currentUserSession = session;
+                const email = (session.user.email || '').toLowerCase();
+                document.getElementById('admin-user-email').textContent = email;
+
+                // Check authorization
+                if (!ALLOWED_ADMINS.includes(email)) {
+                    showAccessDenied(email);
+                    return;
                 }
-            });
-        });
 
+                // Initial fetch
+                fetchAdminData();
+
+                // Periodic refresh every 10 seconds
+                setInterval(fetchAdminData, 10000);
+
+            } catch (err) {
+                console.error("Initialization error:", err);
+            }
+        });
     </script>
 </body>
 </html>
