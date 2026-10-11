@@ -82,6 +82,25 @@
                     </svg>
                     Insights
                 </a>
+                <a href="index.html"
+                    class="flex items-center px-4 py-3 text-brand-muted hover:text-white hover:bg-gray-800 rounded-lg font-medium transition-colors">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10 19l-7-7m0 0l7-7m-7 7h18">
+                        </path>
+                    </svg>
+                    Main Landing Site
+                </a>
+                <!-- Hidden Super Admin Button (Only shown to darksteel180@gmail.com and lordlymonk@gmail.com) -->
+                <a id="sidebar-admin-link" href="admin.html"
+                    class="hidden flex items-center px-4 py-3 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 rounded-lg font-semibold transition-all shadow-[0_0_15px_rgba(239,68,68,0.15)]">
+                    <svg class="w-5 h-5 mr-3 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z">
+                        </path>
+                    </svg>
+                    Super Admin Panel
+                </a>
             </nav>
         </div>
         <div class="p-4">
@@ -101,13 +120,17 @@
         <header
             class="h-16 glass-panel border-b border-gray-800 flex items-center justify-between px-8 sticky top-0 z-10">
             <h2 class="text-xl font-semibold">Dashboard</h2>
-            <div class="flex items-center space-x-4">
+            <div class="flex items-center space-x-3">
                 <span class="text-sm text-brand-muted" id="header-domain">mystore.com</span>
                 <div class="w-8 h-8 rounded-full bg-gray-800 border-2 border-gray-700 flex items-center justify-center text-gray-400">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
                 </div>
-                <button id="logout-btn" class="ml-4 px-4 py-2 bg-gray-800 hover:bg-red-500/20 text-sm font-medium rounded-lg text-gray-300 hover:text-red-400 transition-all border border-gray-700 hover:border-red-500/50 flex items-center gap-2 shadow-sm">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                <a href="index.html" class="px-3 py-2 bg-gray-800/60 hover:bg-gray-800 text-xs font-medium rounded-lg text-gray-300 hover:text-white transition-all border border-gray-700 flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                    Exit Site
+                </a>
+                <button id="logout-btn" class="px-3 py-2 bg-gray-800 hover:bg-red-500/20 text-xs font-medium rounded-lg text-gray-300 hover:text-red-400 transition-all border border-gray-700 hover:border-red-500/50 flex items-center gap-1.5 shadow-sm">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
                     Log out
                 </button>
             </div>
@@ -281,6 +304,14 @@
                 if (!session) {
                     window.location.href = 'login.html';
                     return;
+                }
+
+                // Check if user is Super Admin
+                const ALLOWED_ADMINS = ['darksteel180@gmail.com', 'lordlymonk@gmail.com'];
+                const userEmail = (session.user.email || '').toLowerCase();
+                if (ALLOWED_ADMINS.includes(userEmail)) {
+                    const adminLink = document.getElementById('sidebar-admin-link');
+                    if (adminLink) adminLink.classList.remove('hidden');
                 }
 
                 // 2. Берем домен из метаданных пользователя

@@ -235,6 +235,64 @@
                 <a href="dashboard.html" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold transition-all">Go to My Dashboard</a>
                 <button onclick="handleLogout()" class="px-5 py-2.5 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg text-sm font-semibold transition-all">Sign Out & Switch Account</button>
             </div>
+    <!-- Edit User Modal -->
+    <div id="edit-user-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md opacity-0 pointer-events-none transition-all duration-300">
+        <div id="edit-user-card" class="bg-[#111827] border border-gray-700/80 rounded-2xl p-6 sm:p-8 max-w-lg w-full mx-4 relative shadow-2xl transform scale-95 transition-all duration-300 space-y-6">
+            <button id="close-edit-modal" class="absolute top-5 right-5 text-gray-400 hover:text-white transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center border border-blue-500/30">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                </div>
+                <div>
+                    <h3 class="text-xl font-bold font-outfit text-white">Manage User & Subscription</h3>
+                    <p id="edit-modal-email" class="text-xs text-brand-muted font-mono mt-0.5">user@example.com</p>
+                </div>
+            </div>
+
+            <form id="edit-user-form" class="space-y-4">
+                <input type="hidden" id="edit-user-id">
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Store Domain</label>
+                    <input type="text" id="edit-user-domain" required placeholder="store.com"
+                        class="w-full px-4 py-2.5 rounded-lg bg-gray-900 border border-gray-700 text-white text-sm focus:outline-none focus:border-brand-accent transition-colors font-mono">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Subscription Plan</label>
+                        <select id="edit-user-plan" class="w-full px-3 py-2.5 rounded-lg bg-gray-900 border border-gray-700 text-white text-sm focus:outline-none focus:border-brand-accent transition-colors">
+                            <option value="Starter">Starter (Free)</option>
+                            <option value="Pro">Pro ($29/mo)</option>
+                            <option value="Business">Business ($79/mo)</option>
+                            <option value="Enterprise">Enterprise (VIP)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">AI Query Limit</label>
+                        <input type="number" id="edit-user-limit" placeholder="5000" min="100" step="100"
+                            class="w-full px-4 py-2.5 rounded-lg bg-gray-900 border border-gray-700 text-white text-sm focus:outline-none focus:border-brand-accent transition-colors">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Extend / Adjust Days</label>
+                    <div class="grid grid-cols-4 gap-2">
+                        <button type="button" class="quick-day-btn px-2 py-2 rounded bg-gray-800 hover:bg-gray-700 text-xs text-gray-300 font-medium border border-gray-700 transition-colors" data-days="30">+ 30 Days</button>
+                        <button type="button" class="quick-day-btn px-2 py-2 rounded bg-gray-800 hover:bg-gray-700 text-xs text-gray-300 font-medium border border-gray-700 transition-colors" data-days="90">+ 90 Days</button>
+                        <button type="button" class="quick-day-btn px-2 py-2 rounded bg-gray-800 hover:bg-gray-700 text-xs text-gray-300 font-medium border border-gray-700 transition-colors" data-days="365">+ 1 Year</button>
+                        <button type="button" class="quick-day-btn px-2 py-2 rounded bg-red-500/10 hover:bg-red-500/20 text-xs text-red-400 font-medium border border-red-500/30 transition-colors" data-days="-30">- 30 Days</button>
+                    </div>
+                    <p class="text-[11px] text-brand-muted mt-2">Active days remaining: <span class="text-white font-semibold" id="edit-days-remaining">--</span></p>
+                </div>
+
+                <div class="pt-4 border-t border-gray-800 flex justify-end gap-3">
+                    <button type="button" id="cancel-edit-btn" class="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg text-sm font-medium transition-colors">Cancel</button>
+                    <button type="submit" id="save-edit-btn" class="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm font-semibold transition-colors shadow-lg shadow-blue-600/30">Save Changes</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -452,7 +510,7 @@
                             </span>
                         </td>
                         <td class="px-6 py-4 text-right space-x-1">
-                            <button class="edit-btn px-2 py-1.5 text-gray-400 hover:text-white transition-colors" title="Edit User" onclick="editUser('${u.id}', '${u.email}', '${u.store_domain}')">
+                            <button class="edit-btn px-2 py-1.5 text-gray-400 hover:text-white transition-colors" title="Manage User & Subscription" onclick="openEditModal('${u.id}')">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                             </button>
                             <button class="add-time-btn px-2 py-1.5 bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 border border-orange-500/30 rounded text-xs font-medium transition-colors" onclick="modifySubscription('${u.id}', -30)">- 30D</button>
@@ -509,10 +567,60 @@
             }
         }
 
-        // Edit User (Email / Domain)
-        async function editUser(userId, currentEmail, currentDomain) {
-            const newDomain = prompt(`Update store domain for ${currentEmail}:`, currentDomain);
-            if (newDomain === null || newDomain === currentDomain) return;
+        // Edit Modal Logic
+        let pendingDaysToAdd = 0;
+
+        function openEditModal(userId) {
+            const user = cachedUsersList.find(u => u.id === userId);
+            if (!user) return;
+
+            document.getElementById('edit-user-id').value = user.id;
+            document.getElementById('edit-modal-email').textContent = user.email;
+            document.getElementById('edit-user-domain').value = user.store_domain;
+            document.getElementById('edit-user-plan').value = user.plan || 'Starter';
+            document.getElementById('edit-user-limit').value = user.query_limit;
+            document.getElementById('edit-days-remaining').textContent = `${user.days_remaining} days`;
+            pendingDaysToAdd = 0;
+
+            const modal = document.getElementById('edit-user-modal');
+            const card = document.getElementById('edit-user-card');
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            card.classList.remove('scale-95');
+            card.classList.add('scale-100');
+        }
+
+        function closeEditModal() {
+            const modal = document.getElementById('edit-user-modal');
+            const card = document.getElementById('edit-user-card');
+            modal.classList.add('opacity-0', 'pointer-events-none');
+            card.classList.remove('scale-100');
+            card.classList.add('scale-95');
+        }
+
+        document.getElementById('close-edit-modal').addEventListener('click', closeEditModal);
+        document.getElementById('cancel-edit-btn').addEventListener('click', closeEditModal);
+        document.getElementById('edit-user-modal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('edit-user-modal')) closeEditModal();
+        });
+
+        document.querySelectorAll('.quick-day-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const days = parseInt(btn.getAttribute('data-days'), 10);
+                pendingDaysToAdd += days;
+                showToast(`Queued ${days > 0 ? '+' : ''}${days} days (Click Save to apply)`, 'success');
+            });
+        });
+
+        document.getElementById('edit-user-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const userId = document.getElementById('edit-user-id').value;
+            const domain = document.getElementById('edit-user-domain').value.trim();
+            const plan = document.getElementById('edit-user-plan').value;
+            const limit = document.getElementById('edit-user-limit').value;
+            const saveBtn = document.getElementById('save-edit-btn');
+
+            saveBtn.textContent = 'Saving...';
+            saveBtn.disabled = true;
 
             try {
                 const res = await fetch(`${API_BASE}/api/admin/users/${userId}/update`, {
@@ -521,17 +629,27 @@
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${currentUserSession.access_token}`
                     },
-                    body: JSON.stringify({ store_domain: newDomain.trim() })
+                    body: JSON.stringify({
+                        store_domain: domain,
+                        plan: plan,
+                        query_limit: parseInt(limit, 10),
+                        days_to_add: pendingDaysToAdd
+                    })
                 });
+
                 const data = await res.json();
                 if (!res.ok) throw new Error(data.error || 'Failed to update user');
 
-                showToast(`Updated store domain to ${newDomain}`, 'success');
+                showToast(`Updated account settings successfully!`, 'success');
+                closeEditModal();
                 fetchAdminData();
             } catch (err) {
                 showToast(`Update error: ${err.message}`, 'error');
+            } finally {
+                saveBtn.textContent = 'Save Changes';
+                saveBtn.disabled = false;
             }
-        }
+        });
 
         // Search & Filter Logic
         function applyFilters() {

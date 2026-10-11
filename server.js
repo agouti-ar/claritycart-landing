@@ -114,15 +114,18 @@ app.get('/api/admin/overview', authenticateAdmin, async (req, res) => {
       const storeDomain = meta.store_domain || 'not-connected.com';
       const plan = meta.plan || (storeDomain === 'my-super-shoes.com' ? 'Pro' : 'Starter');
       
-      let queryLimit = 500;
+      let queryLimit = meta.query_limit || 500;
       let planPrice = 0;
 
       if (plan.toLowerCase() === 'pro') {
-        queryLimit = 5000;
+        if (!meta.query_limit) queryLimit = 5000;
         planPrice = 29;
       } else if (plan.toLowerCase() === 'business') {
-        queryLimit = 15000;
+        if (!meta.query_limit) queryLimit = 15000;
         planPrice = 79;
+      } else if (plan.toLowerCase() === 'enterprise') {
+        if (!meta.query_limit) queryLimit = 50000;
+        planPrice = 199;
       }
 
       const queryCount = domainCounts[storeDomain] || 0;
@@ -133,6 +136,13 @@ app.get('/api/admin/overview', authenticateAdmin, async (req, res) => {
         totalMRR += planPrice;
       }
 
+      // Calculate days remaining in subscription
+      let daysRemaining = 30; // default
+      if (meta.subscription_expires_at) {
+        const diffMs = new Date(meta.subscription_expires_at) - new Date();
+        daysRemaining = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+      }
+
       return {
         id: u.id,
         email: u.email,
@@ -141,6 +151,8 @@ app.get('/api/admin/overview', authenticateAdmin, async (req, res) => {
         query_count: queryCount,
         query_limit: queryLimit,
         is_blocked: isBlocked,
+        days_remaining: daysRemaining,
+        subscription_expires_at: meta.subscription_expires_at || null,
         created_at: u.created_at,
         last_sign_in_at: u.last_sign_in_at
       };
@@ -225,24 +237,36 @@ app.post('/api/admin/users/:id/subscription', authenticateAdmin, async (req, res
   }
 });
 
-// Admin: Edit user email or store domain
+// Admin: Edit user email, store domain, plan, limits, and subscription
 app.post('/api/admin/users/:id/update', authenticateAdmin, async (req, res) => {
   const { id } = req.params;
-  const { email, store_domain, plan } = req.body;
+  const { email, store_domain, plan, query_limit, days_to_add } = req.body;
 
   try {
     const { data: { user }, error: getErr } = await supabase.auth.admin.getUserById(id);
     if (getErr) throw getErr;
 
+    const newMeta = { ...user.user_metadata };
+    if (store_domain) newMeta.store_domain = store_domain.trim();
+    if (plan) newMeta.plan = plan;
+    if (query_limit !== undefined && query_limit !== null) {
+      newMeta.query_limit = parseInt(query_limit, 10);
+    }
+
+    if (days_to_add) {
+      const currentExpiry = newMeta.subscription_expires_at
+        ? new Date(newMeta.subscription_expires_at)
+        : new Date();
+      const baseDate = currentExpiry > new Date() ? currentExpiry : new Date();
+      baseDate.setDate(baseDate.getDate() + parseInt(days_to_add, 10));
+      newMeta.subscription_expires_at = baseDate.toISOString();
+    }
+
     const updatePayload = {
-      user_metadata: {
-        ...user.user_metadata,
-        ...(store_domain ? { store_domain } : {}),
-        ...(plan ? { plan } : {})
-      }
+      user_metadata: newMeta
     };
     if (email) {
-      updatePayload.email = email;
+      updatePayload.email = email.trim();
     }
 
     const { data, error: updateErr } = await supabase.auth.admin.updateUserById(id, updatePayload);

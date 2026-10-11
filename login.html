@@ -53,13 +53,21 @@
 </head>
 
 <body class="flex items-center justify-center min-h-screen relative overflow-hidden">
+    <!-- Back to Home Button -->
+    <a href="index.html" class="absolute top-6 left-6 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-800/60 hover:bg-gray-800 border border-gray-700 text-xs font-medium text-brand-muted hover:text-white transition-all group z-20 backdrop-blur-sm">
+        <svg class="w-4 h-4 transform group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+        <span>Back to Home</span>
+    </a>
+
     <!-- Background Glows -->
     <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-600/20 rounded-full blur-[120px] pointer-events-none"></div>
     <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-600/20 rounded-full blur-[120px] pointer-events-none"></div>
 
     <div class="w-full max-w-md p-8 glass-panel rounded-2xl relative z-10 mx-4">
         <div class="text-center mb-8">
-            <h1 class="text-3xl font-bold tracking-tight mb-2">Clarity<span class="text-brand-accent">Cart</span></h1>
+            <a href="index.html" class="inline-block hover:opacity-90 transition-opacity">
+                <h1 class="text-3xl font-bold tracking-tight mb-2">Clarity<span class="text-brand-accent">Cart</span></h1>
+            </a>
             <p class="text-brand-muted">Welcome back! Sign in to your dashboard.</p>
         </div>
 

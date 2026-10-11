@@ -20,6 +20,7 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
     const SUPABASE_URL = 'https://vzmpwstfddznsvypudhj.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ6bXB3c3RmZGR6bnN2eXB1ZGhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3NzMyMTksImV4cCI6MjEwNjM0OTIxOX0.Qz0TGEDy1TOekLrqTrfspT8gnnfGy5_BjMtJRlz-PaI';
     const API_URL = document.currentScript?.getAttribute('data-api') || '/api/chat';
+    const SCRIPT_DOMAIN = document.currentScript?.getAttribute('data-domain');
     class ClarityCartWidget {
         constructor() {
             this.targetSelector = '#add-to-cart';
@@ -748,7 +749,7 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                             'Prefer': 'return=minimal'
                         },
                         body: JSON.stringify({
-                            store_domain: window.location.hostname || 'unknown',
+                            store_domain: SCRIPT_DOMAIN || window.location.hostname || 'unknown',
                             question_text: question,
                             product_context: extractedContext ? extractedContext.title : ''
                         })
