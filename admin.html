@@ -96,8 +96,9 @@
                 <a href="dashboard.html" class="px-3 py-1.5 bg-gray-800/80 hover:bg-gray-700 border border-gray-700 rounded-lg text-xs text-gray-300 hover:text-white transition-all">
                     Merchant Dashboard
                 </a>
-                <a href="index.html" class="px-3 py-1.5 bg-gray-800/50 hover:bg-gray-700/50 border border-gray-700 rounded-lg text-xs text-gray-300 hover:text-white transition-all">
-                    Exit Site
+                <a href="index.html" class="px-3 py-1.5 bg-gray-800/50 hover:bg-gray-700/50 border border-gray-700 rounded-lg text-xs text-gray-300 hover:text-white transition-all flex items-center gap-1.5" title="Return to Landing Page">
+                    <span>Website</span>
+                    <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
                 </a>
                 <button id="logout-btn" class="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 rounded-lg text-xs font-medium transition-all" title="Sign Out">
                     Log out
@@ -235,6 +236,9 @@
                 <a href="dashboard.html" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold transition-all">Go to My Dashboard</a>
                 <button onclick="handleLogout()" class="px-5 py-2.5 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg text-sm font-semibold transition-all">Sign Out & Switch Account</button>
             </div>
+        </div>
+    </div>
+
     <!-- Edit User Modal -->
     <div id="edit-user-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md opacity-0 pointer-events-none transition-all duration-300">
         <div id="edit-user-card" class="bg-[#111827] border border-gray-700/80 rounded-2xl p-6 sm:p-8 max-w-lg w-full mx-4 relative shadow-2xl transform scale-95 transition-all duration-300 space-y-6">
@@ -284,6 +288,10 @@
                         <button type="button" class="quick-day-btn px-2 py-2 rounded bg-gray-800 hover:bg-gray-700 text-xs text-gray-300 font-medium border border-gray-700 transition-colors" data-days="90">+ 90 Days</button>
                         <button type="button" class="quick-day-btn px-2 py-2 rounded bg-gray-800 hover:bg-gray-700 text-xs text-gray-300 font-medium border border-gray-700 transition-colors" data-days="365">+ 1 Year</button>
                         <button type="button" class="quick-day-btn px-2 py-2 rounded bg-red-500/10 hover:bg-red-500/20 text-xs text-red-400 font-medium border border-red-500/30 transition-colors" data-days="-30">- 30 Days</button>
+                    </div>
+                    <div class="mt-3 flex items-center gap-2">
+                        <label class="text-xs text-gray-400 font-medium whitespace-nowrap">Custom Days (+/-):</label>
+                        <input type="number" id="edit-custom-days" placeholder="e.g. 5, 7, -10" class="w-full px-3 py-1.5 rounded-lg bg-gray-900 border border-gray-700 text-white text-xs focus:outline-none focus:border-brand-accent transition-colors font-mono">
                     </div>
                     <p class="text-[11px] text-brand-muted mt-2">Active days remaining: <span class="text-white font-semibold" id="edit-days-remaining">--</span></p>
                 </div>
@@ -489,6 +497,9 @@
                                         ${u.email}
                                         ${isCurrentAdmin ? '<span class="text-[10px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded border border-blue-500/30 font-semibold">You</span>' : ''}
                                     </span>
+                                    <span class="text-[11px] text-gray-400 block font-normal mt-0.5">
+                                        Joined: ${u.created_at ? new Date(u.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recently'}
+                                    </span>
                                 </div>
                             </div>
                         </td>
@@ -580,6 +591,7 @@
             document.getElementById('edit-user-plan').value = user.plan || 'Starter';
             document.getElementById('edit-user-limit').value = user.query_limit;
             document.getElementById('edit-days-remaining').textContent = `${user.days_remaining} days`;
+            document.getElementById('edit-custom-days').value = '';
             pendingDaysToAdd = 0;
 
             const modal = document.getElementById('edit-user-modal');
@@ -617,6 +629,8 @@
             const domain = document.getElementById('edit-user-domain').value.trim();
             const plan = document.getElementById('edit-user-plan').value;
             const limit = document.getElementById('edit-user-limit').value;
+            const customDaysVal = parseInt(document.getElementById('edit-custom-days').value || 0, 10);
+            const totalDaysToAdd = pendingDaysToAdd + (isNaN(customDaysVal) ? 0 : customDaysVal);
             const saveBtn = document.getElementById('save-edit-btn');
 
             saveBtn.textContent = 'Saving...';
@@ -633,7 +647,7 @@
                         store_domain: domain,
                         plan: plan,
                         query_limit: parseInt(limit, 10),
-                        days_to_add: pendingDaysToAdd
+                        days_to_add: totalDaysToAdd
                     })
                 });
 

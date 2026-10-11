@@ -75,6 +75,153 @@ app.post('/api/validate-domain', async (req, res) => {
   res.json({ valid: true, message: 'Domain is valid' });
 });
 
+// Helper to check if a store domain is blocked or exceeded quota
+async function checkStoreLimit(domain) {
+  if (!domain || domain === 'unknown') {
+    return { allowed: true };
+  }
+  const cleanDomain = domain.trim().toLowerCase();
+
+  try {
+    // 1. Fetch user list from Supabase Admin
+    const { data: authData, error: usersError } = await supabase.auth.admin.listUsers();
+    if (usersError || !authData?.users) {
+      console.warn('[CheckLimit] Failed to list users:', usersError);
+      return { allowed: true };
+    }
+
+    const user = authData.users.find(u => {
+      const metaDomain = (u.user_metadata?.store_domain || '').trim().toLowerCase();
+      return metaDomain === cleanDomain;
+    });
+
+    if (!user) {
+      // Store not found among registered accounts (e.g. unregistered trial)
+      return { allowed: true };
+    }
+
+    const meta = user.user_metadata || {};
+    const isBlocked = Boolean(user.banned_until && new Date(user.banned_until) > new Date()) || Boolean(meta.is_blocked);
+    if (isBlocked) {
+      return {
+        allowed: false,
+        reason: 'blocked',
+        message: "This store's AI assistant has been temporarily suspended by the administrator."
+      };
+    }
+
+    // 2. Count questions for this domain in Supabase
+    const { count, error: countErr } = await supabase
+      .from('questions')
+      .select('*', { count: 'exact', head: true })
+      .eq('store_domain', cleanDomain);
+
+    const queryCount = count || 0;
+    let queryLimit = meta.query_limit;
+    if (!queryLimit) {
+      const plan = (meta.plan || '').toLowerCase();
+      if (plan === 'pro') queryLimit = 5000;
+      else if (plan === 'business') queryLimit = 15000;
+      else if (plan === 'enterprise') queryLimit = 50000;
+      else queryLimit = 500;
+    }
+
+    if (queryCount >= queryLimit) {
+      return {
+        allowed: false,
+        reason: 'limit_reached',
+        queryCount,
+        queryLimit,
+        message: "Monthly AI query limit reached for this store. Please upgrade your plan in your ClarityCart dashboard."
+      };
+    }
+
+    return { allowed: true, queryCount, queryLimit };
+  } catch (err) {
+    console.error('[CheckLimit] Error checking limit:', err);
+    return { allowed: true };
+  }
+}
+
+// Chat API endpoint (with quota & block protection)
+app.post('/api/chat', async (req, res) => {
+  const { question, domain, store_domain, productContext, systemInstruction, temperature, model } = req.body || {};
+  const targetDomain = domain || store_domain;
+
+  // 1. Quota & block check
+  const status = await checkStoreLimit(targetDomain);
+  if (!status.allowed) {
+    console.log(`[Chat API] Protected block for domain "${targetDomain}". Reason: ${status.reason}`);
+    return res.status(200).json({
+      answer: status.message,
+      limitReached: status.reason === 'limit_reached',
+      blocked: status.reason === 'blocked',
+      queryCount: status.queryCount,
+      queryLimit: status.queryLimit
+    });
+  }
+
+  // 2. If allowed, generate response via Gemini or proxy to Vercel Gemini
+  let apiKey = (process.env.GEMINI_API_KEY || '').trim().replace(/^["']|["']$/g, '');
+  if (!apiKey) {
+    // Proxy to Vercel production endpoint
+    try {
+      const vercelRes = await fetch('https://claritycart-landing.vercel.app/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(req.body)
+      });
+      const data = await vercelRes.json();
+      return res.status(vercelRes.status).json(data);
+    } catch (proxyErr) {
+      return res.status(200).json({ answer: "⚠️ Could not reach AI service." });
+    }
+  }
+
+  // Local Gemini call
+  try {
+    const basePrompt = systemInstruction ? `${systemInstruction}\n\n` : '';
+    const strictConstraint = "CRITICAL DIRECTIVE: You are an AI sales assistant exclusively for this e-commerce store. Your primary goal is to SELL the product. If the user asks a general off-topic question, politely decline. Answer concisely in 1-2 sentences.";
+    const fullSystemInstruction = `${basePrompt}${strictConstraint}`;
+    const promptText = `Product: "${productContext?.title || 'Unknown'}". Details: ${productContext?.description || 'None'}. Price: ${productContext?.price || 'Unknown'}. User Question: "${question}". Answer concisely in 1-2 sentences.`;
+
+    const modelPriority = [model || 'gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-flash-latest'];
+    let lastError = null;
+
+    for (const m of modelPriority) {
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${apiKey}`;
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            system_instruction: { parts: [{ text: fullSystemInstruction }] },
+            contents: [{ parts: [{ text: promptText }] }],
+            generationConfig: {
+              temperature: temperature !== undefined ? parseFloat(temperature) : 0.7
+            }
+          })
+        });
+
+        const data = await response.json();
+        if (response.ok && data.candidates) {
+          return res.status(200).json({
+            answer: data.candidates[0].content.parts[0].text,
+            usedModel: m
+          });
+        } else {
+          lastError = data.error?.message;
+        }
+      } catch (err) {
+        lastError = err.message;
+      }
+    }
+    return res.status(200).json({ answer: `⚠️ No available models. Last error: ${lastError}` });
+  } catch (error) {
+    return res.status(200).json({ answer: `⚠️ ${error.message}` });
+  }
+});
+
 // Admin: Get overview data (all users, usage counts, platform stats)
 app.get('/api/admin/overview', authenticateAdmin, async (req, res) => {
   try {

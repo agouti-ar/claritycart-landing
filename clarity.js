@@ -19,7 +19,10 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
 (function () {
     const SUPABASE_URL = 'https://vzmpwstfddznsvypudhj.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ6bXB3c3RmZGR6bnN2eXB1ZGhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3NzMyMTksImV4cCI6MjEwNjM0OTIxOX0.Qz0TGEDy1TOekLrqTrfspT8gnnfGy5_BjMtJRlz-PaI';
-    const API_URL = document.currentScript?.getAttribute('data-api') || '/api/chat';
+    const API_URL = document.currentScript?.getAttribute('data-api') || 
+        (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost' 
+            ? 'http://localhost:3000/api/chat' 
+            : 'https://claritycart-landing.vercel.app/api/chat');
     const SCRIPT_DOMAIN = document.currentScript?.getAttribute('data-domain');
     class ClarityCartWidget {
         constructor() {
@@ -814,49 +817,61 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                     finalResponseText = runMock();
                     requestSuccess = true;
                 } else {
-                    for (let i = 0; i < modelsToTry.length; i++) {
-                        const model = modelsToTry[i];
-                        try {
-                            const res = await fetch('https://claritycart-landing.vercel.app/api/chat', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                    question,
-                                    productContext: extractedContext,
-                                    systemInstruction: sysInstr,
-                                    model: model,
-                                    temperature: currentTone === 'professional' ? 0.2 : 0.7
-                                })
-                            });
+                let isQuotaBlocked = false;
+                for (let i = 0; i < modelsToTry.length; i++) {
+                    const model = modelsToTry[i];
+                    try {
+                        const res = await fetch(API_URL, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                question,
+                                domain: SCRIPT_DOMAIN || window.location.hostname || 'unknown',
+                                productContext: extractedContext,
+                                systemInstruction: sysInstr,
+                                model: model,
+                                temperature: currentTone === 'professional' ? 0.2 : 0.7
+                            })
+                        });
 
-                            if (res.status === 503 || res.status === 404) throw new Error(`API Error ${res.status}`);
-                            if (!res.ok) throw new Error('Network response was not ok');
+                        if (res.status === 503 || res.status === 404) throw new Error(`API Error ${res.status}`);
+                        if (!res.ok) throw new Error('Network response was not ok');
 
-                            const data = await res.json();
-                            let response = data.answer || "Sorry, I received an empty response.";
-                            const lowerResp = response.toLowerCase();
-                            const hasErrorText = lowerResp.includes("no available models") ||
-                                lowerResp.includes("high demand") ||
-                                lowerResp.includes("error") ||
-                                lowerResp.includes("status 503") ||
-                                lowerResp.includes("overloaded") ||
-                                lowerResp.includes("google");
+                        const data = await res.json();
+                        let response = data.answer || "Sorry, I received an empty response.";
 
-                            if (hasErrorText) {
-                                throw new Error("Text-based error intercepted");
-                            }
-
+                        // If quota limit reached or store blocked, stop retries and show message
+                        if (data.limitReached || data.blocked || response.includes("Monthly AI query limit reached")) {
                             finalResponseText = response;
-                            finalUsedModel = data.usedModel || model;
+                            finalUsedModel = 'Policy Enforcement';
                             requestSuccess = true;
+                            isQuotaBlocked = true;
                             break;
-                        } catch (err) {
-                            console.error(`ClarityCart API Error with ${model}:`, err);
-                            if (i < modelsToTry.length - 1) {
-                                await new Promise(r => setTimeout(r, 1200));
-                            }
+                        }
+
+                        const lowerResp = response.toLowerCase();
+                        const hasErrorText = lowerResp.includes("no available models") ||
+                            lowerResp.includes("high demand") ||
+                            lowerResp.includes("error") ||
+                            lowerResp.includes("status 503") ||
+                            lowerResp.includes("overloaded") ||
+                            lowerResp.includes("google");
+
+                        if (hasErrorText) {
+                            throw new Error("Text-based error intercepted");
+                        }
+
+                        finalResponseText = response;
+                        finalUsedModel = data.usedModel || model;
+                        requestSuccess = true;
+                        break;
+                    } catch (err) {
+                        console.error(`ClarityCart API Error with ${model}:`, err);
+                        if (i < modelsToTry.length - 1) {
+                            await new Promise(r => setTimeout(r, 1200));
                         }
                     }
+                }
                 }
 
                 isRequestPending = false;
@@ -874,6 +889,15 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                 let cleanResponse = finalResponseText.replace(/\[INTENT: HIGH\]/g, '').replace(/\[INTENT: LOW\]/g, '').trim();
 
                 addMessage(cleanResponse, 'ai');
+
+                if (isQuotaBlocked) {
+                    input.placeholder = "Monthly limit reached. Please upgrade.";
+                    input.disabled = true;
+                    sendBtn.disabled = true;
+                    input.style.opacity = '0.6';
+                    sendBtn.style.opacity = '0.5';
+                    return;
+                }
 
                 const canDiscount = cfg.activeTier !== 'Starter' && cfg.intentDiscountEnabled;
                 if (canDiscount && isHighIntent && !sessionStorage.getItem('clarity_promo_seen')) {
