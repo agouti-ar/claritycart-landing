@@ -60,6 +60,7 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
 
             this.productData = this.extractProductContext();
 
+            this.shadow = shadow;
             this.render(shadow);
             this.bindEvents(shadow);
             
@@ -70,7 +71,7 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
         async fetchStoreSettings() {
             try {
                 const domain = window.location.hostname || 'unknown';
-                const response = await fetch(`${SUPABASE_URL}/rest/v1/store_settings?store_domain=eq.${domain}&select=friendly_tone,use_emojis`, {
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/store_settings?store_domain=eq.${domain}&select=*`, {
                     headers: {
                         'apikey': SUPABASE_ANON_KEY,
                         'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
@@ -79,8 +80,20 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                 const data = await response.json();
                 if (data && data.length > 0) {
                     const settings = data[0];
-                    window.ClarityCartConfig.tone = settings.friendly_tone ? 'friendly' : 'professional';
-                    window.ClarityCartConfig.use_emojis = settings.use_emojis;
+                    if (settings.friendly_tone !== undefined) {
+                        window.ClarityCartConfig.tone = settings.friendly_tone ? 'friendly' : 'professional';
+                    }
+                    if (settings.use_emojis !== undefined) {
+                        window.ClarityCartConfig.use_emojis = settings.use_emojis;
+                    }
+                    if (settings.white_label !== undefined) {
+                        window.ClarityCartConfig.whiteLabel = Boolean(settings.white_label);
+                        const footer = this.shadow?.getElementById('clarity-footer');
+                        if (footer && settings.white_label) footer.style.display = 'none';
+                    }
+                    if (settings.exit_intent !== undefined) {
+                        window.ClarityCartConfig.exitIntentEnabled = Boolean(settings.exit_intent);
+                    }
                 }
             } catch (e) {
                 console.error("ClarityCart: Failed to load settings", e);
@@ -715,6 +728,16 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                     isChatOpen = true;
                 }
             };
+
+            // Auto-Show on Exit Intent (Pro & Business feature)
+            let exitTriggered = false;
+            document.addEventListener('mouseleave', (e) => {
+                if (window.ClarityCartConfig.exitIntentEnabled && !exitTriggered && !isChatOpen && e.clientY <= 20) {
+                    exitTriggered = true;
+                    openChat();
+                    addMessage("👋 Thinking of heading out? Have any questions about this item before you go?", 'bot');
+                }
+            });
 
             const addMessage = (text, sender) => {
                 const msg = document.createElement('div');

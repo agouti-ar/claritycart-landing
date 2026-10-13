@@ -112,14 +112,20 @@
             class="h-16 glass-panel border-b border-gray-800 flex items-center justify-between px-8 sticky top-0 z-10">
             <h2 class="text-xl font-bold font-outfit text-white tracking-tight">Dashboard</h2>
             <div class="flex items-center space-x-3">
-                <div id="domain-badge-container" class="px-3 py-1.5 rounded-xl bg-gray-900/90 border border-gray-700/80 flex items-center gap-2 shadow-sm transition-all duration-300">
-                    <span class="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)] animate-pulse"></span>
-                    <span class="text-xs font-mono font-medium text-gray-200" id="header-domain">Loading...</span>
+                <div id="domain-badge-container" class="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-gray-900/90 via-blue-950/40 to-gray-900/90 border border-blue-500/30 hover:border-blue-400/50 flex items-center gap-2.5 shadow-[0_0_15px_rgba(59,130,246,0.12)] transition-all">
+                    <div class="relative flex items-center justify-center">
+                        <svg class="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path></svg>
+                        <span class="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+                        <span class="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                    </div>
+                    <span class="text-sm font-semibold font-outfit tracking-wide bg-clip-text text-transparent bg-gradient-to-r from-white via-blue-100 to-indigo-200" id="header-domain">Loading...</span>
                 </div>
-                <a href="index.html" class="px-3.5 py-1.5 bg-gray-900/90 hover:bg-gray-800 text-xs font-semibold rounded-lg text-gray-300 hover:text-white transition-all border border-gray-700/80 hover:border-gray-600 shadow-sm" title="Visit Landing Page">
+                <a href="index.html" class="flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-xs font-semibold rounded-xl text-emerald-300 hover:text-white transition-all border border-emerald-500/30 hover:border-emerald-500/50 shadow-[0_0_10px_rgba(16,185,129,0.15)]" title="Visit Landing Page">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path></svg>
                     Landing Page
                 </a>
-                <button id="logout-btn" class="px-3.5 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-xs font-semibold rounded-lg text-red-400 hover:text-red-300 transition-all border border-red-500/30 hover:border-red-500/50 shadow-sm flex items-center gap-1.5" title="Sign Out">
+                <button id="logout-btn" class="flex items-center gap-1.5 px-3.5 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-xs font-semibold rounded-xl text-red-400 hover:text-red-300 transition-all border border-red-500/30 hover:border-red-500/50 shadow-[0_0_10px_rgba(239,68,68,0.15)]" title="Sign Out">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
                     Log out
                 </button>
             </div>
@@ -199,7 +205,7 @@
                             </svg>
                         </div>
                     </div>
-                    <p class="text-xl font-bold mt-1 truncate" id="top-intent">No data</p>
+                    <p class="text-xl font-bold mt-1 truncate" id="top-intent">0 queries</p>
                     <p class="text-xs text-brand-muted mt-3" id="top-intent-percent">0% of all queries</p>
                 </div>
             </div>
@@ -231,33 +237,59 @@
                             
                             <hr class="border-gray-800">
 
+                            <!-- Friendly Tone Toggle -->
                             <div class="flex items-center justify-between">
                                 <div>
                                     <p class="font-medium text-sm">Friendly Tone</p>
                                     <p class="text-xs text-brand-muted">AI uses warm, conversational language</p>
                                 </div>
                                 <label class="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" id="tone-toggle" value="" class="sr-only peer" checked>
-                                    <div
-                                        class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-accent">
-                                    </div>
+                                    <input type="checkbox" id="tone-toggle" class="sr-only peer" checked>
+                                    <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-accent"></div>
                                 </label>
                             </div>
 
+                            <!-- Use Emojis Toggle -->
                             <div class="flex items-center justify-between">
                                 <div>
                                     <p class="font-medium text-sm">Use Emojis</p>
                                     <p class="text-xs text-brand-muted">Allow AI to use emojis in responses</p>
                                 </div>
                                 <label class="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" id="emoji-toggle" value="" class="sr-only peer" checked>
-                                    <div
-                                        class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-accent">
-                                    </div>
+                                    <input type="checkbox" id="emoji-toggle" class="sr-only peer" checked>
+                                    <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-accent"></div>
                                 </label>
                             </div>
-                        </div>
-                    </div>
+
+                            <!-- Exit Intent Auto-Show (Pro & Business) -->
+                            <div class="flex items-center justify-between pt-2 border-t border-gray-800/60" id="exit-intent-row">
+                                <div>
+                                    <div class="flex items-center gap-2">
+                                        <p class="font-medium text-sm">Auto-Show on Exit Intent</p>
+                                        <span id="exit-intent-plan-tag" class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-400 border border-purple-500/20">PRO+</span>
+                                    </div>
+                                    <p class="text-xs text-brand-muted">Nudge leaving shoppers before they abandon cart</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer" id="exit-intent-label">
+                                    <input type="checkbox" id="exit-intent-toggle" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-accent"></div>
+                                </label>
+                            </div>
+
+                            <!-- White-Label Branding (Business Only) -->
+                            <div class="flex items-center justify-between pt-2 border-t border-gray-800/60" id="whitelabel-row">
+                                <div>
+                                    <div class="flex items-center gap-2">
+                                        <p class="font-medium text-sm">Remove Branding (White-Label)</p>
+                                        <span id="whitelabel-plan-tag" class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">BUSINESS</span>
+                                    </div>
+                                    <p class="text-xs text-brand-muted">Hide "Powered by ClarityCart" badge from widget</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer" id="whitelabel-label">
+                                    <input type="checkbox" id="whitelabel-toggle" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-accent"></div>
+                                </label>
+                            </div>
 
                     <div class="mt-8 pt-6 border-t border-gray-800">
                         <h4 class="text-sm font-semibold mb-2">Installation Snippet</h4>
@@ -391,7 +423,7 @@
                 let queryLimit = meta.query_limit;
                 if (queryLimit === undefined || queryLimit === null) {
                     const p = userPlan.toLowerCase();
-                    queryLimit = p === 'pro' ? 5000 : p === 'business' ? 15000 : 500;
+                    queryLimit = p === 'pro' ? 2500 : p === 'business' ? 10000 : 500;
                 }
 
                 let daysLeft = 30;
@@ -412,10 +444,17 @@
                 const subEnd = meta.subscription_expires_at ? new Date(meta.subscription_expires_at) : new Date(subStart.getTime() + 30 * 86400000);
                 const fmtCompact = (d) => `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}`;
 
+                const isSuperAdminUser = isSuperAdminEmail;
                 const isCanceled = meta.subscription_status === 'canceled';
+
                 if (resetLabel) {
-                    if (isCanceled) {
+                    if (isSuperAdminUser) {
+                        resetLabel.innerHTML = `<span class="text-amber-400 font-semibold">Lifetime Access:</span> Permanent Super-Admin Privileges (∞).`;
+                        if (cancelBtn) cancelBtn.style.display = 'none';
+                    } else if (isCanceled) {
                         resetLabel.innerHTML = `<span class="text-amber-400 font-semibold">Canceled:</span> Access active until ${fmtCompact(subEnd)} (${daysLeft}d left).`;
+                    } else if (daysLeft === 0) {
+                        resetLabel.innerHTML = `<span class="text-red-400 font-semibold">Expired:</span> Billing period ended on ${fmtCompact(subEnd)}. <a href="index.html#pricing" class="text-brand-accent hover:underline">Renew</a> to restore access.`;
                     } else {
                         resetLabel.innerHTML = `Period: <span class="font-mono text-gray-300">${fmtCompact(subStart)} – ${fmtCompact(subEnd)}</span> (${daysLeft}d left). <a href="index.html#pricing" class="text-brand-accent hover:underline">Upgrade</a> to increase limits.`;
                     }
@@ -712,6 +751,92 @@
                         copyBtn.innerHTML = `<svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`;
                         setTimeout(() => { copyBtn.innerHTML = oldHtml; }, 2000);
                     });
+                }
+
+                // 6. Widget Settings Toggles & Plan Gating
+                const toneToggle = document.getElementById('tone-toggle');
+                const emojiToggle = document.getElementById('emoji-toggle');
+                const exitToggle = document.getElementById('exit-intent-toggle');
+                const whiteLabelToggle = document.getElementById('whitelabel-toggle');
+
+                const isProOrHigher = isSuperAdminEmail || userPlan.toLowerCase() === 'pro' || userPlan.toLowerCase() === 'business';
+                const isBusinessOrHigher = isSuperAdminEmail || userPlan.toLowerCase() === 'business';
+
+                // Initial states
+                if (toneToggle) toneToggle.checked = meta.friendly_tone !== false;
+                if (emojiToggle) emojiToggle.checked = meta.use_emojis !== false;
+
+                // Exit Intent gating (Pro & Business)
+                if (exitToggle) {
+                    if (isProOrHigher) {
+                        exitToggle.checked = meta.exit_intent === true;
+                        exitToggle.disabled = false;
+                    } else {
+                        exitToggle.checked = false;
+                        exitToggle.disabled = true;
+                        const row = document.getElementById('exit-intent-row');
+                        if (row) {
+                            row.classList.add('opacity-50', 'cursor-not-allowed');
+                            row.title = 'Available on Pro and Business plans. Upgrade to unlock!';
+                        }
+                    }
+                }
+
+                // White-Label gating (Business Only)
+                if (whiteLabelToggle) {
+                    if (isBusinessOrHigher) {
+                        whiteLabelToggle.checked = meta.white_label === true;
+                        whiteLabelToggle.disabled = false;
+                    } else {
+                        whiteLabelToggle.checked = false;
+                        whiteLabelToggle.disabled = true;
+                        const row = document.getElementById('whitelabel-row');
+                        if (row) {
+                            row.classList.add('opacity-50', 'cursor-not-allowed');
+                            row.title = 'White-labeling is exclusively available on the Business plan. Upgrade to unlock!';
+                        }
+                    }
+                }
+
+                // Helper to save settings to Auth Metadata and store_settings table
+                const saveSetting = async (key, val, friendlyName) => {
+                    try {
+                        const updateObj = {};
+                        updateObj[key] = val;
+                        await supabaseClient.auth.updateUser({ data: updateObj });
+
+                        try {
+                            const storeUpdate = {};
+                            if (key === 'friendly_tone') storeUpdate.friendly_tone = val;
+                            if (key === 'use_emojis') storeUpdate.use_emojis = val;
+                            if (key === 'exit_intent') storeUpdate.exit_intent = val;
+                            if (key === 'white_label') storeUpdate.white_label = val;
+
+                            if (Object.keys(storeUpdate).length > 0) {
+                                await supabaseClient
+                                    .from('store_settings')
+                                    .update(storeUpdate)
+                                    .eq('store_domain', storeDomain);
+                            }
+                        } catch (e) {}
+
+                        showToast(`${friendlyName} preference saved!`, 'success');
+                    } catch (err) {
+                        showToast(`Failed to save ${friendlyName}: ${err.message}`, 'error');
+                    }
+                };
+
+                if (toneToggle) {
+                    toneToggle.onchange = () => saveSetting('friendly_tone', toneToggle.checked, 'Tone');
+                }
+                if (emojiToggle) {
+                    emojiToggle.onchange = () => saveSetting('use_emojis', emojiToggle.checked, 'Emojis');
+                }
+                if (exitToggle && isProOrHigher) {
+                    exitToggle.onchange = () => saveSetting('exit_intent', exitToggle.checked, 'Exit-Intent Auto-Show');
+                }
+                if (whiteLabelToggle && isBusinessOrHigher) {
+                    whiteLabelToggle.onchange = () => saveSetting('white_label', whiteLabelToggle.checked, 'White-Label Branding');
                 }
 
             } catch (e) {

@@ -143,9 +143,8 @@ async function checkStoreLimit(domain, question = '') {
     let queryLimit = meta.query_limit;
     if (!queryLimit) {
       const plan = (meta.plan || '').toLowerCase();
-      if (plan === 'pro') queryLimit = 5000;
-      else if (plan === 'business') queryLimit = 15000;
-      else if (plan === 'enterprise') queryLimit = 50000;
+      if (plan === 'pro') queryLimit = 2500;
+      else if (plan === 'business') queryLimit = 10000;
       else queryLimit = 500;
     }
 
@@ -290,14 +289,14 @@ app.get('/api/admin/overview', authenticateAdmin, async (req, res) => {
       let planPrice = 0;
 
       if (plan.toLowerCase() === 'pro') {
-        if (!meta.query_limit) queryLimit = 5000;
-        planPrice = 29;
+        if (!meta.query_limit) queryLimit = 2500;
+        planPrice = 29.99;
       } else if (plan.toLowerCase() === 'business') {
-        if (!meta.query_limit) queryLimit = 15000;
-        planPrice = 79;
-      } else if (plan.toLowerCase() === 'enterprise') {
-        if (!meta.query_limit) queryLimit = 50000;
-        planPrice = 199;
+        if (!meta.query_limit) queryLimit = 10000;
+        planPrice = 79.99;
+      } else {
+        if (!meta.query_limit) queryLimit = 500;
+        planPrice = 9.99;
       }
 
       const queryCount = domainCounts[storeDomain] || 0;
