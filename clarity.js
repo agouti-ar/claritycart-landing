@@ -741,24 +741,6 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
 
                 const extractedContext = this.extractProductContext();
 
-                // Send to Supabase in the background (invisible to the user)
-                if (SUPABASE_ANON_KEY !== 'YOUR_ANON_KEY_HERE') {
-                    fetch(`${SUPABASE_URL}/rest/v1/questions`, {
-                        method: 'POST',
-                        headers: {
-                            'apikey': SUPABASE_ANON_KEY,
-                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-                            'Content-Type': 'application/json',
-                            'Prefer': 'return=minimal'
-                        },
-                        body: JSON.stringify({
-                            store_domain: SCRIPT_DOMAIN || window.location.hostname || 'unknown',
-                            question_text: question,
-                            product_context: extractedContext ? extractedContext.title : ''
-                        })
-                    }).catch(e => console.error("Supabase sync failed", e));
-                }
-
                 const cfg = window.ClarityCartConfig;
                 let currentTone = cfg.activeTier === 'Starter' ? 'friendly' : cfg.tone;
                 if (cfg.activeTier === 'Pro' && currentTone === 'custom') currentTone = 'friendly';
@@ -891,12 +873,30 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                 addMessage(cleanResponse, 'ai');
 
                 if (isQuotaBlocked) {
-                    input.placeholder = "Monthly limit reached. Please upgrade.";
+                    input.placeholder = "AI assistant is resting ☕";
                     input.disabled = true;
                     sendBtn.disabled = true;
                     input.style.opacity = '0.6';
                     sendBtn.style.opacity = '0.5';
                     return;
+                }
+
+                // Record genuine answered question to Supabase (never records quota blocked / resting fallbacks)
+                if (requestSuccess && !isQuotaBlocked && !cfg.mockMode && SUPABASE_ANON_KEY !== 'YOUR_ANON_KEY_HERE') {
+                    fetch(`${SUPABASE_URL}/rest/v1/questions`, {
+                        method: 'POST',
+                        headers: {
+                            'apikey': SUPABASE_ANON_KEY,
+                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                            'Content-Type': 'application/json',
+                            'Prefer': 'return=minimal'
+                        },
+                        body: JSON.stringify({
+                            store_domain: SCRIPT_DOMAIN || window.location.hostname || 'unknown',
+                            question_text: question,
+                            product_context: extractedContext ? extractedContext.title : ''
+                        })
+                    }).catch(e => console.error("Supabase sync failed", e));
                 }
 
                 const canDiscount = cfg.activeTier !== 'Starter' && cfg.intentDiscountEnabled;

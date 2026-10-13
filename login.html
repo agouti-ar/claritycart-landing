@@ -53,11 +53,6 @@
 </head>
 
 <body class="flex items-center justify-center min-h-screen relative overflow-hidden">
-    <!-- Back to Home Button -->
-    <a href="index.html" class="absolute top-6 left-6 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-800/60 hover:bg-gray-800 border border-gray-700 text-xs font-medium text-brand-muted hover:text-white transition-all group z-20 backdrop-blur-sm">
-        <svg class="w-4 h-4 transform group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-        <span>Back to Home</span>
-    </a>
 
     <!-- Background Glows -->
     <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-600/20 rounded-full blur-[120px] pointer-events-none"></div>
@@ -95,8 +90,8 @@
             </div>
 
             <button type="submit" id="login-btn"
-                class="w-full py-3 px-4 bg-brand-accent hover:bg-blue-600 text-white font-semibold rounded-lg shadow-lg hover:shadow-blue-500/30 transition-all duration-200">
-                Sign in
+                class="w-full py-3 px-4 bg-brand-accent hover:bg-blue-600 text-white font-semibold rounded-lg shadow-lg hover:shadow-blue-500/30 transition-all duration-200 flex items-center justify-center">
+                <span id="btn-text">Sign in</span>
             </button>
         </form>
 
@@ -121,6 +116,15 @@
         </p>
     </div>
 
+    <!-- Linear-Style Minimalist Loading Overlay -->
+    <div id="page-loader" class="fixed inset-0 bg-[#0B0F19]/80 backdrop-blur-md z-50 flex flex-col items-center justify-center transition-opacity duration-300 opacity-0 pointer-events-none">
+        <div class="relative flex items-center justify-center">
+            <div class="w-10 h-10 rounded-full border-2 border-blue-500/20 border-t-blue-500 animate-spin"></div>
+            <div class="absolute w-2 h-2 rounded-full bg-blue-400 animate-ping"></div>
+        </div>
+        <p id="loader-status" class="mt-4 text-xs font-medium text-gray-400 tracking-widest uppercase">Connecting...</p>
+    </div>
+
     <!-- Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
@@ -128,10 +132,39 @@
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ6bXB3c3RmZGR6bnN2eXB1ZGhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3NzMyMTksImV4cCI6MjEwNjM0OTIxOX0.Qz0TGEDy1TOekLrqTrfspT8gnnfGy5_BjMtJRlz-PaI';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+        function showFullLoader(text = 'Connecting...') {
+            const loader = document.getElementById('page-loader');
+            const status = document.getElementById('loader-status');
+            if (status) status.textContent = text;
+            loader.classList.remove('opacity-0', 'pointer-events-none');
+            loader.classList.add('opacity-100');
+        }
+
+        // Check if user is already logged in (skip if explicitly logged out)
+        (async () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('logged_out') === 'true') {
+                try {
+                    await supabaseClient.auth.signOut();
+                } catch (e) {}
+                localStorage.clear();
+                sessionStorage.clear();
+                window.history.replaceState({}, document.title, window.location.pathname);
+                return;
+            }
+
+            try {
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                if (session && session.user) {
+                    showFullLoader('Redirecting to dashboard...');
+                    setTimeout(() => { window.location.href = 'dashboard.html'; }, 300);
+                }
+            } catch (e) {}
+        })();
+
         function showError(message) {
             const errorBox = document.getElementById('error-message');
             const errorText = document.getElementById('error-text');
-            // Supabase "Invalid login credentials" => more user-friendly message
             if (message.includes("Invalid login credentials")) {
                 message = "Invalid email or password.";
             }
@@ -159,8 +192,14 @@
             }
 
             const btn = document.getElementById('login-btn');
-            const originalText = btn.textContent;
-            btn.textContent = 'Authenticating...';
+            const btnText = document.getElementById('btn-text');
+            btnText.innerHTML = `
+                <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Signing in...
+            `;
             btn.disabled = true;
 
             try {
@@ -171,18 +210,22 @@
 
                 if (error) throw error;
 
-                // Успешно!
-                window.location.href = 'dashboard.html';
+                // Успешно! Smooth Linear-style transition
+                showFullLoader('Welcome back! Loading dashboard...');
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 400);
                 
             } catch (error) {
                 showError(error.message);
-                btn.textContent = originalText;
+                btnText.textContent = 'Sign in';
                 btn.disabled = false;
             }
         });
 
         document.getElementById('google-login-btn').addEventListener('click', async function() {
             hideError();
+            showFullLoader('Connecting with Google...');
             try {
                 const { data, error } = await supabaseClient.auth.signInWithOAuth({
                     provider: 'google',
@@ -193,6 +236,9 @@
                 if (error) throw error;
             } catch (error) {
                 showError("Google login error: " + error.message);
+                const loader = document.getElementById('page-loader');
+                loader.classList.add('opacity-0', 'pointer-events-none');
+                loader.classList.remove('opacity-100');
             }
         });
     </script>

@@ -75,12 +75,33 @@ app.post('/api/validate-domain', async (req, res) => {
   res.json({ valid: true, message: 'Domain is valid' });
 });
 
+// Friendly, customer-safe resting messages when AI quota is reached or store is paused
+function getRandomRestingMessage(isRussian = false) {
+  const ruMessages = [
+    "Наш AI-помощник сейчас на коротком кофе-брейке ☕ после общения со столькими покупателями сегодня! Вы можете продолжить покупки или оформить заказ, наша команда на связи.",
+    "Кажется, наш консультант ненадолго отвлекся на подзарядку батареек 🔋! Вы можете добавить товар в корзину или написать нашим менеджерам.",
+    "Наш электронный специалист на пару минут отошел за свежим чаем 🍵. Оформите заказ на сайте или напишите в поддержку — мы на связи!",
+    "Наш AI-консультант устроил небольшую передышку 🛋️! Вы можете смело завершить покупку или задать вопрос оператору."
+  ];
+
+  const enMessages = [
+    "Our AI assistant is taking a short coffee break ☕ after chatting with so many shoppers today! Feel free to explore or complete your order directly.",
+    "Our digital specialist is briefly recharging batteries 🔋! You can proceed to checkout or reach out to our support team.",
+    "Our store assistant stepped away for a fresh cup of tea 🍵. You can safely add items to your cart or contact our staff!",
+    "Looks like our AI consultant is taking a quick breather 🛋️! Feel free to continue shopping or message our team."
+  ];
+
+  const list = isRussian ? ruMessages : enMessages;
+  return list[Math.floor(Math.random() * list.length)];
+}
+
 // Helper to check if a store domain is blocked or exceeded quota
-async function checkStoreLimit(domain) {
+async function checkStoreLimit(domain, question = '') {
   if (!domain || domain === 'unknown') {
     return { allowed: true };
   }
   const cleanDomain = domain.trim().toLowerCase();
+  const isRussian = /[а-яё]/i.test(question || '');
 
   try {
     // 1. Fetch user list from Supabase Admin
@@ -101,12 +122,14 @@ async function checkStoreLimit(domain) {
     }
 
     const meta = user.user_metadata || {};
-    const isBlocked = Boolean(user.banned_until && new Date(user.banned_until) > new Date()) || Boolean(meta.is_blocked);
+    const isBlocked = Boolean(user.banned_until && new Date(user.banned_until) > new Date()) || 
+                      Boolean(meta.is_blocked) || 
+                      Boolean(meta.widget_paused);
     if (isBlocked) {
       return {
         allowed: false,
         reason: 'blocked',
-        message: "This store's AI assistant has been temporarily suspended by the administrator."
+        message: getRandomRestingMessage(isRussian)
       };
     }
 
@@ -126,13 +149,15 @@ async function checkStoreLimit(domain) {
       else queryLimit = 500;
     }
 
+    // Since questions are only recorded after a successful AI response,
+    // queryCount >= queryLimit accurately blocks new requests once quota is reached.
     if (queryCount >= queryLimit) {
       return {
         allowed: false,
         reason: 'limit_reached',
         queryCount,
         queryLimit,
-        message: "Monthly AI query limit reached for this store. Please upgrade your plan in your ClarityCart dashboard."
+        message: getRandomRestingMessage(isRussian)
       };
     }
 
@@ -149,7 +174,7 @@ app.post('/api/chat', async (req, res) => {
   const targetDomain = domain || store_domain;
 
   // 1. Quota & block check
-  const status = await checkStoreLimit(targetDomain);
+  const status = await checkStoreLimit(targetDomain, question);
   if (!status.allowed) {
     console.log(`[Chat API] Protected block for domain "${targetDomain}". Reason: ${status.reason}`);
     return res.status(200).json({
@@ -298,6 +323,7 @@ app.get('/api/admin/overview', authenticateAdmin, async (req, res) => {
         query_count: queryCount,
         query_limit: queryLimit,
         is_blocked: isBlocked,
+        widget_paused: Boolean(meta.widget_paused),
         days_remaining: daysRemaining,
         subscription_expires_at: meta.subscription_expires_at || null,
         created_at: u.created_at,
@@ -321,7 +347,7 @@ app.get('/api/admin/overview', authenticateAdmin, async (req, res) => {
   }
 });
 
-// Admin: Block / Unblock user
+// Admin: Block / Unblock user (Full Auth ban for abuse)
 app.post('/api/admin/users/:id/block', authenticateAdmin, async (req, res) => {
   const { id } = req.params;
   const { block } = req.body; // true = block, false = unblock
@@ -332,9 +358,13 @@ app.post('/api/admin/users/:id/block', authenticateAdmin, async (req, res) => {
   }
 
   try {
+    const { data: { user }, error: getErr } = await supabase.auth.admin.getUserById(id);
+    if (getErr) throw getErr;
+
     const updatePayload = {
       ban_duration: block ? '876000h' : 'none',
       user_metadata: {
+        ...(user?.user_metadata || {}),
         is_blocked: Boolean(block)
       }
     };
@@ -342,14 +372,67 @@ app.post('/api/admin/users/:id/block', authenticateAdmin, async (req, res) => {
     const { data, error } = await supabase.auth.admin.updateUserById(id, updatePayload);
     if (error) throw error;
 
-    console.log(`[Admin] User ${id} block status updated to: ${block}`);
+    console.log(`[Admin] User ${id} auth block status updated to: ${block}`);
     res.json({ 
       success: true, 
-      message: block ? 'User blocked successfully' : 'User unblocked successfully',
+      message: block ? 'User account blocked successfully' : 'User account unblocked successfully',
       is_blocked: Boolean(block)
     });
   } catch (err) {
     console.error('[Admin API] Error updating block status:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Admin: Pause / Resume Widget (Service suspension without banning login)
+app.post('/api/admin/users/:id/pause', authenticateAdmin, async (req, res) => {
+  const { id } = req.params;
+  const { pause } = req.body; // true = pause, false = resume
+
+  if (req.adminUser && req.adminUser.id === id && pause) {
+    return res.status(400).json({ error: 'You cannot pause your own account widget!' });
+  }
+
+  try {
+    const { data: { user }, error: getErr } = await supabase.auth.admin.getUserById(id);
+    if (getErr) throw getErr;
+
+    const { error } = await supabase.auth.admin.updateUserById(id, {
+      user_metadata: {
+        ...(user?.user_metadata || {}),
+        widget_paused: Boolean(pause)
+      }
+    });
+    if (error) throw error;
+
+    console.log(`[Admin] User ${id} widget pause status: ${pause}`);
+    res.json({ 
+      success: true, 
+      message: pause ? 'Store AI widget paused' : 'Store AI widget resumed',
+      widget_paused: Boolean(pause)
+    });
+  } catch (err) {
+    console.error('[Admin API] Error updating pause status:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Admin: Delete user permanently (GDPR / Super-Admin cleanup)
+app.delete('/api/admin/users/:id', authenticateAdmin, async (req, res) => {
+  const { id } = req.params;
+
+  if (req.adminUser && req.adminUser.id === id) {
+    return res.status(400).json({ error: 'You cannot delete your own Super-Admin account!' });
+  }
+
+  try {
+    const { error } = await supabase.auth.admin.deleteUser(id);
+    if (error) throw error;
+
+    console.log(`[Admin] User ${id} permanently deleted.`);
+    res.json({ success: true, message: 'User permanently deleted' });
+  } catch (err) {
+    console.error('[Admin API] Error deleting user:', err);
     res.status(500).json({ error: err.message });
   }
 });

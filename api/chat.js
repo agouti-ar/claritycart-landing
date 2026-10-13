@@ -40,16 +40,34 @@ export default async function handler(req, res) {
             const user = (authData.users || []).find(u => (u.user_metadata?.store_domain || '').trim().toLowerCase() === targetDomain);
             if (user) {
               const meta = user.user_metadata || {};
-              isBlocked = Boolean(user.banned_until && new Date(user.banned_until) > new Date()) || Boolean(meta.is_blocked);
+              isBlocked = Boolean(user.banned_until && new Date(user.banned_until) > new Date()) || 
+                          Boolean(meta.is_blocked) || 
+                          Boolean(meta.widget_paused);
               const plan = (meta.plan || '').toLowerCase();
               queryLimit = meta.query_limit || (plan === 'pro' ? 5000 : plan === 'business' ? 15000 : 500);
             }
           }
         }
 
+        const isRussian = /[а-яё]/i.test(question || '');
+        const ruMessages = [
+          "Наш AI-помощник сейчас на коротком кофе-брейке ☕ после общения со столькими покупателями сегодня! Вы можете продолжить покупки или оформить заказ, наша команда на связи.",
+          "Кажется, наш консультант ненадолго отвлекся на подзарядку батареек 🔋! Вы можете добавить товар в корзину или написать нашим менеджерам.",
+          "Наш электронный специалист на пару минут отошел за свежим чаем 🍵. Оформите заказ на сайте или напишите в поддержку — мы на связи!",
+          "Наш AI-консультант устроил небольшую передышку 🛋️! Вы можете смело завершить покупку или задать вопрос оператору."
+        ];
+        const enMessages = [
+          "Our AI assistant is taking a short coffee break ☕ after chatting with so many shoppers today! Feel free to explore or complete your order directly.",
+          "Our digital specialist is briefly recharging batteries 🔋! You can proceed to checkout or reach out to our support team.",
+          "Our store assistant stepped away for a fresh cup of tea 🍵. You can safely add items to your cart or contact our staff!",
+          "Looks like our AI consultant is taking a quick breather 🛋️! Feel free to continue shopping or message our team."
+        ];
+        const restingList = isRussian ? ruMessages : enMessages;
+        const randomRestingMsg = restingList[Math.floor(Math.random() * restingList.length)];
+
         if (isBlocked) {
           return res.status(200).json({
-            answer: "This store's AI assistant has been temporarily suspended by the administrator.",
+            answer: randomRestingMsg,
             blocked: true
           });
         }
@@ -68,7 +86,7 @@ export default async function handler(req, res) {
 
         if (!isNaN(totalCount) && totalCount >= queryLimit) {
           return res.status(200).json({
-            answer: "Monthly AI query limit reached for this store. Please upgrade your plan in your ClarityCart dashboard.",
+            answer: randomRestingMsg,
             limitReached: true,
             queryCount: totalCount,
             queryLimit: queryLimit
