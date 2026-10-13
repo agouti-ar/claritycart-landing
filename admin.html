@@ -196,7 +196,15 @@
                         <option value="business">Business</option>
                         <option value="starter">Starter</option>
                     </select>
-                    <input type="text" id="search-input" placeholder="Search email or domain..." class="bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-brand-accent w-full sm:w-64 transition-colors">
+                    <div class="relative flex items-center group w-full sm:w-72">
+                        <div class="absolute inset-0 rounded-full bg-gradient-to-r from-blue-500/40 via-cyan-400/40 to-indigo-500/40 blur-[6px] opacity-70 group-focus-within:opacity-100 group-focus-within:blur-[10px] group-focus-within:from-cyan-400 group-focus-within:to-blue-600 transition-all duration-300 pointer-events-none"></div>
+                        <div class="relative flex items-center w-full rounded-full bg-[#0E1526] border border-cyan-500/50 group-focus-within:border-cyan-400 p-1 pl-1.5 shadow-[inset_0_1px_4px_rgba(0,0,0,0.6)] transition-all">
+                            <div class="w-7 h-7 rounded-full bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white shadow-[0_0_10px_rgba(6,182,212,0.6)] flex-shrink-0">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                            </div>
+                            <input type="text" id="search-input" placeholder="Search email or domain..." class="bg-transparent border-0 px-3 py-1 text-sm text-white placeholder-gray-400 focus:outline-none w-full">
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -567,10 +575,10 @@
                     statusBadge = `<span class="status-pill px-2 py-0.5 bg-amber-500/10 text-amber-400 rounded text-[10px] font-bold uppercase tracking-wide border border-amber-500/20">Paused</span>`;
                 }
 
-                // Dynamic Subscription Period (Calculated from Start Date to Expiration Date)
+                // Dynamic Subscription Period (Vibrant color-coded badges)
                 let periodText = '';
                 if (isSuperAdminEmail) {
-                    periodText = '<span class="text-amber-400 font-medium">Lifetime Access (∞)</span>';
+                    periodText = '<span class="px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-300 font-semibold border border-amber-500/30 shadow-[0_0_8px_rgba(245,158,11,0.2)]">Lifetime Access (∞)</span>';
                 } else {
                     const subStart = u.created_at ? new Date(u.created_at) : new Date();
                     const subEnd = u.subscription_expires_at ? new Date(u.subscription_expires_at) : new Date(subStart.getTime() + 30 * 86400000);
@@ -578,9 +586,11 @@
                     const diffMs = subEnd.getTime() - Date.now();
                     const daysLeft = Math.max(0, Math.ceil(diffMs / 86400000));
                     if (daysLeft === 0) {
-                        periodText = `<span class="text-red-400 font-medium">${fmtCompact(subStart)} – ${fmtCompact(subEnd)} (Expired)</span>`;
+                        periodText = `<span class="px-2 py-0.5 rounded-md bg-red-500/15 text-red-400 font-medium border border-red-500/25">${fmtCompact(subStart)} – ${fmtCompact(subEnd)} (Expired)</span>`;
+                    } else if (daysLeft <= 7) {
+                        periodText = `<span class="px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-300 font-medium border border-amber-500/25 animate-pulse">${fmtCompact(subStart)} – ${fmtCompact(subEnd)} (${daysLeft}d left ⚠️)</span>`;
                     } else {
-                        periodText = `${fmtCompact(subStart)} – ${fmtCompact(subEnd)} (${daysLeft}d left)`;
+                        periodText = `<span class="px-2 py-0.5 rounded-md bg-cyan-500/15 text-cyan-300 font-medium border border-cyan-500/25 shadow-[0_0_6px_rgba(6,182,212,0.15)]">${fmtCompact(subStart)} – ${fmtCompact(subEnd)} (${daysLeft}d left)</span>`;
                     }
                 }
 
@@ -606,7 +616,7 @@
                 // Delete Account Button (protected for both super-admins)
                 const deleteBtn = isSuperAdminEmail
                     ? ''
-                    : `<button class="px-2 py-1.5 text-gray-500 hover:text-red-400 transition-colors" title="Permanently delete user account" onclick="confirmDelete('${u.id}', '${u.email}')">
+                    : `<button class="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/25 text-red-400 hover:text-red-300 border border-red-500/20 hover:border-red-500/40 transition-all shadow-[0_0_8px_rgba(239,68,68,0.15)]" title="Permanently delete user account" onclick="confirmDelete('${u.id}', '${u.email}')">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                        </button>`;
 
@@ -666,7 +676,7 @@
                             </span>
                         </td>
                         <td class="px-6 py-4 text-right space-x-1 whitespace-nowrap">
-                            <button class="edit-btn px-2 py-1.5 text-gray-400 hover:text-white transition-colors" title="Manage User & Subscription" onclick="openEditModal('${u.id}')">
+                            <button class="edit-btn p-1.5 rounded-lg bg-blue-500/10 hover:bg-blue-500/25 text-blue-400 hover:text-blue-300 border border-blue-500/20 hover:border-blue-500/40 transition-all shadow-[0_0_8px_rgba(59,130,246,0.15)] inline-flex items-center justify-center align-middle" title="Manage User & Subscription" onclick="openEditModal('${u.id}')">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                             </button>
                             <button class="add-time-btn px-2 py-1.5 bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 border border-orange-500/30 rounded text-xs font-medium transition-colors" onclick="modifySubscription('${u.id}', -30)">- 30D</button>

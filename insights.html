@@ -105,21 +105,22 @@
             class="h-16 glass-panel border-b border-gray-800 flex items-center justify-between px-8 sticky top-0 z-10">
             <h2 class="text-xl font-bold font-outfit text-white tracking-tight">Insights & Analytics</h2>
             <div class="flex items-center space-x-3">
-                <div id="domain-badge-container" class="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-gray-900/90 via-blue-950/40 to-gray-900/90 border border-blue-500/30 hover:border-blue-400/50 flex items-center gap-2.5 shadow-[0_0_15px_rgba(59,130,246,0.12)] transition-all">
+                <div id="domain-badge-container" class="px-3.5 py-1.5 rounded-full bg-gradient-to-r from-gray-900/90 via-blue-950/40 to-gray-900/90 border border-blue-500/30 hover:border-blue-400/50 flex items-center gap-2.5 shadow-[0_0_15px_rgba(59,130,246,0.12)] transition-all">
                     <div class="relative flex items-center justify-center">
-                        <svg class="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path></svg>
+                        <svg class="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
                         <span class="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
                         <span class="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
                     </div>
                     <span class="text-sm font-semibold font-outfit tracking-wide bg-clip-text text-transparent bg-gradient-to-r from-white via-blue-100 to-indigo-200" id="header-domain">Loading...</span>
                 </div>
-                <a href="index.html" class="flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-xs font-semibold rounded-xl text-emerald-300 hover:text-white transition-all border border-emerald-500/30 hover:border-emerald-500/50 shadow-[0_0_10px_rgba(16,185,129,0.15)]" title="Visit Landing Page">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path></svg>
-                    Landing Page
+                <a href="index.html" class="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gray-900/90 hover:bg-gray-800 text-xs font-semibold text-gray-200 hover:text-white border border-gray-700/80 hover:border-gray-500 shadow-sm transition-all group" title="Visit Landing Page">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 group-hover:scale-125 transition-transform"></span>
+                    <span>Landing Page</span>
+                    <svg class="w-3 h-3 text-gray-400 group-hover:text-white group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M7 17L17 7m0 0H8m9 0v9"></path></svg>
                 </a>
-                <button id="logout-btn" class="flex items-center gap-1.5 px-3.5 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-xs font-semibold rounded-xl text-red-400 hover:text-red-300 transition-all border border-red-500/30 hover:border-red-500/50 shadow-[0_0_10px_rgba(239,68,68,0.15)]" title="Sign Out">
+                <button id="logout-btn" class="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-red-500/10 hover:bg-red-500/20 text-xs font-semibold text-red-400 hover:text-red-300 border border-red-500/30 hover:border-red-500/50 shadow-[0_0_10px_rgba(239,68,68,0.15)] transition-all" title="Sign Out">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                    Log out
+                    <span>Log out</span>
                 </button>
             </div>
         </header>
@@ -258,9 +259,33 @@
                 }
             });
 
-            // Update Metric Cards dynamically
+            // Compute real Customer Sentiment and Intent from actual store questions
+            let posCount = 0;
+            let negCount = 0;
+            let neuCount = 0;
+            let cartAdds = 0;
+
+            const posRegex = /love|great|awesome|best|good|thank|nice|fast|discount|promo|coupon|deal|perfect|helpful|excellent|спасибо|отлично|супер|скидка|промокод|быстро|хорош|класс|нравится|доволен/i;
+            const negRegex = /broken|bad|hate|slow|scam|fake|return|refund|cancel|worst|fail|wrong|issue|problem|complaint|late|delay|error|не работает|брак|возврат|отмена|обман|ужас|плохо|ошибка|сломался|где заказ|жалоба/i;
+            const intentRegex = /buy|cart|order|price|checkout|discount|promo|купить|корзин|заказ|цен|оплат|скидк/i;
+
+            realQuestions.forEach(q => {
+                const text = (q.question_text || '').toLowerCase();
+                if (negRegex.test(text)) {
+                    negCount++;
+                } else if (posRegex.test(text)) {
+                    posCount++;
+                } else {
+                    neuCount++;
+                }
+
+                if (intentRegex.test(text)) {
+                    cartAdds++;
+                }
+            });
+
+            const hasData = totalQ > 0;
             const engagedUsers = totalQ;
-            const cartAdds = Math.round(totalQ * 0.35);
             const estRevenue = Math.round(cartAdds * 35);
 
             const engagedEl = document.getElementById('metric-engaged');
@@ -271,17 +296,32 @@
             if (cartEl) cartEl.textContent = cartAdds.toLocaleString();
             if (revenueEl) revenueEl.textContent = `$${estRevenue.toLocaleString()}`;
 
-            // Sentiment Calculation
+            // Real Sentiment Calculation
             const sentimentPercentEl = document.getElementById('sentiment-percent');
             const sentimentLabelEl = document.getElementById('sentiment-label');
-            const hasData = totalQ > 0;
 
-            if (sentimentPercentEl) {
-                sentimentPercentEl.textContent = hasData ? '85%' : '0%';
+            let dominantPercent = '0%';
+            let dominantLabel = 'No queries yet';
+
+            if (hasData) {
+                const posPercent = Math.round((posCount / totalQ) * 100);
+                const negPercent = Math.round((negCount / totalQ) * 100);
+                const neuPercent = Math.max(0, 100 - posPercent - negPercent);
+
+                if (posCount >= negCount && posCount > 0) {
+                    dominantPercent = `${posPercent}%`;
+                    dominantLabel = 'Positive';
+                } else if (negCount > posCount) {
+                    dominantPercent = `${negPercent}%`;
+                    dominantLabel = 'Negative';
+                } else {
+                    dominantPercent = `${neuPercent}%`;
+                    dominantLabel = 'Neutral';
+                }
             }
-            if (sentimentLabelEl) {
-                sentimentLabelEl.textContent = hasData ? 'Positive' : 'No queries';
-            }
+
+            if (sentimentPercentEl) sentimentPercentEl.textContent = dominantPercent;
+            if (sentimentLabelEl) sentimentLabelEl.textContent = dominantLabel;
 
             // Initialize Charts
             Chart.defaults.color = '#94A3B8';
@@ -349,7 +389,7 @@
                 data: {
                     labels: hasData ? ['Positive', 'Neutral', 'Negative'] : ['No Data'],
                     datasets: [{
-                        data: hasData ? [85, 12, 3] : [100],
+                        data: hasData ? [posCount, neuCount, negCount] : [1],
                         backgroundColor: hasData 
                             ? ['#10B981', '#3B82F6', '#EF4444'] 
                             : ['#374151'],
