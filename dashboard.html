@@ -94,13 +94,13 @@
                 </a>
             </nav>
         </div>
-        <div class="p-4">
+        <div class="p-4" id="sidebar-upgrade-box">
             <div class="bg-gradient-to-r from-blue-600 to-indigo-600 p-4 rounded-xl shadow-lg">
                 <p class="text-sm font-semibold mb-1">Upgrade to PRO</p>
                 <p class="text-xs text-blue-100 mb-3">Get unlimited AI answers and premium analytics.</p>
-                <button
-                    class="w-full bg-white text-blue-600 text-sm font-bold py-2 rounded-lg hover:bg-gray-100 transition">View
-                    Plans</button>
+                <a href="index.html#pricing"
+                    class="block text-center w-full bg-white text-blue-600 text-sm font-bold py-2 rounded-lg hover:bg-gray-100 transition">View
+                    Plans</a>
             </div>
         </div>
     </aside>
@@ -121,13 +121,14 @@
                     <span class="text-sm font-semibold font-outfit tracking-wide bg-clip-text text-transparent bg-gradient-to-r from-white via-blue-100 to-indigo-200" id="header-domain">Loading...</span>
                 </div>
                 <a href="index.html" class="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gray-900/90 hover:bg-gray-800 text-xs font-semibold text-gray-200 hover:text-white border border-gray-700/80 hover:border-gray-500 shadow-sm transition-all group" title="Visit Landing Page">
-                    <span class="w-2 h-2 rounded-full bg-emerald-400 group-hover:scale-125 transition-transform"></span>
+                    <svg class="w-3.5 h-3.5 text-blue-400 group-hover:text-cyan-300 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
                     <span>Landing Page</span>
                     <svg class="w-3 h-3 text-gray-400 group-hover:text-white group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M7 17L17 7m0 0H8m9 0v9"></path></svg>
                 </a>
-                <button id="logout-btn" class="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-red-500/10 hover:bg-red-500/20 text-xs font-semibold text-red-400 hover:text-red-300 border border-red-500/30 hover:border-red-500/50 shadow-[0_0_10px_rgba(239,68,68,0.15)] transition-all" title="Sign Out">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                    <span>Log out</span>
+                <button id="logout-btn" class="relative group overflow-hidden flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-red-500/10 via-red-500/15 to-rose-500/10 hover:from-red-500/25 hover:to-rose-500/25 text-xs font-semibold text-red-400 hover:text-red-200 border border-red-500/30 hover:border-red-400/60 shadow-[0_0_12px_rgba(239,68,68,0.15)] hover:shadow-[0_0_20px_rgba(239,68,68,0.35)] active:scale-95 transition-all duration-300 cursor-pointer" title="Sign Out">
+                    <span class="absolute inset-0 -translate-x-full group-hover:translate-x-full duration-700 bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform ease-out pointer-events-none"></span>
+                    <svg class="w-3.5 h-3.5 text-red-400 group-hover:text-red-200 group-hover:-translate-x-0.5 group-hover:rotate-12 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                    <span class="tracking-wide">Log out</span>
                 </button>
             </div>
         </header>
@@ -206,8 +207,8 @@
                             </svg>
                         </div>
                     </div>
-                    <p class="text-3xl font-bold mt-1 text-white truncate" id="top-intent">0 queries</p>
-                    <p class="text-xs text-brand-muted mt-3" id="top-intent-percent">0% of all queries</p>
+                    <p class="text-xl font-bold mt-1 text-white truncate" id="top-intent">None yet</p>
+                    <p class="text-xs text-brand-muted mt-2" id="top-intent-percent">0% of all queries</p>
                 </div>
             </div>
 
@@ -278,7 +279,7 @@
                             </div>
 
                             <!-- White-Label Branding (Business Only) -->
-                            <div class="flex items-center justify-between pt-2 border-t border-gray-800/60" id="whitelabel-row">
+                            <div class="flex items-center justify-between pt-2 border-t border-gray-800/60 hidden" id="whitelabel-row" style="display: none;">
                                 <div>
                                     <div class="flex items-center gap-2">
                                         <p class="font-medium text-sm">Remove Branding (White-Label)</p>
@@ -292,16 +293,83 @@
                                 </label>
                             </div>
 
+                            <!-- Widget Accent Color Picker -->
+                            <div class="pt-3 border-t border-gray-800/60" id="widget-color-row">
+                                <div class="flex items-center justify-between mb-3">
+                                    <div>
+                                        <p class="font-medium text-sm text-white">Widget Theme Color</p>
+                                        <p class="text-xs text-brand-muted">Pick a curated palette or customize your store's brand color</p>
+                                    </div>
+                                    <div class="flex items-center gap-2 bg-gray-900/90 px-2.5 py-1 rounded-lg border border-gray-700/70 shadow-inner">
+                                        <input type="color" id="widget-color-picker" value="#3B82F6" class="w-6 h-6 rounded cursor-pointer bg-transparent border-0 p-0" title="Choose custom hex color">
+                                        <span id="widget-color-hex" class="text-xs font-mono text-cyan-300 uppercase font-semibold">#3B82F6</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="grid grid-cols-2 gap-2 mt-2" id="color-palette-grid">
+                                    <!-- 1. Electric Blue (Default) -->
+                                    <button type="button" data-color="#3B82F6" class="color-preset-card flex items-center gap-2.5 p-2 rounded-xl bg-gray-800/40 hover:bg-gray-800/80 border border-gray-700/60 transition-all text-left group cursor-pointer">
+                                        <div class="w-6 h-6 rounded-lg bg-[#3B82F6] flex-shrink-0 flex items-center justify-center shadow-[0_0_8px_rgba(59,130,246,0.4)] swatch-box">
+                                            <svg class="w-3.5 h-3.5 text-white hidden check-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                                        </div>
+                                        <div class="min-w-0 flex items-center gap-1.5">
+                                            <span class="text-xs font-medium text-gray-200 group-hover:text-white truncate">Electric Blue</span>
+                                            <span class="text-[9px] px-1 py-0.5 rounded bg-blue-500/20 text-blue-300 border border-blue-500/30 font-semibold uppercase leading-none">Default</span>
+                                        </div>
+                                    </button>
+
+                                    <!-- 2. Emerald Green -->
+                                    <button type="button" data-color="#10B981" class="color-preset-card flex items-center gap-2.5 p-2 rounded-xl bg-gray-800/40 hover:bg-gray-800/80 border border-gray-700/60 transition-all text-left group cursor-pointer">
+                                        <div class="w-6 h-6 rounded-lg bg-[#10B981] flex-shrink-0 flex items-center justify-center shadow-[0_0_8px_rgba(16,185,129,0.4)] swatch-box">
+                                            <svg class="w-3.5 h-3.5 text-white hidden check-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                                        </div>
+                                        <span class="text-xs font-medium text-gray-200 group-hover:text-white truncate">Emerald Green</span>
+                                    </button>
+
+                                    <!-- 3. Royal Purple -->
+                                    <button type="button" data-color="#8B5CF6" class="color-preset-card flex items-center gap-2.5 p-2 rounded-xl bg-gray-800/40 hover:bg-gray-800/80 border border-gray-700/60 transition-all text-left group cursor-pointer">
+                                        <div class="w-6 h-6 rounded-lg bg-[#8B5CF6] flex-shrink-0 flex items-center justify-center shadow-[0_0_8px_rgba(139,92,246,0.4)] swatch-box">
+                                            <svg class="w-3.5 h-3.5 text-white hidden check-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                                        </div>
+                                        <span class="text-xs font-medium text-gray-200 group-hover:text-white truncate">Royal Purple</span>
+                                    </button>
+
+                                    <!-- 4. Coral Rose -->
+                                    <button type="button" data-color="#F43F5E" class="color-preset-card flex items-center gap-2.5 p-2 rounded-xl bg-gray-800/40 hover:bg-gray-800/80 border border-gray-700/60 transition-all text-left group cursor-pointer">
+                                        <div class="w-6 h-6 rounded-lg bg-[#F43F5E] flex-shrink-0 flex items-center justify-center shadow-[0_0_8px_rgba(244,63,94,0.4)] swatch-box">
+                                            <svg class="w-3.5 h-3.5 text-white hidden check-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                                        </div>
+                                        <span class="text-xs font-medium text-gray-200 group-hover:text-white truncate">Coral Rose</span>
+                                    </button>
+
+                                    <!-- 5. Amber Gold -->
+                                    <button type="button" data-color="#F59E0B" class="color-preset-card flex items-center gap-2.5 p-2 rounded-xl bg-gray-800/40 hover:bg-gray-800/80 border border-gray-700/60 transition-all text-left group cursor-pointer">
+                                        <div class="w-6 h-6 rounded-lg bg-[#F59E0B] flex-shrink-0 flex items-center justify-center shadow-[0_0_8px_rgba(245,158,11,0.4)] swatch-box">
+                                            <svg class="w-3.5 h-3.5 text-white hidden check-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                                        </div>
+                                        <span class="text-xs font-medium text-gray-200 group-hover:text-white truncate">Amber Gold</span>
+                                    </button>
+
+                                    <!-- 6. Midnight Slate -->
+                                    <button type="button" data-color="#0F172A" class="color-preset-card flex items-center gap-2.5 p-2 rounded-xl bg-gray-800/40 hover:bg-gray-800/80 border border-gray-700/60 transition-all text-left group cursor-pointer">
+                                        <div class="w-6 h-6 rounded-lg bg-[#0F172A] border border-gray-500/60 flex-shrink-0 flex items-center justify-center shadow-[0_0_8px_rgba(15,23,42,0.4)] swatch-box">
+                                            <svg class="w-3.5 h-3.5 text-white hidden check-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                                        </div>
+                                        <span class="text-xs font-medium text-gray-200 group-hover:text-white truncate">Midnight Slate</span>
+                                    </button>
+                                </div>
+                            </div>
+
                     <div class="mt-8 pt-6 border-t border-gray-800">
                         <h4 class="text-sm font-semibold mb-2">Installation Snippet</h4>
                         <p class="text-xs text-brand-muted mb-3">Copy and paste this before the closing &lt;/body&gt;
                             tag.</p>
                         <div class="relative bg-black rounded-lg p-3 group">
-                            <code class="text-xs text-green-400 break-all">
+                            <code id="snippet-code" class="text-xs text-green-400 break-all font-mono">
                                 &lt;script src="https://claritycart.ai/clarity.js" data-id="store_12345"&gt;&lt;/script&gt;
                             </code>
-                            <button
-                                class="absolute top-2 right-2 p-1.5 bg-gray-800 rounded text-gray-400 hover:text-white opacity-0 group-hover:opacity-100 transition">
+                            <button id="copy-snippet-btn"
+                                class="absolute top-2 right-2 p-1.5 bg-gray-800 rounded text-gray-400 hover:text-white opacity-0 group-hover:opacity-100 transition" title="Copy Snippet">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z">
@@ -351,19 +419,27 @@
                         <span class="text-gray-300">📉 Low store traffic</span>
                     </label>
                     <label class="flex items-center gap-2 p-2.5 bg-gray-900/80 hover:bg-gray-800/80 border border-gray-800 hover:border-gray-700 rounded-xl cursor-pointer transition-colors">
-                        <input type="radio" name="cancel_reason" value="Technical issue" class="text-brand-accent focus:ring-0">
+                        <input type="radio" name="cancel_reason" value="Switching to another plan" class="text-brand-accent focus:ring-0">
+                        <span class="text-gray-300">🔄 Switching plans</span>
+                    </label>
+                    <label class="flex items-center gap-2 p-2.5 bg-gray-900/80 hover:bg-gray-800/80 border border-gray-800 hover:border-gray-700 rounded-xl cursor-pointer transition-colors">
+                        <input type="radio" name="cancel_reason" value="Technical issues" class="text-brand-accent focus:ring-0">
                         <span class="text-gray-300">⚙️ Technical issues</span>
                     </label>
                     <label class="flex items-center gap-2 p-2.5 bg-gray-900/80 hover:bg-gray-800/80 border border-gray-800 hover:border-gray-700 rounded-xl cursor-pointer transition-colors">
                         <input type="radio" name="cancel_reason" value="Temporary break" class="text-brand-accent focus:ring-0">
                         <span class="text-gray-300">⏸️ Taking a break</span>
                     </label>
+                    <label class="flex items-center gap-2 p-2.5 bg-gray-900/80 hover:bg-gray-800/80 border border-gray-800 hover:border-gray-700 rounded-xl cursor-pointer transition-colors">
+                        <input type="radio" name="cancel_reason" value="Other" id="cancel-reason-other-radio" class="text-brand-accent focus:ring-0">
+                        <span class="text-gray-300">✏️ Other reason...</span>
+                    </label>
                 </div>
             </div>
 
-            <div class="space-y-1.5">
-                <label class="text-xs font-semibold text-gray-300">Any suggestions on what we could do better? (Optional)</label>
-                <textarea id="cancel-feedback-text" rows="2" placeholder="Tell us what feature would make you stay..." class="w-full bg-gray-900/90 border border-gray-800 focus:border-brand-accent rounded-xl p-2.5 text-xs text-white placeholder-gray-500 focus:outline-none transition-colors"></textarea>
+            <div class="space-y-1.5" id="cancel-feedback-container">
+                <label class="text-xs font-semibold text-gray-300" id="cancel-feedback-label">Please tell us why you are leaving (Required for 'Other'):</label>
+                <textarea id="cancel-feedback-text" rows="2" placeholder="Tell us what prompted this cancellation or what could make you stay..." class="w-full bg-gray-900/90 border border-gray-800 focus:border-brand-accent rounded-xl p-2.5 text-xs text-white placeholder-gray-500 focus:outline-none transition-colors"></textarea>
             </div>
 
             <div class="bg-gray-900/60 p-3 rounded-xl border border-gray-800 text-xs text-brand-muted space-y-1.5">
@@ -559,21 +635,30 @@
                                     canceled_at: new Date().toISOString()
                                 }
                             });
+
+                            // Dispatch webhook to backend server
+                            try {
+                                const backendApi = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost'
+                                    ? 'http://localhost:3000/api/webhook/cancellation'
+                                    : '/api/webhook/cancellation';
+                                await fetch(backendApi, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                        user_email: user.email,
+                                        store_domain: storeDomain,
+                                        plan: userPlan,
+                                        reason: selectedReason,
+                                        feedback: feedbackText,
+                                        canceled_at: new Date().toISOString()
+                                    })
+                                });
+                            } catch (webhookErr) {
+                                console.warn("Webhook dispatch error:", webhookErr);
+                            }
+
                             closeCancelModal();
                             showToast('Subscription canceled. Thank you for your feedback! Your AI remains active until cycle end.', 'info');
-                            setTimeout(() => fetchDashboardData(), 800);
-                        } catch (err) {
-                            showToast('Cancellation error: ' + err.message, 'error');
-                        } finally {
-                            confirmCancelBtn.textContent = 'Confirm Cancellation';
-                            confirmCancelBtn.disabled = false;
-                        }
-                    };
-                }
-                                data: { subscription_status: 'canceled' }
-                            });
-                            closeCancelModal();
-                            showToast('Subscription canceled. Your AI remains active until the end of this cycle.', 'info');
                             setTimeout(() => fetchDashboardData(), 800);
                         } catch (err) {
                             showToast('Cancellation error: ' + err.message, 'error');
@@ -643,35 +728,91 @@
                         const topCount = sorted[0][1];
                         const percent = Math.round((topCount / totalQuestions) * 100);
 
-                        topIntentEl.textContent = topQuestion;
-                        topIntentPercentEl.textContent = percent + '% of all queries';
+                        const classifyIntent = (qText) => {
+                            if (!qText) return 'None yet';
+                            const lower = qText.toLowerCase();
+                            if (lower.includes('pay') || lower.includes('installment') || lower.includes('price') || lower.includes('discount') || lower.includes('promo') || lower.includes('cost')) {
+                                return '💳 Payment & Installments';
+                            }
+                            if (lower.includes('ship') || lower.includes('deliver') || lower.includes('track') || lower.includes('when') || lower.includes('fast')) {
+                                return '🚚 Shipping & Delivery';
+                            }
+                            if (lower.includes('return') || lower.includes('refund') || lower.includes('warranty') || lower.includes('guarantee')) {
+                                return '🛡️ Returns & Warranty';
+                            }
+                            if (lower.includes('size') || lower.includes('fit') || lower.includes('color') || lower.includes('compatib') || lower.includes('battery') || lower.includes('feature')) {
+                                return '👟 Product Details & Specs';
+                            }
+                            return '💬 General Inquiry';
+                        };
+
+                        const intentLabel = classifyIntent(topQuestion);
+                        topIntentEl.textContent = intentLabel;
+                        topIntentEl.title = `Top Question: "${topQuestion}" (${topCount} ask${topCount > 1 ? 's' : ''})`;
+                        topIntentPercentEl.innerHTML = `<span class="text-green-400 font-semibold">${topCount} query</span> · ${percent}% of all activity`;
                     } else {
-                        topIntentEl.textContent = '0 queries';
+                        topIntentEl.textContent = 'None yet';
                         topIntentPercentEl.textContent = '0% of all queries';
                     }
                 }
 
-                // Render Top Queries
+                // Hide Upgrade Banner in Sidebar for Pro, Business & Super-Admin
+                const upgradeBox = document.getElementById('sidebar-upgrade-box');
+                if (upgradeBox) {
+                    const planLower = userPlan.toLowerCase();
+                    if (planLower === 'pro' || planLower === 'business' || isSuperAdmin) {
+                        upgradeBox.style.display = 'none';
+                    } else {
+                        upgradeBox.style.display = 'block';
+                    }
+                }
+
+                // Render Top Queries with Timestamp
                 const container = document.getElementById('queries-container');
                 if (container) {
-                    container.innerHTML = ''; // clear mock data
+                    container.innerHTML = '';
 
                     if (sorted.length === 0) {
                         container.innerHTML = '<p class="text-brand-muted text-sm p-4">No questions yet. Install the widget to get started!</p>';
                     } else {
+                        const fmtTime = (iso) => {
+                            if (!iso) return 'Recent';
+                            try {
+                                const d = new Date(iso);
+                                const now = new Date();
+                                const diffMin = Math.round((now - d) / 60000);
+                                if (diffMin < 60) return `${Math.max(1, diffMin)}m ago`;
+                                const diffHours = Math.round(diffMin / 60);
+                                if (diffHours < 24) return `${diffHours}h ago`;
+                                return `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+                            } catch (e) {
+                                return 'Recent';
+                            }
+                        };
+
                         sorted.slice(0, 5).forEach((item, index) => {
                             const question = item[0];
                             const count = item[1];
+                            const matchingRows = data.filter(r => r.question_text === question);
+                            const latestDate = matchingRows[matchingRows.length - 1]?.created_at;
+                            const timeLabel = fmtTime(latestDate);
+
                             const html = `
-                                <div class="flex items-center justify-between p-4 bg-gray-800/50 rounded-xl">
+                                <div class="flex items-center justify-between p-4 bg-gray-800/50 rounded-xl hover:bg-gray-800/80 transition-colors">
                                     <div class="flex items-center space-x-4">
-                                        <div class="w-8 h-8 rounded bg-gray-700 flex items-center justify-center font-bold text-sm">${index + 1}</div>
+                                        <div class="w-8 h-8 rounded-lg bg-gray-700/80 border border-gray-600/50 flex items-center justify-center font-bold text-sm text-blue-400 font-mono">${index + 1}</div>
                                         <div>
-                                            <p class="font-medium text-sm">${question}</p>
-                                            <p class="text-xs text-brand-muted">Asked ${count} time${count > 1 ? 's' : ''}</p>
+                                            <p class="font-medium text-sm text-white">${question}</p>
+                                            <div class="flex items-center gap-3 mt-0.5 text-xs text-brand-muted">
+                                                <span>Asked ${count} time${count > 1 ? 's' : ''}</span>
+                                                <span class="inline-flex items-center gap-1 text-cyan-400 font-mono text-[11px]">
+                                                    <svg class="w-3 h-3 text-cyan-500/70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                                    ${timeLabel}
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
-                                    <span class="px-3 py-1 bg-green-500/10 text-green-400 rounded-full text-xs font-medium">Captured</span>
+                                    <span class="px-2.5 py-1 bg-green-500/10 text-green-400 border border-green-500/20 rounded-full text-[11px] font-semibold">Captured</span>
                                 </div>
                             `;
                             container.innerHTML += html;
@@ -679,48 +820,131 @@
                     }
                 }
 
-                // Widget Settings Sync
+                // 6. Widget Settings Toggles & Plan Gating
                 const toneToggle = document.getElementById('tone-toggle');
                 const emojiToggle = document.getElementById('emoji-toggle');
+                const exitToggle = document.getElementById('exit-intent-toggle');
+                const whiteLabelToggle = document.getElementById('whitelabel-toggle');
+                const whitelabelRow = document.getElementById('whitelabel-row');
 
-                // Init checkboxes
-                if (toneToggle) toneToggle.checked = meta.friendly_tone !== false; // default true
-                if (emojiToggle) emojiToggle.checked = meta.use_emojis !== false; // default true
+                const isProOrHigher = isSuperAdmin || userPlan.toLowerCase() === 'pro' || userPlan.toLowerCase() === 'business';
+                const isBusinessPlan = userPlan.toLowerCase() === 'business';
 
-                // Sync changes to Supabase Auth Metadata and store_settings table
-                const saveSettings = async () => {
-                    const tone = toneToggle.checked;
-                    const emoji = emojiToggle.checked;
+                // Initial states
+                if (toneToggle) toneToggle.checked = meta.friendly_tone !== false;
+                if (emojiToggle) emojiToggle.checked = meta.use_emojis !== false;
 
-                    // 1. Save to Auth Metadata (for dashboard UI state)
-                    await supabaseClient.auth.updateUser({
-                        data: {
-                            friendly_tone: tone,
-                            use_emojis: emoji
-                        }
-                    });
+                // Color Picker Setup
+                const colorPicker = document.getElementById('widget-color-picker');
+                const colorHex = document.getElementById('widget-color-hex');
+                const currentColor = meta.widget_color || '#3B82F6';
+                if (colorPicker) colorPicker.value = currentColor;
+                if (colorHex) colorHex.textContent = currentColor;
 
-                    // 2. Save to public store_settings (for widget to read)
-                    const { data: existing } = await supabaseClient
-                        .from('store_settings')
-                        .select('id')
-                        .eq('store_domain', storeDomain)
-                        .maybeSingle();
-
-                    if (existing) {
-                        await supabaseClient
-                            .from('store_settings')
-                            .update({ friendly_tone: tone, use_emojis: emoji })
-                            .eq('store_domain', storeDomain);
+                // Exit Intent gating (Pro & Business)
+                if (exitToggle) {
+                    if (isProOrHigher) {
+                        exitToggle.checked = meta.exit_intent === true;
+                        exitToggle.disabled = false;
                     } else {
-                        await supabaseClient
-                            .from('store_settings')
-                            .insert([{ store_domain: storeDomain, friendly_tone: tone, use_emojis: emoji }]);
+                        exitToggle.checked = false;
+                        exitToggle.disabled = true;
+                        const row = document.getElementById('exit-intent-row');
+                        if (row) {
+                            row.classList.add('opacity-50', 'cursor-not-allowed');
+                            row.title = 'Available on Pro and Business plans. Upgrade to unlock!';
+                        }
+                    }
+                }
+
+                // White-Label gating (Strictly Business Only - hidden on Pro and Starter)
+                if (whitelabelRow) {
+                    if (isBusinessPlan) {
+                        whitelabelRow.style.display = 'flex';
+                        if (whiteLabelToggle) {
+                            whiteLabelToggle.checked = meta.white_label === true;
+                            whiteLabelToggle.disabled = false;
+                        }
+                    } else {
+                        whitelabelRow.style.display = 'none';
+                        if (whiteLabelToggle) {
+                            whiteLabelToggle.checked = false;
+                            whiteLabelToggle.disabled = true;
+                        }
+                    }
+                }
+
+                // Helper to save settings to Auth Metadata
+                const saveSetting = async (key, val, friendlyName) => {
+                    try {
+                        const updateObj = {};
+                        updateObj[key] = val;
+                        await supabaseClient.auth.updateUser({ data: updateObj });
+
+                        showToast(`${friendlyName} preference saved!`, 'success');
+                    } catch (err) {
+                        showToast(`Failed to save ${friendlyName}: ${err.message}`, 'error');
                     }
                 };
 
-                if (toneToggle) toneToggle.addEventListener('change', saveSettings);
-                if (emojiToggle) emojiToggle.addEventListener('change', saveSettings);
+                if (toneToggle) {
+                    toneToggle.onchange = () => saveSetting('friendly_tone', toneToggle.checked, 'Tone');
+                }
+                if (emojiToggle) {
+                    emojiToggle.onchange = () => saveSetting('use_emojis', emojiToggle.checked, 'Emojis');
+                }
+                if (exitToggle && isProOrHigher) {
+                    exitToggle.onchange = () => saveSetting('exit_intent', exitToggle.checked, 'Exit-Intent Auto-Show');
+                }
+                if (whiteLabelToggle && isBusinessPlan) {
+                    whiteLabelToggle.onchange = () => saveSetting('white_label', whiteLabelToggle.checked, 'White-Label Branding');
+                }
+
+                // Active Preset Highlighting Helper
+                const updateActivePresetUI = (selectedColor) => {
+                    if (!selectedColor) return;
+                    const cleanCol = selectedColor.toUpperCase();
+                    document.querySelectorAll('.color-preset-card').forEach(card => {
+                        const cardCol = (card.getAttribute('data-color') || '').toUpperCase();
+                        const checkIcon = card.querySelector('.check-icon');
+                        if (cardCol === cleanCol) {
+                            card.classList.add('ring-2', 'ring-blue-400', 'border-blue-400', 'bg-gray-800/90');
+                            card.classList.remove('border-gray-700/60');
+                            if (checkIcon) checkIcon.classList.remove('hidden');
+                        } else {
+                            card.classList.remove('ring-2', 'ring-blue-400', 'border-blue-400', 'bg-gray-800/90');
+                            card.classList.add('border-gray-700/60');
+                            if (checkIcon) checkIcon.classList.add('hidden');
+                        }
+                    });
+                };
+
+                updateActivePresetUI(currentColor);
+
+                // Color picker change event
+                if (colorPicker) {
+                    colorPicker.oninput = () => {
+                        if (colorHex) colorHex.textContent = colorPicker.value.toUpperCase();
+                        updateActivePresetUI(colorPicker.value);
+                    };
+                    colorPicker.onchange = () => {
+                        const selectedCol = colorPicker.value;
+                        if (colorHex) colorHex.textContent = selectedCol.toUpperCase();
+                        updateActivePresetUI(selectedCol);
+                        saveSetting('widget_color', selectedCol, 'Widget Theme Color');
+                    };
+                }
+
+                // Preset color buttons
+                document.querySelectorAll('.color-preset-card').forEach(btn => {
+                    btn.onclick = () => {
+                        const col = btn.getAttribute('data-color');
+                        if (colorPicker) colorPicker.value = col;
+                        if (colorHex) colorHex.textContent = col.toUpperCase();
+                        updateActivePresetUI(col);
+                        saveSetting('widget_color', col, 'Widget Theme Color');
+                    };
+                });
 
                 // Store Domain Logic
                 const domainInput = document.getElementById('store-domain-input');
@@ -728,7 +952,6 @@
                 const domainHint = document.getElementById('domain-hint');
                 const domainRegex = /^[a-zA-Z0-9.-]+$/;
                 
-                // Set initial value as placeholder so the input stays clean
                 if (domainInput) {
                     if (storeDomain !== 'mystore.com') {
                         domainInput.placeholder = 'Current: ' + storeDomain;
@@ -767,7 +990,6 @@
                             data: { store_domain: newDomain }
                         });
                         
-                        // We also need to create an empty settings row for this new domain if it doesn't exist
                         const { data: existing } = await supabaseClient
                             .from('store_settings')
                             .select('id')
@@ -780,9 +1002,7 @@
                                 .insert([{ store_domain: newDomain, friendly_tone: true, use_emojis: true }]);
                         }
 
-                        // Beautiful Success State (instead of alert)
-                        domainInput.value = ''; // Clear input on success!
-                        
+                        domainInput.value = '';
                         const originalBtnClass = 'bg-brand-accent hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition whitespace-nowrap';
                         saveDomainBtn.textContent = 'Saved!';
                         saveDomainBtn.className = 'bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition whitespace-nowrap';
@@ -791,9 +1011,8 @@
                             saveDomainBtn.textContent = 'Save';
                             saveDomainBtn.className = originalBtnClass;
                             saveDomainBtn.disabled = false;
-                            window.location.reload(); // Reload to fetch new data
+                            window.location.reload();
                         }, 1500);
-                        
                     });
                 }
 
@@ -807,94 +1026,6 @@
                         copyBtn.innerHTML = `<svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`;
                         setTimeout(() => { copyBtn.innerHTML = oldHtml; }, 2000);
                     });
-                }
-
-                // 6. Widget Settings Toggles & Plan Gating
-                const toneToggle = document.getElementById('tone-toggle');
-                const emojiToggle = document.getElementById('emoji-toggle');
-                const exitToggle = document.getElementById('exit-intent-toggle');
-                const whiteLabelToggle = document.getElementById('whitelabel-toggle');
-                const whitelabelRow = document.getElementById('whitelabel-row');
-
-                const isProOrHigher = isSuperAdmin || userPlan.toLowerCase() === 'pro' || userPlan.toLowerCase() === 'business';
-                const isBusinessOrHigher = isSuperAdmin || userPlan.toLowerCase() === 'business';
-
-                // Initial states
-                if (toneToggle) toneToggle.checked = meta.friendly_tone !== false;
-                if (emojiToggle) emojiToggle.checked = meta.use_emojis !== false;
-
-                // Exit Intent gating (Pro & Business)
-                if (exitToggle) {
-                    if (isProOrHigher) {
-                        exitToggle.checked = meta.exit_intent === true;
-                        exitToggle.disabled = false;
-                    } else {
-                        exitToggle.checked = false;
-                        exitToggle.disabled = true;
-                        const row = document.getElementById('exit-intent-row');
-                        if (row) {
-                            row.classList.add('opacity-50', 'cursor-not-allowed');
-                            row.title = 'Available on Pro and Business plans. Upgrade to unlock!';
-                        }
-                    }
-                }
-
-                // White-Label gating (Strictly Business Only - hidden on Pro/Starter)
-                if (whitelabelRow) {
-                    if (isBusinessOrHigher) {
-                        whitelabelRow.style.display = 'flex';
-                        if (whiteLabelToggle) {
-                            whiteLabelToggle.checked = meta.white_label === true;
-                            whiteLabelToggle.disabled = false;
-                        }
-                    } else {
-                        whitelabelRow.style.display = 'none';
-                        if (whiteLabelToggle) {
-                            whiteLabelToggle.checked = false;
-                            whiteLabelToggle.disabled = true;
-                        }
-                    }
-                }
-
-                // Helper to save settings to Auth Metadata and store_settings table
-                const saveSetting = async (key, val, friendlyName) => {
-                    try {
-                        const updateObj = {};
-                        updateObj[key] = val;
-                        await supabaseClient.auth.updateUser({ data: updateObj });
-
-                        try {
-                            const storeUpdate = {};
-                            if (key === 'friendly_tone') storeUpdate.friendly_tone = val;
-                            if (key === 'use_emojis') storeUpdate.use_emojis = val;
-                            if (key === 'exit_intent') storeUpdate.exit_intent = val;
-                            if (key === 'white_label') storeUpdate.white_label = val;
-
-                            if (Object.keys(storeUpdate).length > 0) {
-                                await supabaseClient
-                                    .from('store_settings')
-                                    .update(storeUpdate)
-                                    .eq('store_domain', storeDomain);
-                            }
-                        } catch (e) {}
-
-                        showToast(`${friendlyName} preference saved!`, 'success');
-                    } catch (err) {
-                        showToast(`Failed to save ${friendlyName}: ${err.message}`, 'error');
-                    }
-                };
-
-                if (toneToggle) {
-                    toneToggle.onchange = () => saveSetting('friendly_tone', toneToggle.checked, 'Tone');
-                }
-                if (emojiToggle) {
-                    emojiToggle.onchange = () => saveSetting('use_emojis', emojiToggle.checked, 'Emojis');
-                }
-                if (exitToggle && isProOrHigher) {
-                    exitToggle.onchange = () => saveSetting('exit_intent', exitToggle.checked, 'Exit-Intent Auto-Show');
-                }
-                if (whiteLabelToggle && isBusinessOrHigher) {
-                    whiteLabelToggle.onchange = () => saveSetting('white_label', whiteLabelToggle.checked, 'White-Label Branding');
                 }
 
             } catch (e) {

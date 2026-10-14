@@ -23,6 +23,9 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
         (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost' 
             ? 'http://localhost:3000/api/chat' 
             : 'https://claritycart-landing.vercel.app/api/chat');
+    const CONFIG_URL = (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost')
+        ? 'http://localhost:3000/api/config'
+        : 'https://claritycart-landing.vercel.app/api/config';
     const SCRIPT_DOMAIN = document.currentScript?.getAttribute('data-domain');
     class ClarityCartWidget {
         constructor() {
@@ -64,39 +67,61 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
             this.render(shadow);
             this.bindEvents(shadow);
             
-            // Fetch live settings from Supabase
+            // Fetch live settings and theme color from Backend
             this.fetchStoreSettings();
+        }
+
+        applyThemeColor(color) {
+            if (!this.shadow || !color) return;
+            let styleTag = this.shadow.getElementById('clarity-custom-theme');
+            if (!styleTag) {
+                styleTag = document.createElement('style');
+                styleTag.id = 'clarity-custom-theme';
+                this.shadow.appendChild(styleTag);
+            }
+            styleTag.textContent = `
+                .send-btn { background: ${color} !important; }
+                .send-btn:hover { filter: brightness(1.15) !important; }
+                .ai-badge { color: ${color} !important; background: ${color}18 !important; }
+                .ai-badge .dot { background-color: ${color} !important; }
+                .message.user { background: ${color} !important; color: #ffffff !important; }
+                .input-field:focus { border-color: ${color} !important; box-shadow: 0 0 0 2px ${color}33 !important; }
+                .chip:hover { border-color: ${color}80 !important; color: ${color} !important; }
+            `;
         }
 
         async fetchStoreSettings() {
             try {
-                const domain = window.location.hostname || 'unknown';
-                const response = await fetch(`${SUPABASE_URL}/rest/v1/store_settings?store_domain=eq.${domain}&select=*`, {
-                    headers: {
-                        'apikey': SUPABASE_ANON_KEY,
-                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-                    }
-                });
-                const data = await response.json();
-                if (data && data.length > 0) {
-                    const settings = data[0];
-                    if (settings.friendly_tone !== undefined) {
-                        window.ClarityCartConfig.tone = settings.friendly_tone ? 'friendly' : 'professional';
-                    }
-                    if (settings.use_emojis !== undefined) {
-                        window.ClarityCartConfig.use_emojis = settings.use_emojis;
-                    }
-                    if (settings.white_label !== undefined) {
-                        window.ClarityCartConfig.whiteLabel = Boolean(settings.white_label);
-                        const footer = this.shadow?.getElementById('clarity-footer');
-                        if (footer && settings.white_label) footer.style.display = 'none';
-                    }
-                    if (settings.exit_intent !== undefined) {
-                        window.ClarityCartConfig.exitIntentEnabled = Boolean(settings.exit_intent);
+                const targetDomain = SCRIPT_DOMAIN || 
+                    (document.querySelector('script[data-domain]')?.getAttribute('data-domain')) ||
+                    window.location.hostname || 'unknown';
+
+                const response = await fetch(`${CONFIG_URL}?domain=${encodeURIComponent(targetDomain)}`);
+                if (response.ok) {
+                    const settings = await response.json();
+                    if (settings) {
+                        if (settings.friendly_tone !== undefined) {
+                            window.ClarityCartConfig.tone = settings.friendly_tone ? 'friendly' : 'professional';
+                        }
+                        if (settings.use_emojis !== undefined) {
+                            window.ClarityCartConfig.use_emojis = settings.use_emojis;
+                        }
+                        if (settings.white_label !== undefined) {
+                            window.ClarityCartConfig.whiteLabel = Boolean(settings.white_label);
+                            const footer = this.shadow?.getElementById('clarity-footer');
+                            if (footer) footer.style.display = settings.white_label ? 'none' : 'block';
+                        }
+                        if (settings.exit_intent !== undefined) {
+                            window.ClarityCartConfig.exitIntentEnabled = Boolean(settings.exit_intent);
+                        }
+                        if (settings.widget_color) {
+                            window.ClarityCartConfig.widgetColor = settings.widget_color;
+                            this.applyThemeColor(settings.widget_color);
+                        }
                     }
                 }
             } catch (e) {
-                console.error("ClarityCart: Failed to load settings", e);
+                console.warn("ClarityCart: Failed to load settings", e);
             }
         }
 

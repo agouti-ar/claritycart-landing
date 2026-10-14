@@ -75,6 +75,51 @@ app.post('/api/validate-domain', async (req, res) => {
   res.json({ valid: true, message: 'Domain is valid' });
 });
 
+// Live Widget Configuration & Theme Settings endpoint
+app.get('/api/config', async (req, res) => {
+  const domain = (req.query.domain || req.query.store_domain || '').trim().toLowerCase();
+  
+  const defaultSettings = {
+    widget_color: '#3B82F6',
+    friendly_tone: true,
+    use_emojis: true,
+    white_label: false,
+    exit_intent: false,
+    plan: 'Starter'
+  };
+
+  if (!domain || domain === 'unknown') {
+    return res.json(defaultSettings);
+  }
+
+  try {
+    const { data: authData, error: listErr } = await supabase.auth.admin.listUsers();
+    if (!listErr && authData?.users) {
+      const user = authData.users.find(u => {
+        const metaDomain = (u.user_metadata?.store_domain || '').trim().toLowerCase();
+        return metaDomain === domain;
+      });
+
+      if (user && user.user_metadata) {
+        const meta = user.user_metadata;
+        const plan = (meta.plan || 'Starter').toLowerCase();
+        return res.json({
+          widget_color: meta.widget_color || '#3B82F6',
+          friendly_tone: meta.friendly_tone !== false,
+          use_emojis: meta.use_emojis !== false,
+          white_label: plan === 'business' ? Boolean(meta.white_label) : false,
+          exit_intent: (plan === 'pro' || plan === 'business') ? Boolean(meta.exit_intent) : false,
+          plan: meta.plan || 'Starter'
+        });
+      }
+    }
+  } catch (err) {
+    console.warn('[Backend] /api/config error:', err.message);
+  }
+
+  res.json(defaultSettings);
+});
+
 // Friendly, customer-safe resting messages when AI quota is reached or store is paused
 function getRandomRestingMessage(isRussian = false) {
   const ruMessages = [
@@ -209,7 +254,7 @@ app.post('/api/chat', async (req, res) => {
     const fullSystemInstruction = `${basePrompt}${strictConstraint}`;
     const promptText = `Product: "${productContext?.title || 'Unknown'}". Details: ${productContext?.description || 'None'}. Price: ${productContext?.price || 'Unknown'}. User Question: "${question}". Answer concisely in 1-2 sentences.`;
 
-    const modelPriority = [model || 'gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-flash-latest'];
+    const modelPriority = [model || 'gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-flash-8b', 'gemini-flash-latest'];
     let lastError = null;
 
     for (const m of modelPriority) {
@@ -506,12 +551,58 @@ app.post('/api/admin/users/:id/update', authenticateAdmin, async (req, res) => {
     const { data, error: updateErr } = await supabase.auth.admin.updateUserById(id, updatePayload);
     if (updateErr) throw updateErr;
 
-    res.json({ success: true, message: 'User updated successfully', user: data.user });
+    res.json({ success: true, user: data.user });
   } catch (err) {
-    console.error('[Admin API] Error editing user:', err);
+    console.error('Update user error:', err);
     res.status(500).json({ error: err.message });
   }
 });
+
+// Cancellation Feedback Webhook & Notification Endpoint
+app.post('/api/webhook/cancellation', async (req, res) => {
+  const { user_email, store_domain, plan, reason, feedback, canceled_at } = req.body;
+  
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log('🚨 [CANCELLATION ALERT] A customer requested cancellation:');
+  console.log(`   👤 User Email:   ${user_email || 'Unknown'}`);
+  console.log(`   🌐 Store Domain: ${store_domain || 'Unknown'}`);
+  console.log(`   🏷️ Current Plan:  ${plan || 'Unknown'}`);
+  console.log(`   ❓ Reason:        ${reason || 'Not provided'}`);
+  console.log(`   💬 Custom Notes:  ${feedback || 'None'}`);
+  console.log(`   ⏰ Timestamp:     ${canceled_at || new Date().toISOString()}`);
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+  // If TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID are provided in .env, send instantaneous alert!
+  const tgToken = process.env.TELEGRAM_BOT_TOKEN;
+  const tgChatId = process.env.TELEGRAM_CHAT_ID;
+  if (tgToken && tgChatId) {
+    try {
+      const msg = `🚨 *ClarityCart Subscription Canceled*\n\n` +
+        `👤 *User:* \`${user_email}\`\n` +
+        `🌐 *Store:* \`${store_domain}\`\n` +
+        `🏷️ *Plan:* *${plan}*\n` +
+        `❓ *Reason:* ${reason}\n` +
+        `💬 *Feedback:* _${feedback || 'None'}_\n` +
+        `⏰ *Time:* ${new Date().toLocaleString()}`;
+      
+      await fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: tgChatId,
+          text: msg,
+          parse_mode: 'Markdown'
+        })
+      });
+      console.log('[Backend] Dispatched Telegram alert successfully!');
+    } catch (tgErr) {
+      console.warn('[Backend] Could not send Telegram alert:', tgErr.message);
+    }
+  }
+
+  res.json({ success: true, message: 'Cancellation feedback logged successfully' });
+});
+
 
 // Start the server
 const PORT = process.env.PORT || 3000;

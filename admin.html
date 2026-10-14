@@ -105,9 +105,10 @@
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path></svg>
                     Website
                 </a>
-                <button id="logout-btn" class="flex items-center gap-1.5 px-3.5 py-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 hover:border-red-500/50 rounded-xl text-xs font-semibold text-red-400 hover:text-red-300 transition-all shadow-[0_0_10px_rgba(239,68,68,0.15)]" title="Sign Out">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                    Log out
+                <button id="logout-btn" class="relative group overflow-hidden flex items-center gap-1.5 px-4 py-1.5 bg-gradient-to-r from-red-500/10 via-red-500/15 to-rose-500/10 hover:from-red-500/25 hover:to-rose-500/25 border border-red-500/30 hover:border-red-400/60 rounded-xl text-xs font-semibold text-red-400 hover:text-red-200 shadow-[0_0_12px_rgba(239,68,68,0.15)] hover:shadow-[0_0_20px_rgba(239,68,68,0.35)] active:scale-95 transition-all duration-300 cursor-pointer" title="Sign Out">
+                    <span class="absolute inset-0 -translate-x-full group-hover:translate-x-full duration-700 bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform ease-out pointer-events-none"></span>
+                    <svg class="w-3.5 h-3.5 text-red-400 group-hover:text-red-200 group-hover:-translate-x-0.5 group-hover:rotate-12 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                    <span>Log out</span>
                 </button>
             </div>
         </div>
@@ -199,9 +200,9 @@
                     <div class="relative flex items-center group w-full sm:w-72">
                         <div class="absolute inset-0 rounded-full bg-gradient-to-r from-blue-500/40 via-cyan-400/40 to-indigo-500/40 blur-[6px] opacity-70 group-focus-within:opacity-100 group-focus-within:blur-[10px] group-focus-within:from-cyan-400 group-focus-within:to-blue-600 transition-all duration-300 pointer-events-none"></div>
                         <div class="relative flex items-center w-full rounded-full bg-[#0E1526] border border-cyan-500/50 group-focus-within:border-cyan-400 p-1 pl-1.5 shadow-[inset_0_1px_4px_rgba(0,0,0,0.6)] transition-all">
-                            <div class="w-7 h-7 rounded-full bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white shadow-[0_0_10px_rgba(6,182,212,0.6)] flex-shrink-0">
+                            <button type="button" id="search-icon-btn" class="w-7 h-7 rounded-full bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white shadow-[0_0_10px_rgba(6,182,212,0.6)] hover:scale-110 active:scale-95 hover:shadow-[0_0_14px_rgba(6,182,212,0.9)] transition-all cursor-pointer flex-shrink-0" title="Click to search">
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                            </div>
+                            </button>
                             <input type="text" id="search-input" placeholder="Search email or domain..." class="bg-transparent border-0 px-3 py-1 text-sm text-white placeholder-gray-400 focus:outline-none w-full">
                         </div>
                     </div>
@@ -657,15 +658,15 @@
                         <td class="px-6 py-4 text-gray-300 font-mono text-xs">
                             ${u.store_domain}
                         </td>
-                        <td class="px-6 py-4">
+                        <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center gap-2">
                                 <span class="px-3 py-1 rounded-full text-xs font-medium ${planBadgeClass}">${u.plan}</span>
                                 ${statusBadge}
                             </div>
-                            <span class="text-[11px] text-gray-400 flex items-center gap-1.5 mt-1 font-normal">
-                                <svg class="w-3.5 h-3.5 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                            <div class="inline-flex items-center gap-1.5 mt-1 text-[11px] text-gray-400 font-normal whitespace-nowrap">
+                                <svg class="w-3.5 h-3.5 text-cyan-400/80 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                                 <span>${periodText}</span>
-                            </span>
+                            </div>
                         </td>
                         <td class="px-6 py-4">
                             <div class="w-32 bg-gray-800 rounded-full h-1.5 mt-1 relative overflow-hidden">
@@ -944,6 +945,14 @@
         document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('refresh-btn').addEventListener('click', fetchAdminData);
             document.getElementById('search-input').addEventListener('input', applyFilters);
+            const searchIconBtn = document.getElementById('search-icon-btn');
+            if (searchIconBtn) {
+                searchIconBtn.addEventListener('click', () => {
+                    const input = document.getElementById('search-input');
+                    input.focus();
+                    applyFilters();
+                });
+            }
             document.getElementById('plan-filter').addEventListener('change', applyFilters);
             document.getElementById('sort-filter').addEventListener('change', applyFilters);
 
