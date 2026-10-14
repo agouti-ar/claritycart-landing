@@ -13,6 +13,7 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
     tone: savedConfig.tone || "friendly",
     use_emojis: savedConfig.use_emojis !== false,
     customTonePrompt: savedConfig.customTonePrompt || "",
+    themePreset: savedConfig.themePreset || localStorage.getItem('clarity_theme_preset') || (window.location.search.includes('theme=neon') ? 'neon_pop' : 'classic'),
     mockMode: savedConfig.mockMode || false
 };
 
@@ -66,9 +67,205 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
             this.shadow = shadow;
             this.render(shadow);
             this.bindEvents(shadow);
+
+            // Apply initial theme preset if preset
+            if (window.ClarityCartConfig.themePreset) {
+                this.applyThemePreset(window.ClarityCartConfig.themePreset);
+            }
             
             // Fetch live settings and theme color from Backend
             this.fetchStoreSettings();
+
+            // Listen for cross-tab or runtime storage theme changes
+            window.addEventListener('storage', (e) => {
+                if (e.key === 'clarity_theme_preset') {
+                    this.applyThemePreset(e.newValue || 'classic');
+                }
+            });
+        }
+
+        applyThemePreset(preset) {
+            if (!this.shadow) return;
+            const container = this.shadow.querySelector('.widget-container');
+            let styleTag = this.shadow.getElementById('clarity-preset-theme');
+            if (!styleTag) {
+                styleTag = document.createElement('style');
+                styleTag.id = 'clarity-preset-theme';
+                this.shadow.appendChild(styleTag);
+            }
+
+            if (preset === 'neon_pop') {
+                if (container) container.classList.add('theme-neon-pop');
+                styleTag.textContent = `
+                    .widget-container.theme-neon-pop {
+                        background: #1E1D24 !important;
+                        border: 2.5px solid #F472B6 !important;
+                        border-radius: 22px !important;
+                        box-shadow: 6px 6px 0px #0A0910, 0 0 25px rgba(244, 114, 182, 0.22) !important;
+                        color: #F8FAFC !important;
+                        position: relative !important;
+                    }
+                    .theme-neon-pop .header .title {
+                        color: #FDE047 !important;
+                        font-weight: 800 !important;
+                        font-size: 15px !important;
+                        letter-spacing: -0.01em !important;
+                    }
+                    .theme-neon-pop .header .title-icon {
+                        color: #FDE047 !important;
+                        stroke-width: 2.8px !important;
+                    }
+                    .theme-neon-pop .ai-badge {
+                        background: rgba(253, 224, 71, 0.12) !important;
+                        color: #FDE047 !important;
+                        border: 1.5px solid rgba(253, 224, 71, 0.3) !important;
+                        font-weight: 700 !important;
+                        letter-spacing: 0.8px !important;
+                    }
+                    .theme-neon-pop .ai-badge .dot {
+                        background-color: #22D3EE !important;
+                        box-shadow: 0 0 6px #22D3EE !important;
+                    }
+                    .theme-neon-pop .reset-btn {
+                        color: #F472B6 !important;
+                    }
+                    .theme-neon-pop .quick-chips {
+                        gap: 8px !important;
+                    }
+                    .theme-neon-pop .chip {
+                        border-radius: 9999px !important;
+                        font-weight: 700 !important;
+                        padding: 8px 15px !important;
+                        border: 2px solid #000000 !important;
+                        box-shadow: 2px 2.5px 0px #000000 !important;
+                        font-size: 12.5px !important;
+                        transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1) !important;
+                    }
+                    /* Logitech POP Keyboard Keycaps Color Palette */
+                    .theme-neon-pop .chip:nth-child(3n+1) {
+                        background: #FDE047 !important;
+                        color: #18181B !important;
+                    }
+                    .theme-neon-pop .chip:nth-child(3n+2) {
+                        background: #14131A !important;
+                        color: #FFFFFF !important;
+                        border-color: #2D2A37 !important;
+                    }
+                    .theme-neon-pop .chip:nth-child(3n) {
+                        background: #F472B6 !important;
+                        color: #18181B !important;
+                    }
+                    .theme-neon-pop .chip:hover {
+                        transform: translate(-1px, -2px) !important;
+                        box-shadow: 3px 4.5px 0px #000000 !important;
+                        filter: brightness(1.08) !important;
+                    }
+                    .theme-neon-pop .chip:active {
+                        transform: translate(1px, 1px) !important;
+                        box-shadow: 1px 1px 0px #000000 !important;
+                    }
+                    .theme-neon-pop .chat-container {
+                        border-top: 2px solid #2B2836 !important;
+                    }
+                    .theme-neon-pop .message.user {
+                        background: #EC4899 !important;
+                        color: #FFFFFF !important;
+                        border: 2px solid #000000 !important;
+                        box-shadow: 3px 3px 0px #000000 !important;
+                        border-radius: 9999px !important;
+                        padding: 9px 18px !important;
+                        font-weight: 600 !important;
+                    }
+                    .theme-neon-pop .message.ai {
+                        background: #FCD34D !important;
+                        color: #18181B !important;
+                        border: 2px solid #000000 !important;
+                        box-shadow: 3px 3px 0px #000000 !important;
+                        border-radius: 18px !important;
+                        padding: 12px 18px !important;
+                        font-weight: 600 !important;
+                        line-height: 1.5 !important;
+                    }
+                    .theme-neon-pop .loader {
+                        background: #FCD34D !important;
+                        border: 2px solid #000000 !important;
+                        box-shadow: 2px 2px 0px #000000 !important;
+                        border-radius: 14px !important;
+                    }
+                    .theme-neon-pop .loader-dot {
+                        background: #18181B !important;
+                    }
+                    .theme-neon-pop .input-field {
+                        background: #16151D !important;
+                        color: #F8FAFC !important;
+                        border: 2px solid #FCD34D !important;
+                        box-shadow: 2px 2px 0px #000000 !important;
+                        border-radius: 9999px !important;
+                        padding: 11px 18px !important;
+                    }
+                    .theme-neon-pop .input-field::placeholder {
+                        color: #71717A !important;
+                    }
+                    .theme-neon-pop .input-field:focus {
+                        border-color: #FDE047 !important;
+                        box-shadow: 0 0 12px rgba(253, 224, 71, 0.35), 2px 2px 0px #000000 !important;
+                    }
+                    .theme-neon-pop .send-btn {
+                        background: #EC4899 !important;
+                        color: #000000 !important;
+                        border: 2px solid #000000 !important;
+                        box-shadow: 2px 2.5px 0px #000000 !important;
+                        border-radius: 50% !important;
+                        width: 40px !important;
+                        height: 40px !important;
+                    }
+                    .theme-neon-pop .send-btn:hover {
+                        background: #F43F5E !important;
+                        transform: translate(-1px, -1px) scale(1.05) !important;
+                        box-shadow: 3px 4px 0px #000000 !important;
+                    }
+                    .theme-neon-pop .send-btn svg {
+                        color: #000000 !important;
+                        stroke: #000000 !important;
+                    }
+                    .theme-neon-pop .footer {
+                        color: #71717A !important;
+                    }
+                `;
+
+                const targetBtn = document.querySelector(this.targetSelector);
+                if (targetBtn) {
+                    targetBtn.classList.add('clarity-neon-pop-btn');
+                    if (!document.getElementById('clarity-global-neon-style')) {
+                        const globalStyle = document.createElement('style');
+                        globalStyle.id = 'clarity-global-neon-style';
+                        globalStyle.textContent = `
+                            .clarity-neon-pop-btn {
+                                background: linear-gradient(135deg, #1E1B2C 0%, #26213A 100%) !important;
+                                color: #FFFFFF !important;
+                                border: 2.5px solid #F472B6 !important;
+                                border-radius: 16px !important;
+                                box-shadow: 4px 4px 0px #000000, 0 0 16px rgba(244, 114, 182, 0.25) !important;
+                                font-weight: 800 !important;
+                                letter-spacing: 0.5px !important;
+                                text-shadow: 0 0 8px rgba(255,255,255,0.4);
+                                position: relative !important;
+                                transition: all 0.2s ease !important;
+                            }
+                            .clarity-neon-pop-btn:hover {
+                                transform: translate(-1px, -1px) scale(1.01) !important;
+                                box-shadow: 5px 5px 0px #000000, 0 0 22px rgba(244, 114, 182, 0.4) !important;
+                            }
+                        `;
+                        document.head.appendChild(globalStyle);
+                    }
+                }
+            } else {
+                if (container) container.classList.remove('theme-neon-pop');
+                styleTag.textContent = '';
+                const targetBtn = document.querySelector(this.targetSelector);
+                if (targetBtn) targetBtn.classList.remove('clarity-neon-pop-btn');
+            }
         }
 
         applyThemeColor(color) {
@@ -100,6 +297,12 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                 if (response.ok) {
                     const settings = await response.json();
                     if (settings) {
+                        if (settings.theme_preset) {
+                            window.ClarityCartConfig.themePreset = settings.theme_preset;
+                            this.applyThemePreset(settings.theme_preset);
+                        } else if (window.ClarityCartConfig.themePreset) {
+                            this.applyThemePreset(window.ClarityCartConfig.themePreset);
+                        }
                         if (settings.friendly_tone !== undefined) {
                             window.ClarityCartConfig.tone = settings.friendly_tone ? 'friendly' : 'professional';
                         }

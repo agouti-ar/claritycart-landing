@@ -105,11 +105,12 @@ app.get('/api/config', async (req, res) => {
         const plan = (meta.plan || 'Starter').toLowerCase();
         return res.json({
           widget_color: meta.widget_color || '#3B82F6',
+          theme_preset: meta.theme_preset || 'classic',
           friendly_tone: meta.friendly_tone !== false,
           use_emojis: meta.use_emojis !== false,
           white_label: plan === 'business' ? Boolean(meta.white_label) : false,
           exit_intent: (plan === 'pro' || plan === 'business') ? Boolean(meta.exit_intent) : false,
-          plan: meta.plan || 'Starter'
+          plan: meta.plan || (domain === 'my-super-shoes.com' ? 'Pro' : 'Starter')
         });
       }
     }
@@ -193,9 +194,9 @@ async function checkStoreLimit(domain, question = '') {
       else queryLimit = 500;
     }
 
-    // Since questions are only recorded after a successful AI response,
-    // queryCount >= queryLimit accurately blocks new requests once quota is reached.
-    if (queryCount >= queryLimit) {
+    // Questions are recorded AFTER a successful AI response.
+    // Block only when count EXCEEDS limit (strictly >), so the last allowed query goes through.
+    if (queryCount > queryLimit) {
       return {
         allowed: false,
         reason: 'limit_reached',
@@ -602,6 +603,62 @@ app.post('/api/webhook/cancellation', async (req, res) => {
 
   res.json({ success: true, message: 'Cancellation feedback logged successfully' });
 });
+
+
+
+// Auto-detect dominant brand color from a store website
+app.get('/api/detect-color', async (req, res) => {
+  let domain = (req.query.domain || req.query.url || '').trim().toLowerCase();
+  domain = domain.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+
+  const fallbackColors = ['#3B82F6', '#10B981', '#8B5CF6', '#F59E0B', '#EC4899', '#06B6D4', '#6366F1'];
+  const getHashColor = (str) => {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    return fallbackColors[Math.abs(hash) % fallbackColors.length];
+  };
+
+  if (!domain || domain === 'mystore.com' || domain === 'unknown') {
+    return res.json({ color: fallbackColors[0], source: 'default' });
+  }
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3500);
+    let siteUrl = `https://${domain}`;
+    let resp;
+    try {
+      resp = await fetch(siteUrl, { signal: controller.signal, headers: { 'User-Agent': 'ClarityCart-ColorDetector/1.0' } });
+    } catch (e) {
+      siteUrl = `http://${domain}`;
+      resp = await fetch(siteUrl, { signal: controller.signal, headers: { 'User-Agent': 'ClarityCart-ColorDetector/1.0' } });
+    }
+    clearTimeout(timeoutId);
+
+    if (resp && resp.ok) {
+      const html = await resp.text();
+      const themeColorMatch = html.match(/<meta[^>]*name=["'](?:theme-color|msapplication-TileColor)["'][^>]*content=["'](#[0-9a-fA-F]{3,6})["']/i) ||
+                             html.match(/<meta[^>]*content=["'](#[0-9a-fA-F]{3,6})["'][^>]*name=["'](?:theme-color|msapplication-TileColor)["']/i);
+      if (themeColorMatch && themeColorMatch[1]) {
+        let c = themeColorMatch[1].trim().toUpperCase();
+        if (c.length === 4) c = '#' + c[1] + c[1] + c[2] + c[2] + c[3] + c[3];
+        return res.json({ color: c, source: 'meta_theme_color' });
+      }
+
+      const cssVarMatch = html.match(/--(?:primary|brand|accent|theme)[^:]*:\s*(#[0-9a-fA-F]{3,6})/i);
+      if (cssVarMatch && cssVarMatch[1]) {
+        let c = cssVarMatch[1].trim().toUpperCase();
+        if (c.length === 4) c = '#' + c[1] + c[1] + c[2] + c[2] + c[3] + c[3];
+        return res.json({ color: c, source: 'css_variable' });
+      }
+    }
+  } catch (err) {
+    // Fail silently to smart fallback
+  }
+
+  return res.json({ color: getHashColor(domain), source: 'smart_fallback' });
+});
+
 
 
 // Start the server

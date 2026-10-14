@@ -12,6 +12,7 @@ export default async function handler(req, res) {
 
   const defaultSettings = {
     widget_color: '#3B82F6',
+    theme_preset: 'classic',
     friendly_tone: true,
     use_emojis: true,
     white_label: false,
@@ -39,6 +40,7 @@ export default async function handler(req, res) {
           const plan = (meta.plan || 'Starter').toLowerCase();
           return res.status(200).json({
             widget_color: meta.widget_color || '#3B82F6',
+            theme_preset: meta.theme_preset || 'classic',
             friendly_tone: meta.friendly_tone !== false,
             use_emojis: meta.use_emojis !== false,
             white_label: plan === 'business' ? Boolean(meta.white_label) : false,
