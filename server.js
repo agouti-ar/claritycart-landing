@@ -11,8 +11,12 @@ app.use(cors({
   origin: '*' // In production, this can be restricted to your domain
 }));
 
+// Paddle signatures require the exact bytes, before any JSON middleware.
+const billing=require('./lib/billing-handler').createBillingHandlers({db:options.db,...(options.billingOptions||{})});
+app.post('/api/billing/webhook',express.raw({type:'application/json',limit:'256kb'}),billing.webhook);
 // Parse JSON request bodies
 app.use(express.json({limit:'32kb'}));
+app.all('/api/billing/:action',billing.api);
 
 // Serve static files from workspace root (dashboard.html, test.html, clarity.js, etc.)
 app.use((req,res,next)=>{

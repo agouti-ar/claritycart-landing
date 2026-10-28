@@ -22,13 +22,14 @@ async function createTestDb(options={}) {
  await pg.exec(readFileSync('supabase/migrations/'+migration,'utf8'));
  if(options.security) {await pg.exec('create policy legacy_broad_read on public.questions for select using (true); grant select(id) on public.questions to anon; grant update(question_text) on public.questions to authenticated;'); const migration=readdirSync('supabase/migrations').find(x=>x.endsWith('_widget_security_and_store_binding.sql'));await pg.exec(readFileSync('supabase/migrations/'+migration,'utf8'));}
  }
+ if(options.billing){const billing=readdirSync('supabase/migrations').find(x=>x.endsWith('_paddle_subscription_lifecycle.sql'));await pg.exec(readFileSync('supabase/migrations/'+billing,'utf8'));}
  if(options.freezeRateClock) {
   const definition=(await pg.query("select pg_get_functiondef('cc_private.consume_rate(text,integer,integer)'::regprocedure) as definition")).rows[0].definition;
   if(!definition.includes('clock_timestamp()'))throw new Error('Test clock marker missing');
   await pg.exec(definition.replaceAll('clock_timestamp()',()=>"timestamptz '2026-10-27 12:00:00+00'"));
  }
  const db={rpc(name,args){
-  if(!['claim_chat_request','complete_chat_request','get_cc_store_snapshot','consume_cc_rate_limit','claim_verified_chat_request'].includes(name))throw new Error('Unexpected RPC');
+  if(!['claim_chat_request','complete_chat_request','get_cc_store_snapshot','consume_cc_rate_limit','claim_verified_chat_request','cc_billing_operation','apply_cc_paddle_event'].includes(name))throw new Error('Unexpected RPC');
   const entries=Object.entries(args);const sql='select public.'+name+'('+entries.map(([k],i)=>k+' => $'+(i+1)).join(',')+') as result';
   const p=pg.query(sql,entries.map(([,v])=>typeof v==='object'?JSON.stringify(v):v)).then(r=>({data:r.rows[0].result,error:null}),error=>({data:null,error}));
   p.abortSignal=()=>p;return p;
@@ -39,7 +40,7 @@ async function createTestDb(options={}) {
   const query={select(){return this;},eq(k,v){if(!['id','owner_id','domain','domain_verification_token'].includes(k))throw new Error('Unexpected filter');filters.push([k,v]);return this;},order(){return this;},limit(n){limit=n;return this;},update(value){patch=value;return this;},
    async maybeSingle(){
     const values=[];let sql;
-    if(patch){const sets=Object.entries(patch).map(([k,v])=>{if(!['domain','plan','quota_override','status','access_until','settings','cancel_at_period_end','domain_verified_at'].includes(k))throw new Error('Unexpected update');values.push(typeof v==='object'?JSON.stringify(v):v);return k+'=$'+values.length;});sql='update public.cc_stores set '+sets.join(',');}
+    if(patch){const sets=Object.entries(patch).map(([k,v])=>{if(!['domain','plan','quota_override','status','access_until','settings','cancel_at_period_end','domain_verified_at','billing_hold'].includes(k))throw new Error('Unexpected update');values.push(typeof v==='object'?JSON.stringify(v):v);return k+'=$'+values.length;});sql='update public.cc_stores set '+sets.join(',');}
     else sql='select * from public.cc_stores';
     sql+=' where '+filters.map(([k,v])=>{values.push(v);return k+'=$'+values.length;}).join(' and ');
     sql+=patch?' returning *':' order by created_at limit '+limit;
