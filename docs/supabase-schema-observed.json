@@ -1,0 +1,89 @@
+{
+  "project": "vzmpwstfddznsvypudhj",
+  "openapiStatus": 200,
+  "questions": {
+    "required": [
+      "id",
+      "created_at",
+      "store_domain",
+      "question_text"
+    ],
+    "properties": {
+      "id": {
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "int64",
+        "type": "integer"
+      },
+      "created_at": {
+        "default": "timezone('utc'::text, now())",
+        "format": "timestamp with time zone",
+        "type": "string"
+      },
+      "store_domain": {
+        "format": "text",
+        "type": "string"
+      },
+      "question_text": {
+        "format": "text",
+        "type": "string"
+      },
+      "product_context": {
+        "format": "text",
+        "type": "string"
+      }
+    },
+    "type": "object"
+  },
+  "store_settings": {
+    "required": [
+      "id",
+      "created_at",
+      "store_domain",
+      "friendly_tone"
+    ],
+    "properties": {
+      "id": {
+        "description": "Note:\nThis is a Primary Key.<pk/>",
+        "format": "int64",
+        "type": "integer"
+      },
+      "created_at": {
+        "default": "now()",
+        "format": "timestamp with time zone",
+        "type": "string"
+      },
+      "store_domain": {
+        "format": "text",
+        "type": "string"
+      },
+      "friendly_tone": {
+        "default": true,
+        "format": "boolean",
+        "type": "boolean"
+      },
+      "use_emojis": {
+        "default": true,
+        "format": "boolean",
+        "type": "boolean"
+      }
+    },
+    "type": "object"
+  },
+  "tables": [
+    "questions",
+    "store_settings"
+  ],
+  "rpcs": [],
+  "questionsReadStatus": 206,
+  "questionsCount": "0-0/20",
+  "anonReadStatus": 206,
+  "anonCount": "0-0/20",
+  "checkedDate": "2026-10-27",
+  "method": "Read-only PostgREST OpenAPI and count",
+  "unverified": [
+    "id identity/default",
+    "RLS definitions",
+    "triggers",
+    "full constraints"
+  ]
+}

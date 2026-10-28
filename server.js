@@ -1,8 +1,9 @@
-require('dotenv').config();
+require('dotenv').config({quiet:true});
 const express = require('express');
 const cors = require('cors');
 const { createClient } = require('@supabase/supabase-js');
 
+function createApp(options = {}) {
 const app = express();
 
 // Enable CORS for frontend requests
@@ -11,10 +12,20 @@ app.use(cors({
 }));
 
 // Parse JSON request bodies
-app.use(express.json());
+app.use(express.json({limit:'32kb'}));
+
+// Serve static files from workspace root (dashboard.html, test.html, clarity.js, etc.)
+app.use((req,res,next)=>{
+  let target;
+  try {target=require('node:path').posix.normalize(decodeURIComponent(req.path).replaceAll('\\','/'));}catch{return res.status(400).json({error:'INVALID_PATH'});}
+  if(/^\/(?:lib|scripts|tests|docs|migrations|supabase|node_modules)(?:\/|$)|^\/(?:server|backend)\.js$|^\/package(?:-lock)?\.json$/.test(target))return res.status(404).json({error:'NOT_FOUND'});
+  req.ccPath=target;next();
+});
+const servePublic=express.static(__dirname);
+app.use((req,res,next)=>req.ccPath.startsWith('/api/')?next():servePublic(req,res,next));
 
 // Initialize Supabase with the SERVICE_ROLE key to bypass RLS restrictions securely on the server
-const supabase = createClient(
+const supabase = options.db || createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_KEY
 );
@@ -43,6 +54,7 @@ async function authenticateAdmin(req, res, next) {
       return res.status(403).json({ error: 'Access denied: Admin privileges required' });
     }
 
+    if(req.params.id && !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(req.params.id))return res.status(400).json({error:'INVALID_USER_ID'});
     req.adminUser = user;
     next();
   } catch (err) {
@@ -75,222 +87,37 @@ app.post('/api/validate-domain', async (req, res) => {
   res.json({ valid: true, message: 'Domain is valid' });
 });
 
-// Live Widget Configuration & Theme Settings endpoint
-app.get('/api/config', async (req, res) => {
-  const domain = (req.query.domain || req.query.store_domain || '').trim().toLowerCase();
-  
-  const defaultSettings = {
-    widget_color: '#3B82F6',
-    friendly_tone: true,
-    use_emojis: true,
-    white_label: false,
-    exit_intent: false,
-    plan: 'Starter'
-  };
-
-  if (!domain || domain === 'unknown') {
-    return res.json(defaultSettings);
-  }
-
-  try {
-    const { data: authData, error: listErr } = await supabase.auth.admin.listUsers();
-    if (!listErr && authData?.users) {
-      const user = authData.users.find(u => {
-        const metaDomain = (u.user_metadata?.store_domain || '').trim().toLowerCase();
-        return metaDomain === domain;
-      });
-
-      if (user && user.user_metadata) {
-        const meta = user.user_metadata;
-        const plan = (meta.plan || 'Starter').toLowerCase();
-        return res.json({
-          widget_color: meta.widget_color || '#3B82F6',
-          theme_preset: meta.theme_preset || 'classic',
-          friendly_tone: meta.friendly_tone !== false,
-          use_emojis: meta.use_emojis !== false,
-          white_label: plan === 'business' ? Boolean(meta.white_label) : false,
-          exit_intent: (plan === 'pro' || plan === 'business') ? Boolean(meta.exit_intent) : false,
-          plan: meta.plan || (domain === 'my-super-shoes.com' ? 'Pro' : 'Starter')
-        });
-      }
-    }
-  } catch (err) {
-    console.warn('[Backend] /api/config error:', err.message);
-  }
-
-  res.json(defaultSettings);
+// Preview sync retains its endpoint, but writes require the store owner or super-admin.
+const previewSettings = new Map();
+app.get('/api/live-sync',async(req,res)=>{
+ try {const domain=String(req.query.domain||req.query.store_domain||'').toLowerCase();const {data,error}=await supabase.from('cc_stores').select('*').eq('domain',domain).maybeSingle();
+  if(error)throw error;if(!data)return res.status(404).json({error:'UNKNOWN_STORE'});
+  return res.json(previewSettings.get(data.id)||require('./api/config').publicSettings(await snapshot(supabase,data.id)));
+ }catch{return res.status(503).json({error:'SYNC_UNAVAILABLE'});}
+});
+app.post('/api/live-sync',async(req,res)=>{
+ try {const token=(req.headers.authorization||'').match(/^Bearer (.+)$/)?.[1];if(!token)return res.status(401).json({error:'AUTH_REQUIRED'});
+  const {data:auth,error:authError}=await supabase.auth.getUser(token);if(authError||!auth?.user)return res.status(401).json({error:'INVALID_SESSION'});
+  const {data:store,error}=await supabase.from('cc_stores').select('*').eq('domain',String(req.body.domain||'').toLowerCase()).maybeSingle();if(error)throw error;
+  if(!store||store.owner_id!==auth.user.id&&!ADMIN_EMAILS.includes(String(auth.user.email||'').toLowerCase()))return res.status(403).json({error:'STORE_OWNER_MISMATCH'});
+  const {domain,store_domain,...settings}=req.body;
+  const patch=require('./lib/store-access').validatedPatch({settings},store);
+  const safe=require('./api/config').publicSettings({...await snapshot(supabase,store.id),settings:patch.settings});previewSettings.set(store.id,safe);
+  return res.json({success:true,settings:safe});
+ }catch{return res.status(400).json({error:'INVALID_SYNC_UPDATE'});}
 });
 
-// Friendly, customer-safe resting messages when AI quota is reached or store is paused
-function getRandomRestingMessage(isRussian = false) {
-  const ruMessages = [
-    "Наш AI-помощник сейчас на коротком кофе-брейке ☕ после общения со столькими покупателями сегодня! Вы можете продолжить покупки или оформить заказ, наша команда на связи.",
-    "Кажется, наш консультант ненадолго отвлекся на подзарядку батареек 🔋! Вы можете добавить товар в корзину или написать нашим менеджерам.",
-    "Наш электронный специалист на пару минут отошел за свежим чаем 🍵. Оформите заказ на сайте или напишите в поддержку — мы на связи!",
-    "Наш AI-консультант устроил небольшую передышку 🛋️! Вы можете смело завершить покупку или задать вопрос оператору."
-  ];
+// Account/config use protected store data in both local and Vercel routes.
+const { updateOwnedStore, storeForOwner, snapshot } = require('./lib/store-access');
+app.get('/api/config', require('./api/config').createConfigHandler({db:supabase}));
+app.all('/api/account', require('./lib/store-access').createAccountHandler({db:supabase}));
+app.all('/api/verify-domain', require('./lib/domain-verification').createDomainVerificationHandler({db:supabase}));
 
-  const enMessages = [
-    "Our AI assistant is taking a short coffee break ☕ after chatting with so many shoppers today! Feel free to explore or complete your order directly.",
-    "Our digital specialist is briefly recharging batteries 🔋! You can proceed to checkout or reach out to our support team.",
-    "Our store assistant stepped away for a fresh cup of tea 🍵. You can safely add items to your cart or contact our staff!",
-    "Looks like our AI consultant is taking a quick breather 🛋️! Feel free to continue shopping or message our team."
-  ];
-
-  const list = isRussian ? ruMessages : enMessages;
-  return list[Math.floor(Math.random() * list.length)];
-}
-
-// Helper to check if a store domain is blocked or exceeded quota
-async function checkStoreLimit(domain, question = '') {
-  if (!domain || domain === 'unknown') {
-    return { allowed: true };
-  }
-  const cleanDomain = domain.trim().toLowerCase();
-  const isRussian = /[а-яё]/i.test(question || '');
-
-  try {
-    // 1. Fetch user list from Supabase Admin
-    const { data: authData, error: usersError } = await supabase.auth.admin.listUsers();
-    if (usersError || !authData?.users) {
-      console.warn('[CheckLimit] Failed to list users:', usersError);
-      return { allowed: true };
-    }
-
-    const user = authData.users.find(u => {
-      const metaDomain = (u.user_metadata?.store_domain || '').trim().toLowerCase();
-      return metaDomain === cleanDomain;
-    });
-
-    if (!user) {
-      // Store not found among registered accounts (e.g. unregistered trial)
-      return { allowed: true };
-    }
-
-    const meta = user.user_metadata || {};
-    const isBlocked = Boolean(user.banned_until && new Date(user.banned_until) > new Date()) || 
-                      Boolean(meta.is_blocked) || 
-                      Boolean(meta.widget_paused);
-    if (isBlocked) {
-      return {
-        allowed: false,
-        reason: 'blocked',
-        message: getRandomRestingMessage(isRussian)
-      };
-    }
-
-    // 2. Count questions for this domain in Supabase
-    const { count, error: countErr } = await supabase
-      .from('questions')
-      .select('*', { count: 'exact', head: true })
-      .eq('store_domain', cleanDomain);
-
-    const queryCount = count || 0;
-    let queryLimit = meta.query_limit;
-    if (!queryLimit) {
-      const plan = (meta.plan || '').toLowerCase();
-      if (plan === 'pro') queryLimit = 2500;
-      else if (plan === 'business') queryLimit = 10000;
-      else queryLimit = 500;
-    }
-
-    // Questions are recorded AFTER a successful AI response.
-    // Block only when count EXCEEDS limit (strictly >), so the last allowed query goes through.
-    if (queryCount > queryLimit) {
-      return {
-        allowed: false,
-        reason: 'limit_reached',
-        queryCount,
-        queryLimit,
-        message: getRandomRestingMessage(isRussian)
-      };
-    }
-
-    return { allowed: true, queryCount, queryLimit };
-  } catch (err) {
-    console.error('[CheckLimit] Error checking limit:', err);
-    return { allowed: true };
-  }
-}
-
-// Chat API endpoint (with quota & block protection)
-app.post('/api/chat', async (req, res) => {
-  const { question, domain, store_domain, productContext, systemInstruction, temperature, model } = req.body || {};
-  const targetDomain = domain || store_domain;
-
-  // 1. Quota & block check
-  const status = await checkStoreLimit(targetDomain, question);
-  if (!status.allowed) {
-    console.log(`[Chat API] Protected block for domain "${targetDomain}". Reason: ${status.reason}`);
-    return res.status(200).json({
-      answer: status.message,
-      limitReached: status.reason === 'limit_reached',
-      blocked: status.reason === 'blocked',
-      queryCount: status.queryCount,
-      queryLimit: status.queryLimit
-    });
-  }
-
-  // 2. If allowed, generate response via Gemini or proxy to Vercel Gemini
-  let apiKey = (process.env.GEMINI_API_KEY || '').trim().replace(/^["']|["']$/g, '');
-  if (!apiKey) {
-    // Proxy to Vercel production endpoint
-    try {
-      const vercelRes = await fetch('https://claritycart-landing.vercel.app/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(req.body)
-      });
-      const data = await vercelRes.json();
-      return res.status(vercelRes.status).json(data);
-    } catch (proxyErr) {
-      return res.status(200).json({ answer: "⚠️ Could not reach AI service." });
-    }
-  }
-
-  // Local Gemini call
-  try {
-    const basePrompt = systemInstruction ? `${systemInstruction}\n\n` : '';
-    const strictConstraint = "CRITICAL DIRECTIVE: You are an AI sales assistant exclusively for this e-commerce store. Your primary goal is to SELL the product. If the user asks a general off-topic question, politely decline. Answer concisely in 1-2 sentences.";
-    const fullSystemInstruction = `${basePrompt}${strictConstraint}`;
-    const promptText = `Product: "${productContext?.title || 'Unknown'}". Details: ${productContext?.description || 'None'}. Price: ${productContext?.price || 'Unknown'}. User Question: "${question}". Answer concisely in 1-2 sentences.`;
-
-    const modelPriority = [model || 'gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-flash-8b', 'gemini-flash-latest'];
-    let lastError = null;
-
-    for (const m of modelPriority) {
-      try {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${apiKey}`;
-        const response = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            system_instruction: { parts: [{ text: fullSystemInstruction }] },
-            contents: [{ parts: [{ text: promptText }] }],
-            generationConfig: {
-              temperature: temperature !== undefined ? parseFloat(temperature) : 0.7
-            }
-          })
-        });
-
-        const data = await response.json();
-        if (response.ok && data.candidates) {
-          return res.status(200).json({
-            answer: data.candidates[0].content.parts[0].text,
-            usedModel: m
-          });
-        } else {
-          lastError = data.error?.message;
-        }
-      } catch (err) {
-        lastError = err.message;
-      }
-    }
-    return res.status(200).json({ answer: `⚠️ No available models. Last error: ${lastError}` });
-  } catch (error) {
-    return res.status(200).json({ answer: `⚠️ ${error.message}` });
-  }
-});
+// The same authoritative usage path serves local and Vercel requests.
+const chatHandler = require('./lib/usage-handler').createUsageHandler(options.generateAI || require('./api/chat').generateResponse, {db:supabase, ...(options.authorizeWidget ? {authorize:options.authorizeWidget} : {})});
+const { createLocalChatHandler } = require('./lib/local-chat');
+app.post('/api/chat', createLocalChatHandler(chatHandler,{hasApiKey:options.hasApiKey}));
+app.all('/api/widget-session',createLocalChatHandler(require('./lib/request-security').createWidgetSessionHandler({db:supabase}),{endpoint:'widget-session',hasApiKey:options.hasApiKey}));
 
 // Admin: Get overview data (all users, usage counts, platform stats)
 app.get('/api/admin/overview', authenticateAdmin, async (req, res) => {
@@ -326,37 +153,28 @@ app.get('/api/admin/overview', authenticateAdmin, async (req, res) => {
     let activeSubs = 0;
     let totalMRR = 0;
 
+    const {data: registry,error: registryError}=await supabase.from('cc_stores').select('id,owner_id');
+    if(registryError)throw registryError;
+    const protectedStores=await Promise.all((registry||[]).map(s=>snapshot(supabase,s.id)));
     const users = authData.users.map(u => {
+      const protectedStore=protectedStores.find(s=>s.owner_id===u.id);
       const meta = u.user_metadata || {};
-      const storeDomain = meta.store_domain || 'not-connected.com';
-      const plan = meta.plan || (storeDomain === 'my-super-shoes.com' ? 'Pro' : 'Starter');
+      const storeDomain = protectedStore?.domain || 'not-connected.com';
+      const plan = protectedStore?.plan || 'Unprovisioned';
+      const queryLimit=protectedStore?.query_limit ?? 0;
+      const planPrice=plan==='pro'?29.99:plan==='business'?79.99:plan==='starter'?9.99:0;
+      const queryCount=protectedStore?.query_count ?? 0;
+      const isBlocked = Boolean(u.banned_until && new Date(u.banned_until) > new Date()) || protectedStore?.status==='paused';
       
-      let queryLimit = meta.query_limit || 500;
-      let planPrice = 0;
-
-      if (plan.toLowerCase() === 'pro') {
-        if (!meta.query_limit) queryLimit = 2500;
-        planPrice = 29.99;
-      } else if (plan.toLowerCase() === 'business') {
-        if (!meta.query_limit) queryLimit = 10000;
-        planPrice = 79.99;
-      } else {
-        if (!meta.query_limit) queryLimit = 500;
-        planPrice = 9.99;
-      }
-
-      const queryCount = domainCounts[storeDomain] || 0;
-      const isBlocked = Boolean(u.banned_until && new Date(u.banned_until) > new Date()) || Boolean(meta.is_blocked);
-      
-      if (!isBlocked) {
+      if (!isBlocked && protectedStore?.access_active) {
         activeSubs++;
         totalMRR += planPrice;
       }
 
       // Calculate days remaining in subscription
-      let daysRemaining = 30; // default
-      if (meta.subscription_expires_at) {
-        const diffMs = new Date(meta.subscription_expires_at) - new Date();
+      let daysRemaining = 0; // default
+      if (protectedStore?.access_until) {
+        const diffMs = new Date(protectedStore?.access_until) - new Date();
         daysRemaining = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
       }
 
@@ -368,9 +186,9 @@ app.get('/api/admin/overview', authenticateAdmin, async (req, res) => {
         query_count: queryCount,
         query_limit: queryLimit,
         is_blocked: isBlocked,
-        widget_paused: Boolean(meta.widget_paused),
+        widget_paused: protectedStore?.status==='paused',
         days_remaining: daysRemaining,
-        subscription_expires_at: meta.subscription_expires_at || null,
+        subscription_expires_at: protectedStore?.access_until || null,
         created_at: u.created_at,
         last_sign_in_at: u.last_sign_in_at
       };
@@ -406,6 +224,7 @@ app.post('/api/admin/users/:id/block', authenticateAdmin, async (req, res) => {
     const { data: { user }, error: getErr } = await supabase.auth.admin.getUserById(id);
     if (getErr) throw getErr;
 
+    if(await storeForOwner(supabase,id)) await updateOwnedStore(supabase,id,{pause:Boolean(block)},true);
     const updatePayload = {
       ban_duration: block ? '876000h' : 'none',
       user_metadata: {
@@ -442,6 +261,7 @@ app.post('/api/admin/users/:id/pause', authenticateAdmin, async (req, res) => {
     const { data: { user }, error: getErr } = await supabase.auth.admin.getUserById(id);
     if (getErr) throw getErr;
 
+    await updateOwnedStore(supabase,id,{pause:Boolean(pause)},true);
     const { error } = await supabase.auth.admin.updateUserById(id, {
       user_metadata: {
         ...(user?.user_metadata || {}),
@@ -491,21 +311,8 @@ app.post('/api/admin/users/:id/subscription', authenticateAdmin, async (req, res
     const { data: { user }, error: getErr } = await supabase.auth.admin.getUserById(id);
     if (getErr) throw getErr;
 
-    const currentExpiry = user.user_metadata?.subscription_expires_at
-      ? new Date(user.user_metadata.subscription_expires_at)
-      : new Date();
-    
-    const baseDate = currentExpiry > new Date() ? currentExpiry : new Date();
-    baseDate.setDate(baseDate.getDate() + parseInt(days, 10));
-
-    const { error: updateErr } = await supabase.auth.admin.updateUserById(id, {
-      user_metadata: {
-        ...user.user_metadata,
-        subscription_expires_at: baseDate.toISOString()
-      }
-    });
-    if (updateErr) throw updateErr;
-
+    const updatedStore=await updateOwnedStore(supabase,id,{days_to_add:days},true);
+    const baseDate=new Date(updatedStore.access_until);
     res.json({
       success: true,
       newExpiry: baseDate.toISOString(),
@@ -526,7 +333,13 @@ app.post('/api/admin/users/:id/update', authenticateAdmin, async (req, res) => {
     const { data: { user }, error: getErr } = await supabase.auth.admin.getUserById(id);
     if (getErr) throw getErr;
 
-    const newMeta = { ...user.user_metadata };
+    const authoritativePatch = {};
+    if(store_domain!==undefined) authoritativePatch.store_domain=store_domain;
+    if(plan!==undefined) authoritativePatch.plan=plan;
+    if(query_limit!==undefined) authoritativePatch.query_limit=query_limit;
+    if(days_to_add!==undefined && days_to_add!==0) authoritativePatch.days_to_add=days_to_add;
+    if(Object.keys(authoritativePatch).length) await updateOwnedStore(supabase,id,authoritativePatch,true);
+    const newMeta = { ...user.user_metadata }; // Compatibility mirror; never authoritative.
     if (store_domain) newMeta.store_domain = store_domain.trim();
     if (plan) newMeta.plan = plan;
     if (query_limit !== undefined && query_limit !== null) {
@@ -561,7 +374,15 @@ app.post('/api/admin/users/:id/update', authenticateAdmin, async (req, res) => {
 
 // Cancellation Feedback Webhook & Notification Endpoint
 app.post('/api/webhook/cancellation', async (req, res) => {
-  const { user_email, store_domain, plan, reason, feedback, canceled_at } = req.body;
+  const token=(req.headers.authorization||'').match(/^Bearer (.+)$/)?.[1];
+  if(!token)return res.status(401).json({error:'AUTH_REQUIRED'});
+  const {data:auth,error:authError}=await supabase.auth.getUser(token);
+  if(authError||!auth?.user)return res.status(401).json({error:'INVALID_SESSION'});
+  const store=await storeForOwner(supabase,auth.user.id);
+  if(!store||store.domain!==req.body.store_domain)return res.status(403).json({error:'STORE_OWNER_MISMATCH'});
+  const {reason,feedback,canceled_at}=req.body;
+  if(typeof reason!=='string'||reason.length>200||typeof feedback!=='string'||feedback.length>2000)return res.status(400).json({error:'INVALID_FEEDBACK'});
+  const user_email=auth.user.email,store_domain=store.domain,plan=store.plan;
   
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   console.log('🚨 [CANCELLATION ALERT] A customer requested cancellation:');
@@ -611,17 +432,38 @@ app.get('/api/detect-color', async (req, res) => {
   let domain = (req.query.domain || req.query.url || '').trim().toLowerCase();
   domain = domain.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
 
-  const fallbackColors = ['#3B82F6', '#10B981', '#8B5CF6', '#F59E0B', '#EC4899', '#06B6D4', '#6366F1'];
+  const fallbackColors = ['#10B981', '#3B82F6', '#8B5CF6', '#F59E0B', '#EC4899', '#06B6D4', '#6366F1'];
   const getHashColor = (str) => {
     let hash = 0;
     for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
     return fallbackColors[Math.abs(hash) % fallbackColors.length];
   };
 
-  if (!domain || domain === 'mystore.com' || domain === 'unknown') {
-    return res.json({ color: fallbackColors[0], source: 'default' });
+  // 1. If local demo store or localhost, check test.html directly for demo testability!
+  if (domain === 'my-super-shoes.com' || domain === '127.0.0.1' || domain === 'localhost') {
+    try {
+      const fs = require('fs');
+      const path = require('path');
+      const testHtmlPath = path.join(__dirname, 'test.html');
+      if (fs.existsSync(testHtmlPath)) {
+        const testHtml = fs.readFileSync(testHtmlPath, 'utf8');
+        const themeMatch = testHtml.match(/<meta[^>]*name=["']theme-color["'][^>]*content=["'](#[0-9a-fA-F]{3,6})["']/i);
+        if (themeMatch && themeMatch[1]) {
+          let c = themeMatch[1].trim().toUpperCase();
+          if (c.length === 4) c = '#' + c[1] + c[1] + c[2] + c[2] + c[3] + c[3];
+          return res.json({ color: c, source: 'test_page_meta_theme_color' });
+        }
+      }
+    } catch(e) {}
+    // If no explicit meta tag in test.html, return Emerald as demo brand color
+    return res.json({ color: '#10B981', source: 'store_brand_palette' });
   }
 
+  if (!domain || domain === 'mystore.com' || domain === 'unknown') {
+    return res.json({ color: '#3B82F6', source: 'default' });
+  }
+
+  // 2. Fetch live store website
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 3500);
@@ -645,7 +487,7 @@ app.get('/api/detect-color', async (req, res) => {
         return res.json({ color: c, source: 'meta_theme_color' });
       }
 
-      const cssVarMatch = html.match(/--(?:primary|brand|accent|theme)[^:]*:\s*(#[0-9a-fA-F]{3,6})/i);
+      const cssVarMatch = html.match(/--(?:primary|brand|accent|theme|button)[^:]*:\s*(#[0-9a-fA-F]{3,6})/i);
       if (cssVarMatch && cssVarMatch[1]) {
         let c = cssVarMatch[1].trim().toUpperCase();
         if (c.length === 4) c = '#' + c[1] + c[1] + c[2] + c[2] + c[3] + c[3];
@@ -659,11 +501,17 @@ app.get('/api/detect-color', async (req, res) => {
   return res.json({ color: getHashColor(domain), source: 'smart_fallback' });
 });
 
-
-
-// Start the server
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`🚀 Server listening on port ${PORT}`);
-  console.log(`🔒 Allowed Admin Emails: ${ADMIN_EMAILS.join(', ')}`);
+app.use((error,req,res,next)=>{
+ if(error?.type==='entity.too.large')return res.status(413).json({error:'INPUT_TOO_LARGE'});
+ if(error instanceof SyntaxError)return res.status(400).json({error:'INVALID_JSON'});
+ console.warn('[API] Request failed:',error.code||error.name);return res.status(500).json({error:'REQUEST_FAILED'});
 });
+return app;
+}
+let defaultApp;
+function handler(req,res){defaultApp ||= createApp();return defaultApp(req,res);}
+module.exports=handler;
+module.exports.createApp=createApp;
+if(require.main===module){
+ const PORT=process.env.PORT||3000;createApp().listen(PORT,'0.0.0.0',()=>console.log('ClarityCart API listening on port '+PORT));
+}

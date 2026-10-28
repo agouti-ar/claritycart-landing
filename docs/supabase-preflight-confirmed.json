@@ -1,0 +1,57 @@
+{
+  "source": "User-provided SQL Editor preflight, 2026-10-27",
+  "questions_rls": {
+    "enabled": true,
+    "forced": false
+  },
+  "id": {
+    "type": "bigint",
+    "identity": "ALWAYS"
+  },
+  "created_at": {
+    "type": "timestamptz",
+    "nullable": false,
+    "default": "timezone('utc'::text, now())"
+  },
+  "required": [
+    "id",
+    "created_at",
+    "store_domain",
+    "question_text"
+  ],
+  "optional": [
+    "product_context"
+  ],
+  "constraints": [
+    "PRIMARY KEY (id)"
+  ],
+  "user_triggers": [],
+  "anon_policies": [
+    "INSERT WITH CHECK true",
+    "SELECT USING true"
+  ],
+  "authenticated_policy": "store_domain = auth.jwt()->'user_metadata'->>'store_domain'",
+  "grants": {
+    "anon": [
+      "SELECT",
+      "INSERT",
+      "UPDATE",
+      "DELETE",
+      "TRUNCATE",
+      "REFERENCES",
+      "TRIGGER"
+    ],
+    "authenticated": [
+      "SELECT",
+      "INSERT",
+      "UPDATE",
+      "DELETE",
+      "TRUNCATE",
+      "REFERENCES",
+      "TRIGGER"
+    ]
+  },
+  "stage1_applied": false,
+  "stage2_applied": false,
+  "statement": "Structurally compatible with 001; no live migration executed. Actual exploit by another party is not established."
+}

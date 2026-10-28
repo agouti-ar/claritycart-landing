@@ -375,7 +375,11 @@
                 : `<svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>`;
 
             toast.className = `toast flex items-center gap-3 px-4 py-3 rounded-lg border backdrop-blur-md shadow-lg ${bgColor} pointer-events-auto transition-all`;
-            toast.innerHTML = `${icon} <span class="font-medium text-sm">${message}</span>`;
+            toast.innerHTML = icon;
+            const label = document.createElement('span');
+            label.className = 'font-medium text-sm';
+            label.textContent = String(message);
+            toast.appendChild(label);
             
             container.appendChild(toast);
             
@@ -557,11 +561,14 @@
 
             const SUPER_ADMINS = ['darksteel180@gmail.com', 'lordlymonk@gmail.com'];
 
-            tbody.innerHTML = users.map((u, idx) => {
+            tbody.replaceChildren();
+            users.forEach((sourceUser, idx) => {
+                const u = { ...sourceUser, email: String(sourceUser.email || ''), id: String(sourceUser.id || ''),
+                    query_count: Math.max(0, Number(sourceUser.query_count) || 0), query_limit: Math.max(0, Number(sourceUser.query_limit) || 0) };
                 const initial = (u.email || 'U').charAt(0).toUpperCase();
                 const isSuperAdminEmail = SUPER_ADMINS.includes((u.email || '').toLowerCase());
                 const isCurrentAdmin = currentUserSession && currentUserSession.user.email.toLowerCase() === u.email.toLowerCase();
-                const percent = Math.min(Math.round((u.query_count / u.query_limit) * 100), 100);
+                const percent = u.query_limit > 0 ? Math.min(Math.round((u.query_count / u.query_limit) * 100), 100) : 0;
                 
                 // Color badges for plans
                 let planBadgeClass = 'bg-gray-700 text-gray-300';
@@ -602,7 +609,7 @@
                     : 'px-2.5 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded text-xs font-medium transition-colors';
                 const pauseBtn = isSuperAdminEmail
                     ? ''
-                    : `<button class="${pauseBtnClass}" title="${u.widget_paused ? 'Resume AI responses for store' : 'Temporarily pause AI widget without banning user'}" onclick="togglePause('${u.id}', ${!u.widget_paused})">${pauseBtnText}</button>`;
+                    : `<button class="${pauseBtnClass}" title="${u.widget_paused ? 'Resume AI responses for store' : 'Temporarily pause AI widget without banning user'}" data-action="pause">${pauseBtnText}</button>`;
 
                 // Ban Account Button (protected for both super-admins)
                 const blockBtnText = u.is_blocked ? 'Unban' : 'Ban';
@@ -612,12 +619,12 @@
 
                 const blockBtn = isSuperAdminEmail
                     ? `<button class="px-3 py-1.5 bg-gray-800 text-gray-500 border border-gray-700 rounded text-xs font-medium cursor-not-allowed opacity-50 w-16" title="Super-Admin accounts are protected from banning" disabled>${isCurrentAdmin ? 'Self' : 'Admin'}</button>`
-                    : `<button class="${blockBtnClass}" title="${u.is_blocked ? 'Unban user login' : 'Ban user from logging into the platform'}" onclick="confirmBlock('${u.id}', ${!u.is_blocked}, '${u.email}')">${blockBtnText}</button>`;
+                    : `<button class="${blockBtnClass}" title="${u.is_blocked ? 'Unban user login' : 'Ban user from logging into the platform'}" data-action="block">${blockBtnText}</button>`;
 
                 // Delete Account Button (protected for both super-admins)
                 const deleteBtn = isSuperAdminEmail
                     ? ''
-                    : `<button class="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/25 text-red-400 hover:text-red-300 border border-red-500/20 hover:border-red-500/40 transition-all shadow-[0_0_8px_rgba(239,68,68,0.15)]" title="Permanently delete user account" onclick="confirmDelete('${u.id}', '${u.email}')">
+                    : `<button class="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/25 text-red-400 hover:text-red-300 border border-red-500/20 hover:border-red-500/40 transition-all shadow-[0_0_8px_rgba(239,68,68,0.15)]" title="Permanently delete user account" data-action="delete">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                        </button>`;
 
@@ -637,16 +644,17 @@
                     barColor = 'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.6)]';
                 }
 
-                return `
-                    <tr class="hover:bg-gray-800/30 transition-colors group ${u.is_blocked ? 'opacity-50' : ''}" data-user-id="${u.id}" data-email="${u.email}">
+                const template = document.createElement('template');
+                template.innerHTML = `
+                    <tr class="hover:bg-gray-800/30 transition-colors group ${u.is_blocked ? 'opacity-50' : ''}" >
                         <td class="px-6 py-4">
                             <div class="flex items-center gap-3">
                                 <div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500/30 to-purple-500/30 text-blue-400 flex items-center justify-center font-bold border border-blue-500/20">
-                                    ${initial}
+                                    <span data-safe-field="initial"></span>
                                 </div>
                                 <div>
                                     <span class="font-medium text-white flex items-center gap-1.5">
-                                        ${u.email}
+                                        <span data-safe-field="email"></span>
                                         ${adminBadge}
                                     </span>
                                     <span class="text-[11px] text-gray-400 block font-normal mt-0.5">
@@ -656,11 +664,11 @@
                             </div>
                         </td>
                         <td class="px-6 py-4 text-gray-300 font-mono text-xs">
-                            ${u.store_domain}
+                            <span data-safe-field="domain"></span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center gap-2">
-                                <span class="px-3 py-1 rounded-full text-xs font-medium ${planBadgeClass}">${u.plan}</span>
+                                <span class="px-3 py-1 rounded-full text-xs font-medium ${planBadgeClass}"><span data-safe-field="plan"></span></span>
                                 ${statusBadge}
                             </div>
                             <div class="inline-flex items-center gap-1.5 mt-1 text-[11px] text-gray-400 font-normal whitespace-nowrap">
@@ -677,19 +685,34 @@
                             </span>
                         </td>
                         <td class="px-6 py-4 text-right space-x-1 whitespace-nowrap">
-                            <button class="edit-btn p-1.5 rounded-lg bg-blue-500/10 hover:bg-blue-500/25 text-blue-400 hover:text-blue-300 border border-blue-500/20 hover:border-blue-500/40 transition-all shadow-[0_0_8px_rgba(59,130,246,0.15)] inline-flex items-center justify-center align-middle" title="Manage User & Subscription" onclick="openEditModal('${u.id}')">
+                            <button class="edit-btn p-1.5 rounded-lg bg-blue-500/10 hover:bg-blue-500/25 text-blue-400 hover:text-blue-300 border border-blue-500/20 hover:border-blue-500/40 transition-all shadow-[0_0_8px_rgba(59,130,246,0.15)] inline-flex items-center justify-center align-middle" title="Manage User & Subscription" data-action="edit">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                             </button>
-                            <button class="add-time-btn px-2 py-1.5 bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 border border-orange-500/30 rounded text-xs font-medium transition-colors" onclick="modifySubscription('${u.id}', -30)">- 30D</button>
-                            <button class="add-time-btn px-2 py-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 rounded text-xs font-medium transition-colors" onclick="modifySubscription('${u.id}', 30)">+ 30D</button>
-                            <button class="add-time-btn px-2 py-1.5 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 border border-purple-500/30 rounded text-xs font-medium transition-colors" onclick="modifySubscription('${u.id}', 365)">+ 1Y</button>
+                            <button class="add-time-btn px-2 py-1.5 bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 border border-orange-500/30 rounded text-xs font-medium transition-colors" data-action="subscription" data-days="-30">- 30D</button>
+                            <button class="add-time-btn px-2 py-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 rounded text-xs font-medium transition-colors" data-action="subscription" data-days="30">+ 30D</button>
+                            <button class="add-time-btn px-2 py-1.5 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 border border-purple-500/30 rounded text-xs font-medium transition-colors" data-action="subscription" data-days="365">+ 1Y</button>
                             ${pauseBtn}
                             ${blockBtn}
                             ${deleteBtn}
                         </td>
                     </tr>
                 `;
-            }).join('');
+                const row = template.content.firstElementChild;
+                row.dataset.userId = u.id;
+                row.dataset.email = u.email;
+                for (const [field,value] of Object.entries({initial,email:u.email,domain:u.store_domain,plan:u.plan})) {
+                    row.querySelector('[data-safe-field="' + field + '"]').textContent = String(value ?? '');
+                }
+                row.querySelectorAll('[data-action]').forEach(button => button.addEventListener('click', () => {
+                    const action = button.dataset.action;
+                    if (action === 'pause') togglePause(u.id, !u.widget_paused);
+                    if (action === 'block') confirmBlock(u.id, !u.is_blocked, u.email);
+                    if (action === 'delete') confirmDelete(u.id, u.email);
+                    if (action === 'edit') openEditModal(u.id);
+                    if (action === 'subscription') modifySubscription(u.id, Number(button.dataset.days));
+                }));
+                tbody.appendChild(row);
+            });
 
             applyFilters();
         }
@@ -697,7 +720,7 @@
         // Toggle Pause Widget (Service suspension without banning login)
         async function togglePause(userId, shouldPause) {
             try {
-                const res = await fetch(`${API_BASE}/api/admin/users/${userId}/pause`, {
+                const res = await fetch(`${API_BASE}/api/admin/users/${encodeURIComponent(userId)}/pause`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -743,7 +766,7 @@
             if (!ok) return;
 
             try {
-                const res = await fetch(`${API_BASE}/api/admin/users/${userId}`, {
+                const res = await fetch(`${API_BASE}/api/admin/users/${encodeURIComponent(userId)}`, {
                     method: 'DELETE',
                     headers: {
                         'Authorization': `Bearer ${currentUserSession.access_token}`
@@ -762,7 +785,7 @@
         // Toggle Block / Unblock User
         async function toggleBlock(userId, shouldBlock) {
             try {
-                const res = await fetch(`${API_BASE}/api/admin/users/${userId}/block`, {
+                const res = await fetch(`${API_BASE}/api/admin/users/${encodeURIComponent(userId)}/block`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -783,7 +806,7 @@
         // Modify Subscription Days (-30, +30, +365)
         async function modifySubscription(userId, days) {
             try {
-                const res = await fetch(`${API_BASE}/api/admin/users/${userId}/subscription`, {
+                const res = await fetch(`${API_BASE}/api/admin/users/${encodeURIComponent(userId)}/subscription`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -860,7 +883,7 @@
             saveBtn.disabled = true;
 
             try {
-                const res = await fetch(`${API_BASE}/api/admin/users/${userId}/update`, {
+                const res = await fetch(`${API_BASE}/api/admin/users/${encodeURIComponent(userId)}/update`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

@@ -252,7 +252,12 @@
             }
 
             const currentUser = session.user;
-            const meta = currentUser.user_metadata || {};
+            const apiBase = ['localhost','127.0.0.1'].includes(window.location.hostname) ? 'http://127.0.0.1:3000' : '';
+            const response = await fetch(apiBase + '/api/account', { headers: { Authorization: 'Bearer ' + session.access_token } });
+            if (!response.ok) { document.getElementById('header-domain').textContent = 'Account unavailable'; return; }
+            const account = await response.json();
+            const meta = { ...currentUser.user_metadata, ...account.settings, store_domain: account.domain,
+                plan: account.plan[0].toUpperCase() + account.plan.slice(1) };
             const storeDomain = meta.store_domain || 'mystore.com';
 
             // Set domain in header
@@ -270,19 +275,20 @@
             const userPlan = (meta.plan || (storeDomain === 'my-super-shoes.com' ? 'Pro' : 'Starter')).toLowerCase();
             const isBusinessPlan = isSuperAdmin || userPlan === 'business';
 
-            // Plan badge in header
+            // Plan badge in header - mirrors dashboard.html
             const planBadgeEl = document.getElementById('header-plan-badge');
             const planBadgeContainer = document.getElementById('plan-badge-container');
+            const planDisplayName = meta.plan || (storeDomain === 'my-super-shoes.com' ? 'Pro' : 'Starter');
             if (planBadgeEl) {
-                planBadgeEl.textContent = isSuperAdmin ? 'Admin (Full Access)' : `${meta.plan || (storeDomain === 'my-super-shoes.com' ? 'Pro' : 'Starter')} Plan`;
+                planBadgeEl.textContent = `${planDisplayName} Plan`;
             }
             if (planBadgeContainer) {
-                if (isBusinessPlan) {
-                    planBadgeContainer.className = 'px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5 border border-amber-500/30 bg-amber-500/10 text-amber-300';
+                if (userPlan === 'business' || isSuperAdmin) {
+                    planBadgeContainer.className = 'px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5 border border-amber-500/40 bg-amber-500/15 text-amber-300 shadow-[0_0_14px_rgba(245,158,11,0.25)]';
                 } else if (userPlan === 'pro') {
-                    planBadgeContainer.className = 'px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5 border border-blue-500/30 bg-blue-500/10 text-blue-300';
+                    planBadgeContainer.className = 'px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5 border border-purple-500/40 bg-purple-500/15 text-purple-300 shadow-[0_0_14px_rgba(168,85,247,0.25)]';
                 } else {
-                    planBadgeContainer.className = 'px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5 border border-gray-700 bg-gray-800/80 text-gray-300';
+                    planBadgeContainer.className = 'px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider flex items-center gap-1.5 border border-blue-500/30 bg-blue-500/10 text-blue-300 shadow-[0_0_10px_rgba(59,130,246,0.15)]';
                 }
             }
 

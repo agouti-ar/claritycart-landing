@@ -1,0 +1,69 @@
+{
+  "checkedAt": "2026-10-27T20:38:09.950Z",
+  "deployment": "https://claritycart-landing.vercel.app",
+  "method": "Unauthenticated GET only",
+  "checks": [
+    {
+      "path": "/",
+      "status": 200,
+      "contentType": "text/html; charset=utf-8",
+      "sha256": "ff804b26ae8e87022452810436df529e0e3e9cd62a375a15445110e758026bdd",
+      "matchesWorkingTree": false
+    },
+    {
+      "path": "/clarity.js",
+      "status": 200,
+      "contentType": "application/javascript; charset=utf-8",
+      "sha256": "3db64a4bae76ec862c20cce0d306189fde9e12cd7228af47504bbe9df5a96029",
+      "matchesWorkingTree": false
+    },
+    {
+      "path": "/api/health",
+      "status": 404,
+      "contentType": "text/plain; charset=utf-8"
+    },
+    {
+      "path": "/api/account",
+      "status": 404,
+      "contentType": "text/plain; charset=utf-8"
+    },
+    {
+      "path": "/api/admin/overview",
+      "status": 404,
+      "contentType": "text/plain; charset=utf-8"
+    },
+    {
+      "path": "/api/widget-session",
+      "status": 404,
+      "contentType": "text/plain; charset=utf-8"
+    },
+    {
+      "path": "/api/verify-domain",
+      "status": 404,
+      "contentType": "text/plain; charset=utf-8"
+    },
+    {
+      "path": "/api/live-sync",
+      "status": 404,
+      "contentType": "text/plain; charset=utf-8"
+    },
+    {
+      "path": "/server.js",
+      "status": 404,
+      "contentType": "text/plain; charset=utf-8"
+    },
+    {
+      "path": "/lib/request-security.js",
+      "status": 404,
+      "contentType": "text/plain; charset=utf-8"
+    }
+  ],
+  "notVerified": [
+    "deployed commit identity",
+    "authenticated ownership and admin actions",
+    "database writes and quota concurrency",
+    "AI generation",
+    "Vercel forwarded IP behavior",
+    "webhook delivery"
+  ]
+}

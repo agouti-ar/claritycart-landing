@@ -1,0 +1,21 @@
+question_id,expected_question_domain,store_id,expected_owner_id,expected_store_domain,decision,evidence
+1,127.0.0.1,,,,KEEP_UNMAPPED,User explicitly confirmed test history; no mapping requested
+2,127.0.0.1,,,,KEEP_UNMAPPED,User explicitly confirmed test history; no mapping requested
+3,127.0.0.1,,,,KEEP_UNMAPPED,User explicitly confirmed test history; no mapping requested
+4,127.0.0.1,,,,KEEP_UNMAPPED,User explicitly confirmed test history; no mapping requested
+5,127.0.0.1,,,,KEEP_UNMAPPED,User explicitly confirmed test history; no mapping requested
+6,127.0.0.1,,,,KEEP_UNMAPPED,User explicitly confirmed test history; no mapping requested
+7,127.0.0.1,,,,KEEP_UNMAPPED,User explicitly confirmed test history; no mapping requested
+8,127.0.0.1,,,,KEEP_UNMAPPED,User explicitly confirmed test history; no mapping requested
+9,127.0.0.1,,,,KEEP_UNMAPPED,User explicitly confirmed test history; no mapping requested
+10,127.0.0.1,,,,KEEP_UNMAPPED,User explicitly confirmed test history; no mapping requested
+11,127.0.0.1,,,,KEEP_UNMAPPED,User explicitly confirmed test history; no mapping requested
+12,127.0.0.1,,,,KEEP_UNMAPPED,User explicitly confirmed test history; no mapping requested
+13,127.0.0.1,,,,KEEP_UNMAPPED,User explicitly confirmed test history; no mapping requested
+14,127.0.0.1,,,,KEEP_UNMAPPED,User explicitly confirmed test history; no mapping requested
+15,127.0.0.1,,,,KEEP_UNMAPPED,User explicitly confirmed test history; no mapping requested
+16,my-super-shoes.com,,,,KEEP_UNMAPPED,User explicitly confirmed test history; no mapping requested
+17,my-super-shoes.com,,,,KEEP_UNMAPPED,User explicitly confirmed test history; no mapping requested
+18,my-super-shoes.com,,,,KEEP_UNMAPPED,User explicitly confirmed test history; no mapping requested
+19,my-super-shoes.com,,,,KEEP_UNMAPPED,User explicitly confirmed test history; no mapping requested
+23,my-super-shoes.com,,,,KEEP_UNMAPPED,User explicitly confirmed test history; no mapping requested
