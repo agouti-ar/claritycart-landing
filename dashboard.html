@@ -650,6 +650,7 @@
     <div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
     <!-- Supabase JS -->
+    <script src="billing-ui.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
         const SUPABASE_URL = 'https://vzmpwstfddznsvypudhj.supabase.co';
@@ -672,6 +673,18 @@
                 setTimeout(() => toast.remove(), 300);
             }, 3500);
         }
+
+        const billingUI = mountBillingUI({
+            document,
+            getSession: async () => (await supabaseClient.auth.getSession()).data.session,
+            getStoreId: () => currentStoreId,
+            fetch: window.fetch.bind(window),
+            storage: window.sessionStorage,
+            randomUUID: () => crypto.randomUUID(),
+            navigate: url => window.location.assign(url),
+            base: ['localhost', '127.0.0.1'].includes(location.hostname) ? 'http://127.0.0.1:3000' : '',
+            mock: ['localhost', '127.0.0.1'].includes(location.hostname) && new URLSearchParams(location.search).get('billing_mock') === '1'
+        });
 
         async function fetchAccount(patch) {
             const { data: { session } } = await supabaseClient.auth.getSession();
