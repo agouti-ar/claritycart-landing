@@ -1,4 +1,5 @@
 const { createUsageHandler } = require('../lib/usage-handler');
+const { providerDiagnostic } = require('../lib/gemini-diagnostics');
 
 async function generateResponse(req, res) {
   // CORS and Anti-cache headers
@@ -35,30 +36,36 @@ async function generateResponse(req, res) {
     const promptText = `Product: "${productContext?.title || 'Unknown'}". Details: ${productContext?.description || 'None'}. Price: ${productContext?.price || 'Unknown'}. User Question: "${question}". Answer concisely in 1-2 sentences.`;
 
     const modelPriority = [
-      'gemini-2.5-flash',
-      'gemini-2.0-flash',
-      'gemini-1.5-flash',
-      'gemini-1.5-flash-8b',
-      'gemini-flash-latest'
+      'gemini-3.5-flash-lite',
+      'gemini-3.8-flash'
     ];
 
-    let lastError = null;
+    const redact=[question,productContext?.title,productContext?.description,productContext?.price,settings.custom_tone_prompt];
+    const diagnose=(error,details)=>console.warn('[Gemini]',JSON.stringify(providerDiagnostic(error,{apiKey,redact,...details})));
 
     for (const model of modelPriority) {
+      const started=Date.now();let httpStatus;
+      // A slow first model must not consume the handler's entire 25s deadline.
+      const attempt=new AbortController();
+      const attemptTimer=setTimeout(()=>attempt.abort(),8000);
+      const signal=req.signal?AbortSignal.any([req.signal,attempt.signal]):attempt.signal;
       try {
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
         const response = await fetch(url, {
           method: 'POST',
-          signal: req.signal,
+          signal,
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
             system_instruction: { parts: [{ text: fullSystemInstruction }] },
             contents: [{ parts: [{ text: promptText }] }],
             generationConfig: {
-              temperature: temperature !== undefined ? parseFloat(temperature) : 0.7
+              temperature: temperature !== undefined ? parseFloat(temperature) : 0.7,
+              thinkingConfig: { thinkingLevel: 'low' },
+              maxOutputTokens: 512
             }
           })
         });
+        httpStatus=response.status;
 
         const data = await response.json();
 
@@ -68,11 +75,13 @@ async function generateResponse(req, res) {
             usedModel: model // Return used model for analytics
           });
         } else {
-          lastError = data.error?.message;
+          diagnose(data.error||{message:'Empty or blocked provider response'},{model,httpStatus,elapsedMs:Date.now()-started,category:data.error?'provider_error':'empty_response'});
         }
       } catch (err) {
-        lastError = err.message;
+        diagnose(err,{model,httpStatus,elapsedMs:Date.now()-started,category:req.signal?.aborted?'request_aborted':attempt.signal.aborted?'model_timeout':'transport_or_parse_error'});
         if (req.signal?.aborted) throw err;
+      } finally {
+        clearTimeout(attemptTimer);
       }
     }
 
