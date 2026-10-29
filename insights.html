@@ -236,6 +236,7 @@
     </main>
 
     <!-- Supabase JS -->
+    <script src="auth-flow.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
         const SUPABASE_URL = 'https://vzmpwstfddznsvypudhj.supabase.co';
@@ -253,12 +254,13 @@
 
             const currentUser = session.user;
             const apiBase = ['localhost','127.0.0.1'].includes(window.location.hostname) ? 'http://127.0.0.1:3000' : '';
-            const response = await fetch(apiBase + '/api/account', { headers: { Authorization: 'Bearer ' + session.access_token } });
-            if (!response.ok) { document.getElementById('header-domain').textContent = 'Account unavailable'; return; }
+            const selectedStore = sessionStorage.getItem(ClarityAuth.storeKey(session.user.id));
+            const response = await fetch(apiBase + '/api/account' + (selectedStore ? '?store_id=' + encodeURIComponent(selectedStore) : ''), { headers: { Authorization: 'Bearer ' + session.access_token } });
+            if (!response.ok) { if (response.status === 404 || response.status === 400) {sessionStorage.removeItem(ClarityAuth.storeKey(session.user.id));window.location.replace('onboarding.html');} document.getElementById('header-domain').textContent = 'Account unavailable'; return; }
             const account = await response.json();
             const meta = { ...currentUser.user_metadata, ...account.settings, store_domain: account.domain,
                 plan: account.plan[0].toUpperCase() + account.plan.slice(1) };
-            const storeDomain = meta.store_domain || 'mystore.com';
+            const storeDomain = account.domain;
 
             // Set domain in header
             const domainEl = document.getElementById('header-domain');

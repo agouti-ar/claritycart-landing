@@ -36,16 +36,17 @@ async function createTestDb(options={}) {
  }};
  db.from=(table)=>{
   if(table!=='cc_stores')throw new Error('Unexpected table');
-  const filters=[];let patch,limit=1;
-  const query={select(){return this;},eq(k,v){if(!['id','owner_id','domain','domain_verification_token'].includes(k))throw new Error('Unexpected filter');filters.push([k,v]);return this;},order(){return this;},limit(n){limit=n;return this;},update(value){patch=value;return this;},
-   async maybeSingle(){
+  const filters=[];let patch,insert,limit=1;
+  const query={select(){return this;},eq(k,v){if(!['id','owner_id','domain','domain_verification_token'].includes(k))throw new Error('Unexpected filter');filters.push([k,v]);return this;},order(){return this;},limit(n){limit=n;return this;},update(value){patch=value;return this;},insert(value){insert=value;return this;},
+   async execute(multiple=false){
     const values=[];let sql;
+    if(insert){const keys=Object.keys(insert);if(keys.some(k=>!['owner_id','domain','plan','status'].includes(k)))throw new Error('Unexpected insert');try{const r=await pg.query('insert into public.cc_stores('+keys.join(',')+') values('+keys.map((k,i)=>'$'+(i+1)).join(',')+') returning *',Object.values(insert));return {data:r.rows[0],error:null};}catch(error){return {data:null,error};}}
     if(patch){const sets=Object.entries(patch).map(([k,v])=>{if(!['domain','plan','quota_override','status','access_until','settings','cancel_at_period_end','domain_verified_at','billing_hold'].includes(k))throw new Error('Unexpected update');values.push(typeof v==='object'?JSON.stringify(v):v);return k+'=$'+values.length;});sql='update public.cc_stores set '+sets.join(',');}
     else sql='select * from public.cc_stores';
     sql+=' where '+filters.map(([k,v])=>{values.push(v);return k+'=$'+values.length;}).join(' and ');
     sql+=patch?' returning *':' order by created_at limit '+limit;
-    try{const r=await pg.query(sql,values);return {data:r.rows[0]||null,error:null};}catch(error){return {data:null,error};}
-   },async single(){return this.maybeSingle();}};return query;
+    try{const r=await pg.query(sql,values);return {data:multiple?r.rows:r.rows[0]||null,error:null};}catch(error){return {data:null,error};}
+   },async maybeSingle(){return this.execute();},async single(){return this.execute();},then(resolve,reject){return this.execute(true).then(resolve,reject);}};return query;
  };
  return {pg,db};
 }

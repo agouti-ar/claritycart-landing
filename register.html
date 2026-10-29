@@ -79,7 +79,7 @@
                 <label for="store_domain" class="block text-sm font-medium text-brand-muted mb-1.5">Store Domain</label>
                 <input type="text" id="store_domain" required
                     class="w-full px-4 py-3 rounded-lg bg-gray-900/50 border border-gray-700 text-white focus:outline-none focus:border-brand-accent focus:ring-1 focus:ring-brand-accent transition-colors"
-                    placeholder="mystore.com">
+                    placeholder="shop.example.com">
             </div>
 
             <div>
@@ -132,12 +132,13 @@
         <p id="loader-status" class="mt-4 text-xs font-medium text-gray-400 tracking-widest uppercase">Creating workspace...</p>
     </div>
 
+    <script src="auth-flow.js"></script>
     <!-- Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
         const SUPABASE_URL = 'https://vzmpwstfddznsvypudhj.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ6bXB3c3RmZGR6bnN2eXB1ZGhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3NzMyMTksImV4cCI6MjEwNjM0OTIxOX0.Qz0TGEDy1TOekLrqTrfspT8gnnfGy5_BjMtJRlz-PaI';
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, ClarityAuth.clientOptions);
 
         function showFullLoader(text = 'Creating workspace...') {
             const loader = document.getElementById('page-loader');
@@ -159,7 +160,7 @@
                 const { data: { session } } = await supabaseClient.auth.getSession();
                 if (session) {
                     showFullLoader('Existing session found. Redirecting...');
-                    window.location.href = 'dashboard.html';
+                    window.location.href = 'onboarding.html';
                 }
             } catch (e) {
                 console.error("Session check error", e);
@@ -207,30 +208,12 @@
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                Validating domain...
+                Preparing account...
             `;
             btn.disabled = true;
             
             try {
-                // 1. Verify Domain via Node.js Backend (fallback to pass if offline)
-                try {
-                    const validateRes = await fetch('http://localhost:3000/api/validate-domain', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ domain: storeDomain })
-                    });
-                    
-                    const validateData = await validateRes.json();
-                    if (!validateData.valid) {
-                        throw new Error(validateData.error || 'Invalid domain format');
-                    }
-                } catch (valErr) {
-                    // Only throw if backend specifically replied with invalid domain
-                    if (valErr.message && valErr.message.includes('Invalid domain')) {
-                        throw valErr;
-                    }
-                    console.warn("Backend validation skipped:", valErr.message);
-                }
+                sessionStorage.setItem('cc-domain-draft', storeDomain);
 
                 btn.innerHTML = `
                     <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -244,23 +227,21 @@
                 const { data, error } = await supabaseClient.auth.signUp({
                     email: email,
                     password: password,
-                    options: {
-                        data: {
-                            store_domain: storeDomain,
-                            plan: 'Starter',
-                            query_limit: 500
-                        }
-                    }
+                    options: { emailRedirectTo: ClarityAuth.callbackUrl(window.location.origin) }
                 });
 
                 if (error) throw error;
 
                 // Успешно! Smooth Linear-style transition
-                showFullLoader('Welcome aboard! Launching your workspace...');
-                setTimeout(() => {
-                    window.location.href = 'dashboard.html';
-                }, 500);
-                
+                if (!data.session) {
+                    showError('Check your email to confirm your account, then continue in the same browser.');
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                    return;
+                }
+                showFullLoader('Welcome aboard! Set up your store...');
+                window.location.href = 'onboarding.html';
+
             } catch (error) {
                 showError(error.message);
                 btn.innerHTML = originalText;
@@ -269,17 +250,20 @@
         });
 
         document.getElementById('google-register-btn').addEventListener('click', async function() {
+            if (this.disabled) return;
+            this.disabled = true;
             hideError();
             showFullLoader('Connecting with Google...');
             try {
                 const { data, error } = await supabaseClient.auth.signInWithOAuth({
                     provider: 'google',
                     options: {
-                        redirectTo: window.location.origin + '/dashboard.html'
+                        redirectTo: ClarityAuth.callbackUrl(window.location.origin)
                     }
                 });
                 if (error) throw error;
             } catch (error) {
+                this.disabled = false;
                 showError("Google signup error: " + error.message);
                 hideFullLoader();
             }

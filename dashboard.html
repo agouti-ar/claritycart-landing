@@ -266,7 +266,7 @@
                         <span class="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
                         <span class="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
                     </div>
-                    <span class="text-sm font-semibold font-outfit tracking-wide bg-clip-text text-transparent bg-gradient-to-r from-white via-blue-100 to-indigo-200" id="header-domain">Loading...</span>
+                    <span class="text-sm font-semibold font-outfit tracking-wide bg-clip-text text-transparent bg-gradient-to-r from-white via-blue-100 to-indigo-200" id="header-domain">Loading...</span> <a href="onboarding.html" class="text-xs text-blue-300 hover:underline">Stores</a>
                 </div>
                 <a href="index.html" class="shimmer-btn relative group overflow-hidden flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gray-900/90 hover:bg-blue-950/50 text-xs font-semibold text-gray-200 hover:text-white border border-gray-700/80 hover:border-blue-500/60 shadow-[0_0_10px_rgba(59,130,246,0.1)] hover:shadow-[0_0_18px_rgba(59,130,246,0.3)] transition-all duration-300 cursor-pointer" title="Visit Landing Page">
                     <svg class="w-3.5 h-3.5 text-blue-400 group-hover:text-cyan-300 group-hover:scale-115 group-hover:rotate-12 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
@@ -650,6 +650,7 @@
     <div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
     <!-- Supabase JS -->
+    <script src="auth-flow.js"></script>
     <script src="billing-ui.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
@@ -689,14 +690,21 @@
         async function fetchAccount(patch) {
             const { data: { session } } = await supabaseClient.auth.getSession();
             if (!session) throw new Error('Please sign in again.');
+            const selectedStore = currentStoreId || sessionStorage.getItem(ClarityAuth.storeKey(session.user.id));
             const base = ['localhost','127.0.0.1'].includes(window.location.hostname) ? 'http://127.0.0.1:3000' : '';
-            const response = await fetch(base + '/api/account' + (currentStoreId ? '?store_id=' + encodeURIComponent(currentStoreId) : ''), {
+            const response = await fetch(base + '/api/account' + (selectedStore ? '?store_id=' + encodeURIComponent(selectedStore) : ''), {
                 method: patch ? 'PATCH' : 'GET',
                 headers: { 'Authorization': 'Bearer ' + session.access_token, 'Content-Type': 'application/json' },
                 ...(patch ? { body: JSON.stringify(patch) } : {})
             });
             const account = await response.json();
-            if (!response.ok) throw new Error(account.message || account.error || 'Account unavailable');
+            if (!response.ok) {
+                if (response.status === 404 || (response.status === 400 && account.error === 'INVALID_STORE_ID')) {
+                    sessionStorage.removeItem(ClarityAuth.storeKey(session.user.id));
+                    window.location.replace('onboarding.html');
+                }
+                throw new Error(account.message || account.error || 'Account unavailable');
+            }
             return account;
         }
 
@@ -740,7 +748,7 @@
                 // 2. Берем домен из актуальных метаданных пользователя
                 const storeDomain = account.domain;
                 // Broadcast domain to widget via localStorage for question recording
-                if (storeDomain && storeDomain !== 'mystore.com') {
+                if (storeDomain) {
                     try { localStorage.setItem('clarity_store_domain', storeDomain); } catch(e) {}
                 }
 

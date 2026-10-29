@@ -125,12 +125,13 @@
         <p id="loader-status" class="mt-4 text-xs font-medium text-gray-400 tracking-widest uppercase">Connecting...</p>
     </div>
 
+    <script src="auth-flow.js"></script>
     <!-- Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
         const SUPABASE_URL = 'https://vzmpwstfddznsvypudhj.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ6bXB3c3RmZGR6bnN2eXB1ZGhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3NzMyMTksImV4cCI6MjEwNjM0OTIxOX0.Qz0TGEDy1TOekLrqTrfspT8gnnfGy5_BjMtJRlz-PaI';
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, ClarityAuth.clientOptions);
 
         function showFullLoader(text = 'Connecting...') {
             const loader = document.getElementById('page-loader');
@@ -157,7 +158,7 @@
                 const { data: { session } } = await supabaseClient.auth.getSession();
                 if (session && session.user) {
                     showFullLoader('Redirecting to dashboard...');
-                    setTimeout(() => { window.location.href = 'dashboard.html'; }, 300);
+                    setTimeout(() => { window.location.href = 'onboarding.html'; }, 300);
                 }
             } catch (e) {}
         })();
@@ -213,7 +214,7 @@
                 // Успешно! Smooth Linear-style transition
                 showFullLoader('Welcome back! Loading dashboard...');
                 setTimeout(() => {
-                    window.location.href = 'dashboard.html';
+                    window.location.href = 'onboarding.html';
                 }, 400);
                 
             } catch (error) {
@@ -224,17 +225,20 @@
         });
 
         document.getElementById('google-login-btn').addEventListener('click', async function() {
+            if (this.disabled) return;
+            this.disabled = true;
             hideError();
             showFullLoader('Connecting with Google...');
             try {
                 const { data, error } = await supabaseClient.auth.signInWithOAuth({
                     provider: 'google',
                     options: {
-                        redirectTo: window.location.origin + '/dashboard.html'
+                        redirectTo: ClarityAuth.callbackUrl(window.location.origin)
                     }
                 });
                 if (error) throw error;
             } catch (error) {
+                this.disabled = false;
                 showError("Google login error: " + error.message);
                 const loader = document.getElementById('page-loader');
                 loader.classList.add('opacity-0', 'pointer-events-none');
