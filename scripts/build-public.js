@@ -1,5 +1,5 @@
 const fs=require('node:fs');const path=require('node:path');
-const files=['index.html','hero-showcase.js','hero-showcase.css','dashboard.html','insights.html','admin.html','login.html','register.html','forgot-password.html','reset-password.html','privacy.html','terms.html','refund.html','test.html','widget-themes.js','theme-preview.js','clarity.js','brand-voice-ui.js','analytics-ui.js','billing-ui.js','auth-flow.js','auth-callback.html','onboarding.html','onboarding-ui.js','demo.gif'];
+const files=['index.html','hero-showcase.js','hero-showcase.css','dashboard.html','insights.html','admin.html','login.html','register.html','forgot-password.html','reset-password.html','privacy.html','terms.html','refund.html','contact.html','test.html','widget-themes.js','theme-preview.js','clarity.js','brand-voice-ui.js','analytics-ui.js','billing-ui.js','auth-flow.js','auth-callback.html','onboarding.html','onboarding-ui.js','demo.gif'];
 const heroAssets=['three-r128.min.js','GLTFLoader-r128.js','lounge-chair.glb','three-license.txt','chair-license.md'];
 const root=path.resolve(__dirname,'..'),out=path.join(root,'dist');
 fs.mkdirSync(out,{recursive:true});
