@@ -1,7 +1,13 @@
 const fs=require('node:fs');const path=require('node:path');
-const files=['index.html','dashboard.html','insights.html','admin.html','login.html','register.html','forgot-password.html','reset-password.html','privacy.html','terms.html','refund.html','test.html','clarity.js','billing-ui.js','auth-flow.js','auth-callback.html','onboarding.html','onboarding-ui.js','demo.gif'];
+const files=['index.html','hero-showcase.js','hero-showcase.css','dashboard.html','insights.html','admin.html','login.html','register.html','forgot-password.html','reset-password.html','privacy.html','terms.html','refund.html','test.html','widget-themes.js','theme-preview.js','clarity.js','brand-voice-ui.js','analytics-ui.js','billing-ui.js','auth-flow.js','auth-callback.html','onboarding.html','onboarding-ui.js','demo.gif'];
+const heroAssets=['three-r128.min.js','GLTFLoader-r128.js','lounge-chair.glb','three-license.txt','chair-license.md'];
 const root=path.resolve(__dirname,'..'),out=path.join(root,'dist');
 fs.mkdirSync(out,{recursive:true});
-for(const entry of fs.readdirSync(out))if(!files.includes(entry))throw new Error('Unexpected build output; inspect before publishing: '+entry);
+for(const entry of fs.readdirSync(out))if(!files.includes(entry)&&entry!=='assets')throw new Error('Unexpected build output; inspect before publishing: '+entry);
 for(const file of files)fs.copyFileSync(path.join(root,file),path.join(out,file));
+const assetRoot=path.join(out,'assets');fs.mkdirSync(assetRoot,{recursive:true});
+for(const entry of fs.readdirSync(assetRoot))if(entry!=='hero')throw new Error('Unexpected asset directory: '+entry);
+const heroOut=path.join(assetRoot,'hero');fs.mkdirSync(heroOut,{recursive:true});
+for(const entry of fs.readdirSync(heroOut))if(!heroAssets.includes(entry))throw new Error('Unexpected hero asset: '+entry);
+for(const file of heroAssets)fs.copyFileSync(path.join(root,'assets','hero',file),path.join(heroOut,file));
 console.log('Built '+files.length+' explicitly allowed public assets. Backend, SQL, tests, docs and environment files are excluded.');

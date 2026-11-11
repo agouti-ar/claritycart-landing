@@ -56,7 +56,7 @@ test('denied callback or invalid session stays on error page with no external er
 test('onboarding UI lists external names as text and remembers store per user',async()=>{
  const {document}=parseHTML('<html><body><p id="status"></p><div id="stores"></div><form id="store-form"><input id="domain"><button id="create-store"></button></form></body></html>');
  const values=new Map(),visits=[];const malicious='<img src=x onerror=alert(1)>';
- const ui=mountOnboarding({document,auth:{getSession:async()=>({data:{session:{}}})},storage:{getItem:k=>values.get(k),setItem:(k,v)=>values.set(k,v),removeItem:k=>values.delete(k)},location:{replace:p=>visits.push(p)},flow:{...flow,onboardingRequest:async()=>({result:{stores:[{id:'safe-id',domain:malicious,status:'inactive'}]},userId:owner})}});
+ const ui=mountOnboarding({document,auth:{getSession:async()=>({data:{session:{}}})},storage:{getItem:k=>values.get(k),setItem:(k,v)=>values.set(k,v),removeItem:k=>values.delete(k)},location:{search:'?manage=1',replace:p=>visits.push(p)},flow:{...flow,onboardingRequest:async()=>({result:{stores:[{id:'safe-id',domain:malicious,status:'inactive'}]},userId:owner})}});
  await ui.ready;assert.equal(document.querySelectorAll('img').length,0);assert.match(document.getElementById('stores').textContent,/<img/);
  document.querySelector('#stores button').click();assert.equal(values.get(flow.storeKey(owner)),'safe-id');assert.deepEqual(visits,['dashboard.html']);
 });
@@ -76,4 +76,15 @@ test('browser request helper -> Local HTTP account route -> DB owned store, with
   assert.equal(rows[0].owner_id,other);assert.equal(rows[0].plan,'starter');assert.equal(rows[0].domain_verified_at,null);
   const list=await flow.onboardingRequest({auth,fetch,base:'http://127.0.0.1:'+server.address().port});assert.equal(list.result.stores.length,1);
  }finally{await new Promise(resolve=>server.close(resolve));}
+});
+
+test('returning owner opens the only server-listed store without submitting a domain',async()=>{
+ const {document}=parseHTML('<form id="store-form"><input id="domain"><button id="create-store"></button></form><div id="stores"></div><p id="status"></p>');
+ const values=new Map(),visits=[];
+ const ui=mountOnboarding({document,auth:{getSession:async()=>({data:{session:{}}})},
+   storage:{getItem:k=>values.get(k),setItem:(k,v)=>values.set(k,v),removeItem:k=>values.delete(k)},
+   location:{replace:p=>visits.push(p)},flow:{...flow,onboardingRequest:async()=>({result:{stores:[{id:'owned'}]},userId:owner})}});
+ await ui.ready;
+ assert.deepEqual(visits,['dashboard.html']);
+ assert.equal(values.get(flow.storeKey(owner)),'owned');
 });

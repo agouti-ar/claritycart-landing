@@ -38,17 +38,72 @@
 
 <body>
 
+<aside style="padding:16px;background:#eef2ff;border-radius:12px">
+<p id="test-status">Sign in and choose your store to test real AI.</p>
+<a href="login.html?next=test">Sign in</a> &middot; <a href="dashboard.html">Dashboard</a>
+<select disabled id="test-store" aria-label="Test store"></select><button disabled id="start-test">Start real widget</button>
+<p>Real replies consume store quota and save questions. Owner preview excludes storefront analytics.</p></aside>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="auth-flow.js"></script>
+<script>
+(async()=>{
+const status=document.getElementById('test-status');
+try{
+ const html=await(await fetch('onboarding.html')).text();
+ const url=html.match(/const SUPABASE_URL = '([^']+)'/)[1],key=html.match(/const SUPABASE_ANON_KEY = '([^']+)'/)[1];
+ const client=supabase.createClient(url,key,ClarityAuth.clientOptions);
+ const {result,userId}=await ClarityAuth.onboardingRequest({auth:client.auth,fetch:window.fetch.bind(window)});
+ const select=document.getElementById('test-store');
+ for(const store of result.stores){const option=document.createElement('option');option.value=store.domain;option.textContent=store.domain;select.appendChild(option);}
+ const storeKey='cc-test-store:'+userId;
+ const previous=localStorage.getItem(storeKey);
+ if(result.stores.some(store=>store.domain===previous))select.value=previous;
+ select.disabled=!result.stores.length;
+ document.getElementById('start-test').disabled=!result.stores.length;
+ status.textContent=result.stores.length?'Choose a store and start the widget. The question box appears below Add to Cart.':'Connect a store from Dashboard first.';
+ document.getElementById('start-test').onclick=async()=>{
+ if(!select.value)return;
+ localStorage.setItem(storeKey,select.value);
+ const {data}=await client.auth.getSession();
+ window.ClarityCartConfig={previewAccessToken:data.session.access_token};
+ const script=document.createElement('script');script.src='clarity.js';script.dataset.domain=select.value;script.dataset.api=new URL('/api/chat',location.origin).href;document.body.appendChild(script);
+ document.getElementById('start-test').disabled=true;select.disabled=true;
+ };
+}catch(error){status.textContent=error.message;}
+})();
+</script>
     <h1>Sony WH-1000XM5 Wireless Headphones</h1>
     <div class="price">$399.00</div>
-    <p>Industry-leading noise canceling with two processors and 8 microphones. Up to 30-hour battery life with quick
-        charging.</p>
+    <section id="product-description" aria-label="Product details">
+        <p>Demonstration product page. Price, warranty and return terms below are illustrative conditions of this demo store.</p>
+        <h2>Specs</h2>
+        <ul>
+            <li>Model: Sony WH-1000XM5 wireless over-ear headphones.</li>
+            <li>Active noise cancellation with two processors and eight microphones.</li>
+            <li>Battery: up to 30 hours with noise cancellation on, or up to 40 hours with it off. Actual runtime depends on use.</li>
+            <li>USB-C charging and quick-charge support.</li>
+            <li>Wired listening using the included headphone cable.</li>
+            <li>Approximate weight: 250 g.</li>
+        </ul>
+        <h2>In the box</h2>
+        <ul>
+            <li>Sony WH-1000XM5 headphones.</li>
+            <li>Carrying case.</li>
+            <li>Headphone audio cable.</li>
+            <li>USB Type-C charging cable.</li>
+        </ul>
+        <h2>Demo store warranty</h2>
+        <p>1-year warranty from purchase covering manufacturing defects. Accidental damage and normal wear are excluded. Contact demo store support with proof of purchase to request assistance.</p>
+        <h2>Demo store returns</h2>
+        <p>Free returns within 30 days of delivery. Contact demo store support to request a prepaid return label. Return the headphones with their included accessories. Refunds are processed after the returned item is inspected.</p>
+        <p>Shipping times and current stock are not specified on this demo page.</p>
+        <p><a href="https://www.sony.com/electronics/support/wireless-headphones-bluetooth-headphones/wh-1000xm5/specifications">Manufacturer specifications</a></p>
+    </section>
 
     <!-- Кнопка с id="add-to-cart", под которую крепится виджет -->
     <button id="add-to-cart">Add to Cart</button>
 
     <!-- Скрипт виджета ClarityCart (v=3 для сброса кэша) -->
     <!-- data-domain привязывает тестовые вопросы к конкретному магазину в Supabase -->
-    <script src="./clarity.js?v=3" data-domain="my-super-shoes.com"></script>
 </body>
 
 </html>

@@ -16,6 +16,10 @@ const billing=require('./lib/billing-handler').createBillingHandlers({db:options
 app.post('/api/billing/webhook',express.raw({type:'application/json',limit:'256kb'}),billing.webhook);
 // Parse JSON request bodies
 app.use(express.json({limit:'32kb'}));
+app.post('/api/waitlist', require('./api/waitlist'));
+const events=require('./lib/events-handler').createEventsHandler({db:options.db,...(options.eventsOptions||{})});
+app.all(['/api/events','/api/billing/events'],events);
+app.all(['/api/knowledge','/api/billing/knowledge'],require('./lib/knowledge-handler').createKnowledgeHandler({db:options.db,...(options.knowledgeOptions||{})}));
 app.all('/api/billing/:action',billing.api);
 
 // Serve static files from workspace root (dashboard.html, test.html, clarity.js, etc.)
@@ -69,12 +73,12 @@ async function authenticateAdmin(req, res, next) {
 // --- API ENDPOINTS ---
 
 // Health check endpoint
-app.get('/api/health', (req, res) => {
+app.get(['/api/health', '/api/admin/health'], (req, res) => {
   res.json({ status: 'ok', message: 'ClarityCart API is running!' });
 });
 
 // Domain validation endpoint
-app.post('/api/validate-domain', async (req, res) => {
+app.post(['/api/validate-domain', '/api/admin/validate-domain'], async (req, res) => {
   const { domain } = req.body;
   
   if (!domain) {
@@ -93,13 +97,13 @@ app.post('/api/validate-domain', async (req, res) => {
 
 // Preview sync retains its endpoint, but writes require the store owner or super-admin.
 const previewSettings = new Map();
-app.get('/api/live-sync',async(req,res)=>{
+app.get(['/api/live-sync', '/api/admin/live-sync'],async(req,res)=>{
  try {const domain=String(req.query.domain||req.query.store_domain||'').toLowerCase();const {data,error}=await supabase.from('cc_stores').select('*').eq('domain',domain).maybeSingle();
   if(error)throw error;if(!data)return res.status(404).json({error:'UNKNOWN_STORE'});
   return res.json(previewSettings.get(data.id)||require('./api/config').publicSettings(await snapshot(supabase,data.id)));
  }catch{return res.status(503).json({error:'SYNC_UNAVAILABLE'});}
 });
-app.post('/api/live-sync',async(req,res)=>{
+app.post(['/api/live-sync', '/api/admin/live-sync'],async(req,res)=>{
  try {const token=(req.headers.authorization||'').match(/^Bearer (.+)$/)?.[1];if(!token)return res.status(401).json({error:'AUTH_REQUIRED'});
   const {data:auth,error:authError}=await supabase.auth.getUser(token);if(authError||!auth?.user)return res.status(401).json({error:'INVALID_SESSION'});
   const {data:store,error}=await supabase.from('cc_stores').select('*').eq('domain',String(req.body.domain||'').toLowerCase()).maybeSingle();if(error)throw error;
@@ -118,10 +122,10 @@ app.all('/api/account', require('./lib/store-access').createAccountHandler({db:s
 app.all('/api/verify-domain', require('./lib/domain-verification').createDomainVerificationHandler({db:supabase}));
 
 // The same authoritative usage path serves local and Vercel requests.
-const chatHandler = require('./lib/usage-handler').createUsageHandler(options.generateAI || require('./api/chat').generateResponse, {db:supabase, ...(options.authorizeWidget ? {authorize:options.authorizeWidget} : {})});
+const chatHandler = require('./lib/usage-handler').createUsageHandler(options.generateAI || require('./api/chat').generateResponse, {db:supabase, localPreview:options.localSonyPreview ? require('./lib/local-sony-preview') : undefined, ...(options.authorizeWidget ? {authorize:options.authorizeWidget} : {})});
 const { createLocalChatHandler } = require('./lib/local-chat');
-app.post('/api/chat', createLocalChatHandler(chatHandler,{hasApiKey:options.hasApiKey}));
-app.all('/api/widget-session',createLocalChatHandler(require('./lib/request-security').createWidgetSessionHandler({db:supabase}),{endpoint:'widget-session',hasApiKey:options.hasApiKey}));
+app.post('/api/chat', createLocalChatHandler(chatHandler,{hasApiKey:options.localSonyPreview || options.hasApiKey}));
+app.all('/api/widget-session',createLocalChatHandler(require('./lib/request-security').createWidgetSessionHandler({db:supabase}),{endpoint:'widget-session',hasApiKey:options.localSonyPreview || options.hasApiKey}));
 
 // Admin: Get overview data (all users, usage counts, platform stats)
 app.get('/api/admin/overview', authenticateAdmin, async (req, res) => {
@@ -377,7 +381,7 @@ app.post('/api/admin/users/:id/update', authenticateAdmin, async (req, res) => {
 });
 
 // Cancellation Feedback Webhook & Notification Endpoint
-app.post('/api/webhook/cancellation', async (req, res) => {
+app.post(['/api/webhook/cancellation', '/api/admin/webhook/cancellation'], async (req, res) => {
   const token=(req.headers.authorization||'').match(/^Bearer (.+)$/)?.[1];
   if(!token)return res.status(401).json({error:'AUTH_REQUIRED'});
   const {data:auth,error:authError}=await supabase.auth.getUser(token);
@@ -431,79 +435,7 @@ app.post('/api/webhook/cancellation', async (req, res) => {
 
 
 
-// Auto-detect dominant brand color from a store website
-app.get('/api/detect-color', async (req, res) => {
-  let domain = (req.query.domain || req.query.url || '').trim().toLowerCase();
-  domain = domain.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
-
-  const fallbackColors = ['#10B981', '#3B82F6', '#8B5CF6', '#F59E0B', '#EC4899', '#06B6D4', '#6366F1'];
-  const getHashColor = (str) => {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
-    return fallbackColors[Math.abs(hash) % fallbackColors.length];
-  };
-
-  // 1. If local demo store or localhost, check test.html directly for demo testability!
-  if (domain === 'my-super-shoes.com' || domain === '127.0.0.1' || domain === 'localhost') {
-    try {
-      const fs = require('fs');
-      const path = require('path');
-      const testHtmlPath = path.join(__dirname, 'test.html');
-      if (fs.existsSync(testHtmlPath)) {
-        const testHtml = fs.readFileSync(testHtmlPath, 'utf8');
-        const themeMatch = testHtml.match(/<meta[^>]*name=["']theme-color["'][^>]*content=["'](#[0-9a-fA-F]{3,6})["']/i);
-        if (themeMatch && themeMatch[1]) {
-          let c = themeMatch[1].trim().toUpperCase();
-          if (c.length === 4) c = '#' + c[1] + c[1] + c[2] + c[2] + c[3] + c[3];
-          return res.json({ color: c, source: 'test_page_meta_theme_color' });
-        }
-      }
-    } catch(e) {}
-    // If no explicit meta tag in test.html, return Emerald as demo brand color
-    return res.json({ color: '#10B981', source: 'store_brand_palette' });
-  }
-
-  if (!domain || domain === 'mystore.com' || domain === 'unknown') {
-    return res.json({ color: '#3B82F6', source: 'default' });
-  }
-
-  // 2. Fetch live store website
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3500);
-    let siteUrl = `https://${domain}`;
-    let resp;
-    try {
-      resp = await fetch(siteUrl, { signal: controller.signal, headers: { 'User-Agent': 'ClarityCart-ColorDetector/1.0' } });
-    } catch (e) {
-      siteUrl = `http://${domain}`;
-      resp = await fetch(siteUrl, { signal: controller.signal, headers: { 'User-Agent': 'ClarityCart-ColorDetector/1.0' } });
-    }
-    clearTimeout(timeoutId);
-
-    if (resp && resp.ok) {
-      const html = await resp.text();
-      const themeColorMatch = html.match(/<meta[^>]*name=["'](?:theme-color|msapplication-TileColor)["'][^>]*content=["'](#[0-9a-fA-F]{3,6})["']/i) ||
-                             html.match(/<meta[^>]*content=["'](#[0-9a-fA-F]{3,6})["'][^>]*name=["'](?:theme-color|msapplication-TileColor)["']/i);
-      if (themeColorMatch && themeColorMatch[1]) {
-        let c = themeColorMatch[1].trim().toUpperCase();
-        if (c.length === 4) c = '#' + c[1] + c[1] + c[2] + c[2] + c[3] + c[3];
-        return res.json({ color: c, source: 'meta_theme_color' });
-      }
-
-      const cssVarMatch = html.match(/--(?:primary|brand|accent|theme|button)[^:]*:\s*(#[0-9a-fA-F]{3,6})/i);
-      if (cssVarMatch && cssVarMatch[1]) {
-        let c = cssVarMatch[1].trim().toUpperCase();
-        if (c.length === 4) c = '#' + c[1] + c[1] + c[2] + c[2] + c[3] + c[3];
-        return res.json({ color: c, source: 'css_variable' });
-      }
-    }
-  } catch (err) {
-    // Fail silently to smart fallback
-  }
-
-  return res.json({ color: getHashColor(domain), source: 'smart_fallback' });
-});
+app.all('/api/detect-color',require('./lib/detect-color').createDetectColorHandler({db:supabase,...(options.colorOptions||{})}));
 
 app.use((error,req,res,next)=>{
  if(error?.type==='entity.too.large')return res.status(413).json({error:'INPUT_TOO_LARGE'});
@@ -517,5 +449,5 @@ function handler(req,res){defaultApp ||= createApp();return defaultApp(req,res);
 module.exports=handler;
 module.exports.createApp=createApp;
 if(require.main===module){
- const PORT=process.env.PORT||3000;createApp().listen(PORT,'0.0.0.0',()=>console.log('ClarityCart API listening on port '+PORT));
+ const PORT=process.env.PORT||3000;createApp({localSonyPreview:true}).listen(PORT,'0.0.0.0',()=>console.log('ClarityCart API listening on port '+PORT));
 }

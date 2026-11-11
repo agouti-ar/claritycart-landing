@@ -3,8 +3,9 @@ function publicSettings(store) {
  const pro=['pro','business'].includes(store.plan)&&store.access_active;
  const business=store.plan==='business'&&store.access_active;
  const s=store.settings||{};
- return {widget_color:s.widget_color||'#3B82F6',theme_preset:pro?s.theme_preset||'classic':'classic',
- friendly_tone:pro?s.friendly_tone!==false:true,use_emojis:s.use_emojis!==false,
+ const voice=require('../lib/ai-adapter').brandVoice(s,pro?store.plan:'starter');
+ return {widget_color:pro&&typeof s.widget_color==='string'&&/^#[a-f0-9]{6}$/i.test(s.widget_color)?s.widget_color:null,theme_preset:pro&&require('../widget-themes').isPreset(s.theme_preset)?s.theme_preset:'classic',
+ tone:voice.tone,friendly_tone:voice.tone==='friendly',use_emojis:voice.use_emojis,
  white_label:business&&s.white_label===true,exit_intent:pro&&s.exit_intent===true,
  plan:store.plan,access_active:store.access_active};
 }

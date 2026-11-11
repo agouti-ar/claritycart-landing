@@ -155,10 +155,17 @@
 
             <!-- Charts Row 1: Base Tier Analytics (Available to All) -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="lg:col-span-3 grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="glass-panel p-5 rounded-xl"><p class="text-sm text-brand-muted">Questions Answered</p><p id="analytics-questions" class="text-3xl font-bold mt-2">0</p></div>
+                    <div class="glass-panel p-5 rounded-xl"><p class="text-sm text-brand-muted">Sessions</p><p id="analytics-sessions" class="text-3xl font-bold mt-2">0</p></div>
+                    <div class="glass-panel p-5 rounded-xl"><p class="text-sm text-brand-muted">Unique browser visitors</p><p id="analytics-visitors" class="text-3xl font-bold mt-2">0</p></div>
+                    <div class="glass-panel p-5 rounded-xl"><p class="text-sm text-brand-muted">Est. Time Saved</p><p id="analytics-time-saved" class="text-3xl font-bold mt-2">—</p></div>
+                </div>
+                <p id="analytics-status" class="lg:col-span-3 text-xs text-brand-muted" role="status">Loading storefront analytics…</p>
                 <!-- Engagement Chart -->
                 <div class="glass-panel p-6 rounded-2xl">
                     <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-semibold text-white">Questions Over Time (Last 7 Days)</h3>
+                        <h3 class="text-lg font-semibold text-white">Confirmed Answers (Last 7 UTC Days)</h3>
                         <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-300 border border-blue-500/30 uppercase tracking-wider">All Plans</span>
                     </div>
                     <div class="h-64">
@@ -169,7 +176,7 @@
                 <!-- Sentiment Chart -->
                 <div class="glass-panel p-6 rounded-2xl">
                     <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-semibold text-white">Customer Sentiment</h3>
+                        <h3 class="text-lg font-semibold text-white">Question sentiment · keyword estimate</h3>
                         <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-300 border border-blue-500/30 uppercase tracking-wider">All Plans</span>
                     </div>
                     <div class="h-64 flex items-center justify-center relative">
@@ -208,8 +215,8 @@
                             <p class="text-xs text-green-400 mt-2">After AI chat</p>
                         </div>
                         <div class="p-6 bg-gray-800/40 rounded-xl border border-gray-700/50">
-                            <p class="text-brand-muted text-sm font-medium mb-2">Est. Revenue Lift</p>
-                            <p class="text-3xl font-bold text-green-400 font-outfit" id="metric-revenue">$0</p>
+                            <p class="text-brand-muted text-sm font-medium mb-2">Order revenue</p>
+                            <p class="text-3xl font-bold text-green-400 font-outfit" id="metric-revenue">Not connected</p>
                             <p class="text-xs text-brand-muted mt-2">Driven by AI responses</p>
                         </div>
                     </div>
@@ -223,7 +230,7 @@
                     <span class="text-[10px] font-bold uppercase tracking-widest text-amber-400 px-3 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 mb-2">Business Tier Feature</span>
                     <h3 class="text-xl font-bold text-white mb-2 font-outfit">Unlock Conversion & Revenue Attribution</h3>
                     <p class="text-sm text-brand-muted max-w-lg mb-5 leading-relaxed">
-                        Starter and Pro plans include core activity and sentiment analytics. Upgrade to the <span class="text-amber-300 font-semibold">Business Plan</span> to track real-time cart additions, checkout conversion lift, and calculated revenue driven by AI answers.
+                        Core activity comes from recorded storefront events. Sentiment is a keyword estimate, not a measured satisfaction score. Upgrade to the <span class="text-amber-300 font-semibold">Business Plan</span> for confirmed cart activity. Order revenue requires a verified commerce integration; conversion uplift additionally requires a control/baseline methodology.
                     </p>
                     <a href="index.html#pricing" class="shimmer-btn inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-gray-950 font-bold text-sm shadow-[0_0_20px_rgba(245,158,11,0.35)] transition-all transform hover:scale-105">
                         <span>Upgrade to Business Plan</span>
@@ -236,6 +243,7 @@
     </main>
 
     <!-- Supabase JS -->
+    <script src="analytics-ui.js"></script>
     <script src="auth-flow.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
@@ -331,13 +339,18 @@
                 });
             }
 
+            let metrics;
+            try { metrics = await ClarityMetrics.read({auth:supabaseClient.auth,storeId:account.id,base:apiBase}); }
+            catch (_) { ClarityMetrics.render(document,null); return; }
+            ClarityMetrics.render(document,metrics);
+
             // Fetch REAL questions for this specific merchant store from Supabase
             let realQuestions = [];
             try {
                 const { data, error } = await supabaseClient
                     .from('questions')
                     .select('id, question_text, created_at')
-                    .eq('store_domain', storeDomain);
+                    .eq('cc_store_id', account.id).gte('created_at', metrics.window_start);
                 if (!error && data) realQuestions = data;
             } catch (e) {
                 console.warn('Could not fetch store questions:', e);
@@ -345,38 +358,18 @@
 
             const totalQ = realQuestions.length;
 
-            // Compute last 7 days daily counts
-            const dayLabels = [];
-            const dayCounts = [0, 0, 0, 0, 0, 0, 0];
-            const today = new Date();
-            today.setHours(23, 5, 59, 999);
+            // UTC days aggregated from committed, non-preview server answers.
+            const dayLabels = metrics.daily_questions.map(day => new Date(day.day + 'T00:00:00Z').toLocaleDateString('en-US',{weekday:'short',timeZone:'UTC'}));
+            const dayCounts = metrics.daily_questions.map(day => day.count);
 
-            for (let i = 6; i >= 0; i--) {
-                const d = new Date();
-                d.setDate(today.getDate() - i);
-                dayLabels.push(d.toLocaleDateString('en-US', { weekday: 'short' }));
-            }
-
-            realQuestions.forEach(q => {
-                if (q.created_at) {
-                    const qDate = new Date(q.created_at);
-                    const diffDays = Math.floor((today - qDate) / 86400000);
-                    if (diffDays >= 0 && diffDays < 7) {
-                        const index = 6 - diffDays;
-                        dayCounts[index]++;
-                    }
-                }
-            });
-
-            // Compute real Customer Sentiment and Intent from actual store questions
+            // Compute real Question sentiment · keyword estimate and Intent from actual store questions
             let posCount = 0;
             let negCount = 0;
             let neuCount = 0;
-            let cartAdds = 0;
+
 
             const posRegex = /love|great|awesome|best|good|thank|nice|fast|discount|promo|coupon|deal|perfect|helpful|excellent|спасибо|отлично|супер|скидка|промокод|быстро|хорош|класс|нравится|доволен/i;
             const negRegex = /broken|bad|hate|slow|scam|fake|return|refund|cancel|worst|fail|wrong|issue|problem|complaint|late|delay|error|не работает|брак|возврат|отмена|обман|ужас|плохо|ошибка|сломался|где заказ|жалоба/i;
-            const intentRegex = /buy|cart|order|price|checkout|discount|promo|купить|корзин|заказ|цен|оплат|скидк/i;
 
             realQuestions.forEach(q => {
                 const text = (q.question_text || '').toLowerCase();
@@ -388,22 +381,9 @@
                     neuCount++;
                 }
 
-                if (intentRegex.test(text)) {
-                    cartAdds++;
-                }
             });
 
             const hasData = totalQ > 0;
-            const engagedUsers = totalQ;
-            const estRevenue = Math.round(cartAdds * 35);
-
-            const engagedEl = document.getElementById('metric-engaged');
-            const cartEl = document.getElementById('metric-cart');
-            const revenueEl = document.getElementById('metric-revenue');
-
-            if (engagedEl) engagedEl.textContent = engagedUsers.toLocaleString();
-            if (cartEl) cartEl.textContent = cartAdds.toLocaleString();
-            if (revenueEl) revenueEl.textContent = `$${estRevenue.toLocaleString()}`;
 
             // Real Sentiment Calculation
             const sentimentPercentEl = document.getElementById('sentiment-percent');
@@ -447,7 +427,7 @@
                 data: {
                     labels: dayLabels,
                     datasets: [{
-                        label: 'Questions Asked',
+                        label: 'Confirmed answers',
                         data: dayCounts,
                         borderColor: '#3B82F6',
                         backgroundColor: gradient,

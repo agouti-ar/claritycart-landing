@@ -63,16 +63,16 @@
             transition: transform 0.65s ease;
             pointer-events: none;
         }
-        .shimmer-btn:hover::after {
+        .shimmer-btn:not(:disabled):hover::after {
             transform: translateX(100%);
         }
-        .shimmer-btn:active {
+        .shimmer-btn:not(:disabled):active {
             transform: scale(0.96);
         }
         .shimmer-btn svg {
             transition: transform 0.3s ease, rotate 0.3s ease;
         }
-        .shimmer-btn:hover svg {
+        .shimmer-btn:not(:disabled):hover svg {
             transform: rotate(12deg) scale(1.15);
         }
 
@@ -190,7 +190,7 @@
             background: rgba(99, 102, 241, 0.7);
         }
     </style>
-</head>
+<style>#save-domain-btn:disabled{opacity:.5;cursor:not-allowed}#total-questions{font-variant-numeric:tabular-nums}@media(prefers-reduced-motion:reduce){#total-questions{transition:none}}</style></head>
 
 <body class="flex h-screen overflow-hidden">
 
@@ -256,7 +256,7 @@
             class="h-16 glass-panel border-b border-gray-800 flex items-center justify-between px-8 sticky top-0 z-10">
             <h2 class="text-xl font-bold font-outfit text-white tracking-tight">Dashboard</h2>
             <div class="flex items-center space-x-3">
-                <div id="plan-badge-container" class="shimmer-btn px-3.5 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-2 border border-blue-500/30 bg-blue-500/10 text-blue-300 shadow-[0_0_12px_rgba(59,130,246,0.2)] transition-all cursor-default">
+                <div id="plan-badge-container" class="px-3.5 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-2 border border-blue-500/30 bg-blue-500/10 text-blue-300 shadow-[0_0_12px_rgba(59,130,246,0.2)] transition-all cursor-default">
                     <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
                     <span id="header-plan-badge">Loading...</span>
                 </div>
@@ -266,7 +266,7 @@
                         <span class="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
                         <span class="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
                     </div>
-                    <span class="text-sm font-semibold font-outfit tracking-wide bg-clip-text text-transparent bg-gradient-to-r from-white via-blue-100 to-indigo-200" id="header-domain">Loading...</span> <a href="onboarding.html" class="text-xs text-blue-300 hover:underline">Stores</a>
+                    <span class="text-sm font-semibold font-outfit tracking-wide bg-clip-text text-transparent bg-gradient-to-r from-white via-blue-100 to-indigo-200" id="header-domain">Loading...</span> <a href="onboarding.html?manage=1" class="text-xs text-blue-300 hover:underline">Stores</a>
                 </div>
                 <a href="index.html" class="shimmer-btn relative group overflow-hidden flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gray-900/90 hover:bg-blue-950/50 text-xs font-semibold text-gray-200 hover:text-white border border-gray-700/80 hover:border-blue-500/60 shadow-[0_0_10px_rgba(59,130,246,0.1)] hover:shadow-[0_0_18px_rgba(59,130,246,0.3)] transition-all duration-300 cursor-pointer" title="Visit Landing Page">
                     <svg class="w-3.5 h-3.5 text-blue-400 group-hover:text-cyan-300 group-hover:scale-115 group-hover:rotate-12 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
@@ -326,7 +326,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
                         </svg>
-                        +12% this week
+                        Recorded storefront answers · last 30 days
                     </p>
                 </div>
 
@@ -340,8 +340,8 @@
                             </svg>
                         </div>
                     </div>
-                    <p class="text-3xl font-bold" id="time-saved">0 mins</p>
-                    <p class="text-xs text-brand-muted mt-2">Based on 2.5 mins per ticket</p>
+                    <p class="text-3xl font-bold" id="time-saved">—</p>
+                    <p class="text-xs text-brand-muted mt-2">Estimate: 2.5 min per confirmed answer; not measured time</p>
                 </div>
 
                 <div class="glass-panel p-6 rounded-2xl">
@@ -357,8 +357,12 @@
                     <p class="text-xl font-bold mt-1 text-white truncate" id="top-intent">None yet</p>
                     <p class="text-xs text-brand-muted mt-2" id="top-intent-percent">0% of all queries</p>
                 </div>
+                <div class="glass-panel p-6 rounded-2xl"><h3 class="text-brand-muted text-sm font-medium mb-4">Sessions</h3><p class="text-3xl font-bold" id="analytics-sessions">0</p><p class="text-xs text-brand-muted mt-2">Recorded activity · last 30 days</p></div>
+                <div class="glass-panel p-6 rounded-2xl"><h3 class="text-brand-muted text-sm font-medium mb-4">Unique browser visitors</h3><p class="text-3xl font-bold" id="analytics-visitors">0</p><p class="text-xs text-brand-muted mt-2">Recorded activity · last 30 days</p></div>
+                <div class="glass-panel p-6 rounded-2xl"><h3 class="text-brand-muted text-sm font-medium mb-4">Product views</h3><p class="text-3xl font-bold" id="analytics-views">0</p><p class="text-xs text-brand-muted mt-2">Recorded activity · last 30 days</p></div>
             </div>
 
+<p id="analytics-status" class="text-xs text-brand-muted" role="status">Loading storefront analytics…</p>
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <!-- Top Questions -->
                 <div class="lg:col-span-2 glass-panel p-6 rounded-2xl">
@@ -398,14 +402,38 @@
                             <!-- Friendly Tone Toggle -->
                             <div class="flex items-center justify-between">
                                 <div>
-                                    <p class="font-medium text-sm">Friendly Tone</p>
-                                    <p class="text-xs text-brand-muted">AI uses warm, conversational language</p>
+                                    <p class="font-medium text-sm">Friendly Tone <span class="text-xs text-blue-300">PRO+</span></p>
+                                    <p class="text-xs text-brand-muted">Quick switch: Friendly / Formal. More styles below.</p>
                                 </div>
                                 <label class="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" id="tone-toggle" class="sr-only peer" checked>
+                                    <input type="checkbox" id="tone-toggle" aria-label="Friendly tone quick switch" class="sr-only peer" checked>
                                     <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-accent"></div>
                                 </label>
                             </div>
+
+                            <section aria-labelledby="brand-voice-heading" class="border border-blue-500/20 rounded-xl p-4 bg-blue-500/5">
+                                <h3 id="brand-voice-heading" class="text-sm font-semibold mb-1">Brand Voice <span class="text-xs text-blue-300">PRO+</span></h3>
+                                <p class="text-xs text-brand-muted mb-4">Choose how your assistant speaks. Instructions affect tone and formatting, never product facts.</p>
+                                <form id="brand-voice-form" class="space-y-4">
+                                    <div><label for="brand-voice-tone" class="block text-xs text-brand-muted mb-2">Tone</label>
+                                        <select id="brand-voice-tone" class="w-full p-2.5 rounded-lg bg-gray-900 border border-gray-700 text-sm text-white disabled:opacity-50" disabled>
+                                            <option value="friendly">Friendly — warm and conversational</option>
+                                            <option value="formal">Formal — respectful and professional</option>
+                                            <option value="concise">Concise — short and direct</option>
+                                            <option value="professional">Professional (existing style)</option>
+                                            <option value="sales">Sales-driven — documented benefits only</option>
+                                            <option value="custom">Custom (existing style)</option>
+                                        </select>
+                                    </div>
+                                    <div><label for="custom-instructions" class="block text-xs text-brand-muted mb-2">Custom style instructions</label>
+                                        <textarea id="custom-instructions" maxlength="400" rows="4" aria-describedby="brand-voice-help brand-voice-counter" placeholder="Clear, concise English. Avoid slang."
+                                            class="w-full p-3 rounded-lg bg-gray-900 border border-gray-700 text-sm text-white focus:outline-none focus:border-blue-500 disabled:opacity-50" disabled></textarea>
+                                        <div class="flex justify-between gap-3 mt-1 text-[11px] text-brand-muted"><span id="brand-voice-help">No prices, policies, secret keys or requests to invent facts.</span><span id="brand-voice-counter">0/400</span></div>
+                                    </div>
+                                    <button id="brand-voice-save" type="submit" class="w-full px-4 py-2.5 bg-brand-accent hover:bg-blue-600 rounded-lg text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed" disabled>Save Brand Voice</button>
+                                    <p id="brand-voice-status" class="text-xs text-brand-muted break-words" role="status" aria-live="polite">Loading preferences…</p>
+                                </form>
+                            </section>
 
                             <!-- Use Emojis Toggle -->
                             <div class="flex items-center justify-between">
@@ -453,17 +481,22 @@
                             <div class="pt-3 border-t border-gray-800/60" id="widget-theme-preset-row">
                                 <p class="font-medium text-sm text-white mb-1">Widget Style</p>
                                 <p class="text-xs text-brand-muted mb-2.5">Choose a visual style for your chat widget</p>
-                                <div class="flex gap-2">
+                                <div class="flex flex-wrap gap-2">
                                     <button type="button" id="preset-classic" class="theme-pill active" data-preset="classic">
                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
                                         Classic
                                     </button>
-                                    <button type="button" id="preset-neon" class="theme-pill" data-preset="neon_pop">
+                                    <button type="button" id="preset-neon" class="theme-pill" data-preset="solar_graphite">
                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                                        Neon POP ✨
+                                        Solar Graphite
                                         <span id="neon-plan-tag" class="text-[9px] px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30 font-bold uppercase ml-1 hidden">PRO</span>
                                     </button>
+                                    <button type="button" id="preset-mint" class="theme-pill" data-preset="mint_lavender">Mint Lavender</button>
+                                    <button type="button" id="preset-berry" class="theme-pill" data-preset="berry_coral">Berry Coral</button>
                                 </div>
+                                <p class="text-xs text-brand-muted mt-3">Live visual preview · sample content</p>
+                                <div id="theme-preview" class="mt-3"></div>
+                                <button type="button" id="reset-theme-color" class="text-xs text-blue-400 mt-3">Use preset accent</button>
                             </div>
 
                             <!-- Widget Accent Color Picker -->
@@ -473,13 +506,10 @@
                                         <p class="font-medium text-sm text-white">Widget Accent Color</p>
                                         <p class="text-xs text-brand-muted">Pick a curated palette or your store's brand color</p>
                                     </div>
-                                    <div class="flex items-center gap-1.5 bg-gray-900/90 px-2.5 py-1.5 rounded-xl border border-gray-700/80 shadow-inner cursor-pointer hover:border-indigo-500/50 transition-colors" title="Click to choose custom hex color" onclick="document.getElementById('widget-color-picker').click()">
-                                        <input type="color" id="widget-color-picker" value="#3B82F6" class="w-6 h-6 rounded-lg cursor-pointer bg-transparent border-0 p-0" title="Choose custom hex color">
-                                    </div>
                                 </div>
 
                                 <!-- Auto-detect button -->
-                                <button type="button" id="auto-detect-color-btn" class="shimmer-btn w-full mb-3 flex items-center justify-center gap-2 py-2 px-3 rounded-xl border border-indigo-500/30 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 hover:text-white text-xs font-semibold transition-all shadow-[0_0_12px_rgba(99,102,241,0.15)] hover:shadow-[0_0_20px_rgba(99,102,241,0.3)] cursor-pointer">
+                                <button type="button" id="auto-detect-color-btn" class=" w-full mb-3 flex items-center justify-center gap-2 py-2 px-3 rounded-xl border border-indigo-500/30 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 hover:text-white text-xs font-semibold transition-all shadow-[0_0_12px_rgba(99,102,241,0.15)] hover:shadow-[0_0_20px_rgba(99,102,241,0.3)] cursor-pointer">
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/></svg>
                                     Auto-detect from site
                                     <span id="auto-detect-plan-tag" class="text-[9px] px-1.5 py-0.5 rounded bg-indigo-400/20 text-indigo-300 border border-indigo-400/30 font-bold uppercase">PRO</span>
@@ -487,7 +517,7 @@
                                 
                                 <div class="grid grid-cols-3 gap-2.5 mt-2" id="color-palette-grid">
                                     <!-- 1. Electric Blue -->
-                                    <button type="button" data-color="#3B82F6" class="color-preset-card shimmer-btn flex flex-col items-center gap-1.5 p-2 rounded-xl bg-gray-900/70 hover:bg-gray-800 border border-gray-700/70 transition-all group cursor-pointer text-center w-full">
+                                    <button type="button" data-color="#3B82F6" class="color-preset-card flex flex-col items-center gap-1.5 p-2 rounded-xl bg-gray-900/70 hover:bg-gray-800 border border-gray-700/70 transition-all group cursor-pointer text-center w-full">
                                         <div class="w-9 h-9 rounded-xl bg-[#3B82F6] flex items-center justify-center shadow-[0_0_12px_rgba(59,130,246,0.5)] swatch-box group-hover:scale-105 transition-transform">
                                             <svg class="w-4 h-4 text-white hidden check-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
                                         </div>
@@ -495,7 +525,7 @@
                                     </button>
 
                                     <!-- 2. Emerald Green -->
-                                    <button type="button" data-color="#10B981" class="color-preset-card shimmer-btn flex flex-col items-center gap-1.5 p-2 rounded-xl bg-gray-900/70 hover:bg-gray-800 border border-gray-700/70 transition-all group cursor-pointer text-center w-full">
+                                    <button type="button" data-color="#10B981" class="color-preset-card flex flex-col items-center gap-1.5 p-2 rounded-xl bg-gray-900/70 hover:bg-gray-800 border border-gray-700/70 transition-all group cursor-pointer text-center w-full">
                                         <div class="w-9 h-9 rounded-xl bg-[#10B981] flex items-center justify-center shadow-[0_0_12px_rgba(16,185,129,0.5)] swatch-box group-hover:scale-105 transition-transform">
                                             <svg class="w-4 h-4 text-white hidden check-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
                                         </div>
@@ -503,7 +533,7 @@
                                     </button>
 
                                     <!-- 3. Royal Purple -->
-                                    <button type="button" data-color="#8B5CF6" class="color-preset-card shimmer-btn flex flex-col items-center gap-1.5 p-2 rounded-xl bg-gray-900/70 hover:bg-gray-800 border border-gray-700/70 transition-all group cursor-pointer text-center w-full">
+                                    <button type="button" data-color="#8B5CF6" class="color-preset-card flex flex-col items-center gap-1.5 p-2 rounded-xl bg-gray-900/70 hover:bg-gray-800 border border-gray-700/70 transition-all group cursor-pointer text-center w-full">
                                         <div class="w-9 h-9 rounded-xl bg-[#8B5CF6] flex items-center justify-center shadow-[0_0_12px_rgba(139,92,246,0.5)] swatch-box group-hover:scale-105 transition-transform">
                                             <svg class="w-4 h-4 text-white hidden check-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
                                         </div>
@@ -511,7 +541,7 @@
                                     </button>
 
                                     <!-- 4. Coral Rose -->
-                                    <button type="button" data-color="#F43F5E" class="color-preset-card shimmer-btn flex flex-col items-center gap-1.5 p-2 rounded-xl bg-gray-900/70 hover:bg-gray-800 border border-gray-700/70 transition-all group cursor-pointer text-center w-full">
+                                    <button type="button" data-color="#F43F5E" class="color-preset-card flex flex-col items-center gap-1.5 p-2 rounded-xl bg-gray-900/70 hover:bg-gray-800 border border-gray-700/70 transition-all group cursor-pointer text-center w-full">
                                         <div class="w-9 h-9 rounded-xl bg-[#F43F5E] flex items-center justify-center shadow-[0_0_12px_rgba(244,63,94,0.5)] swatch-box group-hover:scale-105 transition-transform">
                                             <svg class="w-4 h-4 text-white hidden check-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
                                         </div>
@@ -519,7 +549,7 @@
                                     </button>
 
                                     <!-- 5. Amber Gold -->
-                                    <button type="button" data-color="#F59E0B" class="color-preset-card shimmer-btn flex flex-col items-center gap-1.5 p-2 rounded-xl bg-gray-900/70 hover:bg-gray-800 border border-gray-700/70 transition-all group cursor-pointer text-center w-full">
+                                    <button type="button" data-color="#F59E0B" class="color-preset-card flex flex-col items-center gap-1.5 p-2 rounded-xl bg-gray-900/70 hover:bg-gray-800 border border-gray-700/70 transition-all group cursor-pointer text-center w-full">
                                         <div class="w-9 h-9 rounded-xl bg-[#F59E0B] flex items-center justify-center shadow-[0_0_12px_rgba(245,158,11,0.5)] swatch-box group-hover:scale-105 transition-transform">
                                             <svg class="w-4 h-4 text-white hidden check-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
                                         </div>
@@ -527,7 +557,7 @@
                                     </button>
 
                                     <!-- 6. Midnight Slate -->
-                                    <button type="button" data-color="#0F172A" class="color-preset-card shimmer-btn flex flex-col items-center gap-1.5 p-2 rounded-xl bg-gray-900/70 hover:bg-gray-800 border border-gray-700/70 transition-all group cursor-pointer text-center w-full">
+                                    <button type="button" data-color="#0F172A" class="color-preset-card flex flex-col items-center gap-1.5 p-2 rounded-xl bg-gray-900/70 hover:bg-gray-800 border border-gray-700/70 transition-all group cursor-pointer text-center w-full">
                                         <div class="w-9 h-9 rounded-xl bg-[#0F172A] border border-gray-600 flex items-center justify-center shadow-[0_0_10px_rgba(15,23,42,0.6)] swatch-box group-hover:scale-105 transition-transform">
                                             <svg class="w-4 h-4 text-white hidden check-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
                                         </div>
@@ -650,6 +680,10 @@
     <div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
     <!-- Supabase JS -->
+    <script src="widget-themes.js"></script>
+    <script src="theme-preview.js"></script>
+    <script src="brand-voice-ui.js"></script>
+    <script src="analytics-ui.js"></script>
     <script src="auth-flow.js"></script>
     <script src="billing-ui.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -769,7 +803,7 @@
                 const headerPlanBadge = document.getElementById('header-plan-badge');
                 if (headerPlanBadge && planBadgeContainer) {
                     headerPlanBadge.textContent = `${userPlan} Plan`;
-                    if (userPlan.toLowerCase() === 'business' || isSuperAdmin) {
+                    if (account.access_active === true && account.plan === 'business' || isSuperAdmin) {
                         planBadgeContainer.className = 'shimmer-btn px-3.5 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-2 border border-amber-400/50 bg-gradient-to-r from-amber-500/20 via-yellow-500/15 to-amber-600/20 text-amber-300 shadow-[0_0_16px_rgba(245,158,11,0.35)] transition-all cursor-default';
                         if (headerPlanBadge.previousElementSibling) headerPlanBadge.previousElementSibling.className = 'w-2 h-2 rounded-full bg-amber-400 animate-pulse';
                     } else if (userPlan.toLowerCase() === 'pro') {
@@ -968,25 +1002,39 @@
                 if (activeDomainDisplay) activeDomainDisplay.textContent = storeDomain;
 
                 // 6. Widget Settings Toggles & Plan Gating
+                let brandVoiceUI;
                 const toneToggle = document.getElementById('tone-toggle');
                 const emojiToggle = document.getElementById('emoji-toggle');
                 const exitToggle = document.getElementById('exit-intent-toggle');
                 const whiteLabelToggle = document.getElementById('whitelabel-toggle');
                 const whitelabelRow = document.getElementById('whitelabel-row');
 
-                const isProOrHigher = isSuperAdmin || userPlan.toLowerCase() === 'pro' || userPlan.toLowerCase() === 'business';
-                const isBusinessPlan = userPlan.toLowerCase() === 'business';
+                const isProOrHigher = account.access_active === true && ['pro','business'].includes(account.plan);
+                const isBusinessPlan = account.access_active === true && account.plan === 'business';
 
                 // Initial states
-                if (toneToggle) toneToggle.checked = meta.friendly_tone !== false;
+                if (toneToggle) {
+                    toneToggle.checked = account.settings.tone ? account.settings.tone === 'friendly' : meta.friendly_tone !== false;
+                    toneToggle.disabled = !isProOrHigher;
+                    if (toneToggle.disabled && ['pro','business'].includes(account.plan)) {
+                        toneToggle.title = 'This store needs an active access period. Check its status and expiration.';
+                    }
+                }
                 if (emojiToggle) emojiToggle.checked = meta.use_emojis !== false;
 
                 // Color Picker Setup
-                const colorPicker = document.getElementById('widget-color-picker');
                 const colorHex = document.getElementById('widget-color-hex');
-                const currentColor = meta.widget_color || '#3B82F6';
+                let appliedColor = meta.widget_color || null;
+                let appliedPreset = meta.theme_preset || 'classic';
+                const currentColor = ClarityCartThemes.tokens(appliedPreset, appliedColor).values.accent;
+                const themePreview = ClarityThemePreview.mount(document.getElementById('theme-preview'));
+                const refreshTheme = (preset = appliedPreset, color = appliedColor) => {
+                    themePreview.update(preset, color);
+                    const accent = ClarityCartThemes.tokens(preset, color).values.accent;
+                    if (colorHex) colorHex.textContent = accent;
+                };
+                refreshTheme();
                 const currentPreset = meta.theme_preset || 'classic';
-                if (colorPicker) colorPicker.value = currentColor;
                 if (colorHex) colorHex.textContent = currentColor;
 
                 // Insights lock badge: show for non-Business plans
@@ -995,38 +1043,31 @@
                     insightsBadge.classList.remove('hidden');
                 }
 
-                // Theme Preset Pills
-                const presetClassicBtn = document.getElementById('preset-classic');
-                const presetNeonBtn = document.getElementById('preset-neon');
+                // Presets share the same tokens as the storefront widget.
+                const presetButtons = [...document.querySelectorAll('[data-preset]')];
                 const neonPlanTag = document.getElementById('neon-plan-tag');
-                if (neonPlanTag && !isProOrHigher) {
-                    neonPlanTag.classList.remove('hidden');
+                if (neonPlanTag && !isProOrHigher) neonPlanTag.classList.remove('hidden');
+                const updatePresetUI = preset => presetButtons.forEach(btn => {
+                    btn.classList.toggle('active', ClarityCartThemes.normalize(btn.dataset.preset) === ClarityCartThemes.normalize(preset));
+                    btn.classList.remove('neon-active');
+                });
+                updatePresetUI(currentPreset);
+                if(!isProOrHigher){
+                    presetButtons.forEach(button=>button.disabled=true);
+                    document.querySelectorAll('.color-preset-card, #reset-theme-color').forEach(button=>button.disabled=true);
                 }
 
-                const updatePresetUI = (preset) => {
-                    if (presetClassicBtn) {
-                        presetClassicBtn.classList.toggle('active', preset === 'classic');
-                        presetClassicBtn.classList.remove('neon-active');
-                    }
-                    if (presetNeonBtn) {
-                        presetNeonBtn.classList.toggle('neon-active', preset === 'neon_pop');
-                        presetNeonBtn.classList.remove('active');
-                    }
+                presetButtons.forEach(btn => { btn.onclick = async () => {
+                    const preset = btn.dataset.preset;
+                    if (preset !== 'classic' && !isProOrHigher) { showToast('This theme requires Pro or Business.', 'info'); return; }
+                    const saved = await saveSetting('theme_preset', preset, 'Widget Style');
+                    if (saved) appliedPreset = saved.settings.theme_preset;
+                    updatePresetUI(appliedPreset); refreshTheme();
+                }; });
+                document.getElementById('reset-theme-color').onclick = async () => {
+                    if (await saveSetting('widget_color', null, 'Preset Accent')) appliedColor = null;
+                    refreshTheme();
                 };
-                updatePresetUI(currentPreset);
-
-                [presetClassicBtn, presetNeonBtn].forEach(btn => {
-                    if (!btn) return;
-                    btn.onclick = () => {
-                        const preset = btn.getAttribute('data-preset');
-                        if (preset === 'neon_pop' && !isProOrHigher) {
-                            showToast('🔒 Neon POP theme requires Pro or Business plan. Upgrade to unlock!', 'info');
-                            return;
-                        }
-                        updatePresetUI(preset);
-                        saveSetting('theme_preset', preset, 'Widget Style');
-                    };
-                });
 
                 // Auto-detect color button
                 const autoDetectBtn = document.getElementById('auto-detect-color-btn');
@@ -1037,29 +1078,25 @@
                 }
 
                 if (autoDetectBtn) {
+                    autoDetectBtn.disabled = !isProOrHigher;
                     autoDetectBtn.onclick = async () => {
                         if (!isProOrHigher) {
                             showToast('🔒 Auto-detect color is available on Pro & Business plans. Upgrade to unlock!', 'info');
                             return;
                         }
-                        const detectTarget = currentStoreDomain || 'my-super-shoes.com';
+                        const detectTarget = document.getElementById('store-domain-input').value.trim() || currentStoreDomain;
+                        if (!detectTarget || !currentStoreId) { showToast('Enter a store domain first', 'error'); return; }
                         autoDetectBtn.disabled = true;
                         autoDetectBtn.innerHTML = `<svg class="w-3.5 h-3.5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg> Analyzing site...`;
                         try {
-                            const detectApiBase = 'http://127.0.0.1:3000';
-                            const resp = await fetch(`${detectApiBase}/api/detect-color?domain=${encodeURIComponent(detectTarget)}`);
-                            if (resp.ok) {
-                                const json = await resp.json();
-                                if (json.color) {
-                                    if (colorPicker) colorPicker.value = json.color;
-                                    updateActivePresetUI(json.color);
-                                    await saveSetting('widget_color', json.color, 'Widget Accent Color');
-                                    showToast(`Auto-detected brand color: ${json.color} 🎨`, 'success');
-                                } else {
-                                    showToast('No dominant color detected. Try setting it manually.', 'info');
-                                }
-                            } else {
-                                showToast('Auto-detect failed. Try setting color manually.', 'error');
+                            const detectApiBase = ['localhost','127.0.0.1'].includes(location.hostname) ? 'http://127.0.0.1:3000' : '';
+                            const resp = await fetch(`${detectApiBase}/api/detect-color?domain=${encodeURIComponent(detectTarget)}&store_id=${encodeURIComponent(currentStoreId)}`, {headers:{Authorization:'Bearer '+session.access_token}});
+                            const json = await resp.json();
+                            if (!resp.ok) throw new Error(json.error || json.reason || 'Detection failed');
+                            if (!/^#[0-9a-f]{6}$/i.test(json.color)) throw new Error('Invalid color response');
+                            if (await saveSetting('widget_color', json.color, 'Widget Accent Color')) {
+                                appliedColor = json.color; refreshTheme(); updateActivePresetUI(json.color);
+                                showToast(ClarityThemePreview.detectionMessage(json), json.detected ? 'success' : 'info');
                             }
                         } catch (e) {
                             showToast('Could not reach auto-detect service.', 'error');
@@ -1147,7 +1184,7 @@
                         false: 'Strict emoji filter active (Emojis stripped) 🚫'
                     },
                     theme_preset: {
-                        neon_pop: 'Neon POP ✨ style applied to widget!',
+                        neon_pop: 'Solar Graphite style applied to widget!',
                         classic: 'Classic Clean style applied to widget!'
                     },
                     white_label: {
@@ -1156,30 +1193,48 @@
                     }
                 };
 
-                // Helper to save settings to Auth Metadata AND broadcast to widget in real-time
+                // Save store-owned settings; broadcast only after server confirmation
                 const saveSetting = async (key, val, friendlyName) => {
-                    broadcastLiveUpdate(key, val);
-
                     try {
+                        if (!isProOrHigher && ['widget_color','theme_preset'].includes(key)) {
+                            showToast('Design customization requires Pro or Business.', 'info'); return null;
+                        }
                         const updateObj = {};
                         updateObj[key] = val;
-                        await fetchAccount({ settings: updateObj });
+                        const savedAccount = await fetchAccount({ settings: updateObj });
+                        broadcastLiveUpdate(key, savedAccount.settings[key]);
+                        if (key === 'friendly_tone') { brandVoiceUI?.load(savedAccount.settings); broadcastLiveUpdate('tone',savedAccount.settings.tone); }
                         
                         let toastMsg = `${friendlyName} saved and applied! ✓`;
+                        if (key === 'widget_color' || key === 'theme_preset') {
+                            appliedPreset = savedAccount.settings.theme_preset || 'classic';
+                            appliedColor = savedAccount.settings.widget_color || null;
+                            broadcastLiveUpdate('theme_preset', appliedPreset);
+                            broadcastLiveUpdate('widget_color', appliedColor);
+                            updatePresetUI(appliedPreset);
+                            refreshTheme();
+                        }
                         if (key === 'widget_color') {
                             toastMsg = `Widget accent color updated: ${val} 🎨`;
                         } else if (toastMap[key] && toastMap[key][val] !== undefined) {
                             toastMsg = toastMap[key][val];
                         }
                         showToast(toastMsg, 'success');
+                        return savedAccount;
                     } catch (err) {
                         showToast(`Failed to save ${friendlyName}: ${err.message}`, 'error');
+                        return null;
                     }
                 };
 
                 if (toneToggle) {
                     toneToggle.onchange = () => {
-                        saveSetting('friendly_tone', toneToggle.checked, 'Friendly Tone');
+                        const desired = toneToggle.checked;
+                        toneToggle.disabled = true;
+                        saveSetting('friendly_tone', desired, 'Friendly Tone').then(saved => {
+                            toneToggle.checked = saved ? saved.settings.tone === 'friendly' : !desired;
+                            toneToggle.disabled = !isProOrHigher;
+                        });
                     };
                 }
                 if (emojiToggle) {
@@ -1195,6 +1250,16 @@
                 if (whiteLabelToggle && isBusinessPlan) {
                     whiteLabelToggle.onchange = () => saveSetting('white_label', whiteLabelToggle.checked, 'White-Label Branding');
                 }
+
+                brandVoiceUI = mountBrandVoice({document,settings:account.settings,
+                    canCustomize:['pro','business'].includes(account.plan) && account.access_active === true,
+                    save:settings=>fetchAccount({settings}),
+                    onSaved:settings=>{
+                        if (toneToggle) toneToggle.checked = settings.tone === 'friendly';
+                        try { localStorage.setItem('clarity_friendly_tone',String(settings.tone==='friendly')); } catch (_) {}
+                        broadcastLiveUpdate('tone', settings.tone);
+                    }
+                });
 
                 // Active Preset Highlighting Helper
                 const updateActivePresetUI = (selectedColor) => {
@@ -1217,26 +1282,13 @@
 
                 updateActivePresetUI(currentColor);
 
-                // Color picker change event
-                if (colorPicker) {
-                    colorPicker.oninput = () => {
-                        updateActivePresetUI(colorPicker.value);
-                        broadcastLiveUpdate('widget_color', colorPicker.value);
-                    };
-                    colorPicker.onchange = () => {
-                        const selectedCol = colorPicker.value;
-                        updateActivePresetUI(selectedCol);
-                        saveSetting('widget_color', selectedCol, 'Widget Accent Color');
-                    };
-                }
-
                 // Preset color buttons
                 document.querySelectorAll('.color-preset-card').forEach(btn => {
-                    btn.onclick = () => {
+                    btn.onclick = async () => {
                         const col = btn.getAttribute('data-color');
-                        if (colorPicker) colorPicker.value = col;
                         updateActivePresetUI(col);
-                        saveSetting('widget_color', col, 'Widget Accent Color');
+                        if (await saveSetting('widget_color', col, 'Widget Accent Color')) appliedColor = col;
+                        refreshTheme(); updateActivePresetUI(appliedColor || ClarityCartThemes.tokens(appliedPreset).values.accent);
                     };
                 });
 
@@ -1246,6 +1298,7 @@
                 const domainHint = document.getElementById('domain-hint');
                 const domainRegex = /^[a-zA-Z0-9.-]+$/;
                 
+                if (saveDomainBtn) saveDomainBtn.disabled = true;
                 if (domainInput) {
                     domainInput.value = '';
                     domainInput.placeholder = 'For example: myshop.com';
@@ -1263,7 +1316,7 @@
                             domainInput.style.borderColor = '';
                             domainInput.style.boxShadow = '';
                             domainHint.classList.add('hidden');
-                            saveDomainBtn.disabled = false;
+                            saveDomainBtn.disabled = !domainInput.value.trim() || domainInput.value.trim().toLowerCase() === currentStoreDomain?.toLowerCase();
                         }
                     });
                 }
@@ -1302,12 +1355,12 @@
                                 saveDomainBtn.innerHTML = origHTML;
                                 saveDomainBtn.classList.remove('from-emerald-600', 'to-teal-600');
                                 saveDomainBtn.classList.add('from-blue-600', 'to-indigo-600');
-                                saveDomainBtn.disabled = false;
+                                saveDomainBtn.disabled = !domainInput.value.trim() || domainInput.value.trim().toLowerCase() === currentStoreDomain?.toLowerCase();
                             }, 1800);
                         } catch(err) {
                             showToast('Failed to save domain: ' + err.message, 'error');
                             saveDomainBtn.innerHTML = origHTML;
-                            saveDomainBtn.disabled = false;
+                            saveDomainBtn.disabled = !domainInput.value.trim() || domainInput.value.trim().toLowerCase() === currentStoreDomain?.toLowerCase();
                         }
                     });
                 }
@@ -1375,7 +1428,7 @@
                 const resetLabel = document.getElementById('plan-reset-label');
                 const timeSavedEl = document.getElementById('time-saved');
 
-                if (totalEl) totalEl.textContent = totalQuestions;
+                // Questions Answered is rendered from confirmed analytics, independently of billing usage.
                 if (usageEl) usageEl.textContent = totalQuestions;
 
                 const percent = queryLimit > 0 ? Math.min((totalQuestions / queryLimit) * 100, 100) : 100;
@@ -1407,10 +1460,12 @@
                     }
                 }
 
-                if (timeSavedEl) {
-                    const mins = totalQuestions * 2.5;
-                    const hrs = (mins / 60).toFixed(1);
-                    timeSavedEl.textContent = hrs < 1 ? mins + ' mins' : hrs + ' hrs';
+                if (typeof ClarityMetrics !== 'undefined') {
+                    try {
+                        const metrics = await ClarityMetrics.read({auth:supabaseClient.auth,storeId:account.id,
+                            base:['localhost','127.0.0.1'].includes(location.hostname)?'http://127.0.0.1:3000':''});
+                        ClarityMetrics.render(document, metrics);
+                    } catch (_) { ClarityMetrics.render(document, null); }
                 }
 
                 // Group by question

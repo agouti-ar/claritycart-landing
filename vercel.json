@@ -1,23 +1,5 @@
 {
   "version": 2,
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/api/$1"
-    },
-    {
-      "src": "/clarity.js",
-      "dest": "/clarity.js",
-      "headers": {
-        "Access-Control-Allow-Origin": "*",
-        "Content-Type": "application/javascript"
-      }
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/$1"
-    }
-  ],
   "framework": null,
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
@@ -25,5 +7,46 @@
     "api/**/*.js": {
       "maxDuration": 60
     }
-  }
+  },
+  "rewrites": [
+    {
+      "source": "/api/knowledge",
+      "destination": "/api/billing/knowledge"
+    },
+    {
+      "source": "/api/events",
+      "destination": "/api/billing/events"
+    },
+    {
+      "source": "/api/health",
+      "destination": "/api/admin/health"
+    },
+    {
+      "source": "/api/live-sync",
+      "destination": "/api/admin/live-sync"
+    },
+    {
+      "source": "/api/validate-domain",
+      "destination": "/api/admin/validate-domain"
+    },
+    {
+      "source": "/api/webhook/cancellation",
+      "destination": "/api/admin/webhook/cancellation"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/clarity.js",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Content-Type",
+          "value": "application/javascript"
+        }
+      ]
+    }
+  ]
 }

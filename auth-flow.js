@@ -12,7 +12,7 @@
      if(failed||error||!data?.session)throw new Error('Sign-in could not be completed. Please start again in the same browser.');
      const verified=await auth.getUser();
      if(verified.error||!verified.data?.user)throw new Error('Your session could not be verified. Please sign in again.');
-     location.replace('onboarding.html');
+     location.replace(url.searchParams.get('next') === 'test' ? 'test.html' : 'onboarding.html');
    } finally {history.replaceState({},'',url.pathname);}
  }
  async function onboardingRequest({auth,fetch,base='',body}){

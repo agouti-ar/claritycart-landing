@@ -55,10 +55,122 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
             : 'https://claritycart-landing.vercel.app/api/chat');
     const CONFIG_URL = document.currentScript?.getAttribute('data-config') ||
         new URL('./config', new URL(API_URL, document.baseURI)).href;
+    // Storefront telemetry is independent from billing/usage and may fail without breaking the widget.
+    const themesReady = window.ClarityCartThemes ? Promise.resolve() : new Promise(resolve => {
+        const script = document.createElement('script');
+        script.src = document.currentScript?.src ? new URL('./widget-themes.js', document.currentScript.src).href : new URL('../widget-themes.js', API_URL).href;
+        script.onload = script.onerror = resolve;
+        const timer = setTimeout(resolve, 3000);
+        script.addEventListener('load', () => clearTimeout(timer), {once:true});
+        document.head.appendChild(script);
+    });
+    class ClarityAnalytics {
+        constructor(widget) {
+            this.widget = widget;
+            this.key = 'cc-analytics:' + resolveStoreDomain();
+            this.queue = [];
+            try { this.queue = JSON.parse(sessionStorage.getItem(this.key + ':queue') || '[]').filter(e => e.queued_at > Date.now() - 300000).slice(-100); } catch (_) {}
+            this.record(widget.isAnalyticsProductPage() ? 'product_view' : 'session_start');
+            document.addEventListener('claritycart:cart-added', event => {
+                if (event.detail?.confirmed === true) this.record('cart_add', 'merchant_confirmed', event.detail.event_id);
+            });
+            document.addEventListener('claritycart:analytics-consent', event => {
+                if (typeof event.detail?.granted !== 'boolean') return;
+                window.ClarityCartConfig.analyticsConsent = event.detail.granted;
+                if (!event.detail.granted) { this.queue = []; this.persist(); return; }
+                this.installCartAdapter();
+                this.record(widget.isAnalyticsProductPage() ? 'product_view' : 'session_start');
+            });
+            this.installCartAdapter();
+            window.addEventListener('pagehide', () => { this.flush(); });
+            this.timer = setInterval(() => this.flush(), 10000);
+            this.flush();
+        }
+        enabled() {
+            return !isLocalDev && !window.ClarityCartConfig.previewAccessToken && !window.ClarityCartConfig.mockMode &&
+                window.ClarityCartConfig.analyticsConsent !== false && !navigator.globalPrivacyControl && navigator.doNotTrack !== '1' &&
+                document.querySelector('script[data-analytics="off"]') === null;
+        }
+        identity() {
+            if (!this.enabled()) return null;
+            const now = Date.now();
+            try {
+                let visitor = JSON.parse(localStorage.getItem(this.key + ':visitor') || 'null');
+                if (!visitor || visitor.expires < now) { visitor = { id: crypto.randomUUID(), expires: now + 90 * 86400000 }; localStorage.setItem(this.key + ':visitor', JSON.stringify(visitor)); }
+                let session = JSON.parse(sessionStorage.getItem(this.key + ':session') || 'null');
+                if (!session || now - session.last > 1800000 || session.visitor !== visitor.id) { session = { id: crypto.randomUUID(), visitor: visitor.id }; this.freshSession = true; }
+                session.last = now; sessionStorage.setItem(this.key + ':session', JSON.stringify(session));
+                return { visitor_id: visitor.id, session_id: session.id };
+            } catch (_) { return null; } // No storage/fingerprinting fallback: AI continues normally.
+        }
+        persist() { try { sessionStorage.setItem(this.key + ':queue', JSON.stringify(this.queue)); } catch (_) {} }
+        record(type, source, eventId) {
+            try {
+                const identity = this.identity(); if (!identity) return;
+                const add = event => this.queue.push({ ...identity, queued_at: Date.now(), ...event });
+                if (this.freshSession) { add({ event_id: crypto.randomUUID(), type: 'session_start' }); this.freshSession = false; }
+                if (type !== 'session_start') add({ event_id: /^[0-9a-f-]{36}$/i.test(eventId || '') ? eventId : crypto.randomUUID(), type, product_path: window.location.pathname, ...(source ? { source } : {}) });
+                this.queue = this.queue.filter(e => e.queued_at > Date.now() - 300000).slice(-100); this.persist();
+                this.flush();
+            } catch (_) {}
+        }
+        async flush() {
+            if (this.sending || !this.queue.length) return;
+            if (!this.enabled()) { this.queue = []; this.persist(); return; }
+            this.sending = true;
+            try {
+                this.queue = this.queue.filter(e => e.queued_at > Date.now() - 300000);
+                this.persist();
+                if (!this.queue.length) return;
+                const first = this.queue[0];
+                const batch = this.queue.filter(e => e.session_id === first.session_id && e.visitor_id === first.visitor_id && e.queued_at > Date.now() - 300000).slice(0, 20);
+                if (!batch.length) { this.queue = []; this.persist(); return; }
+                const session = await this.widget.getRequestSession();
+                const response = await fetch(new URL('./events', new URL(API_URL, document.baseURI)).href, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Widget ' + session.widget_session },
+                    body: JSON.stringify({ domain: resolveStoreDomain(), visitor_id: first.visitor_id, session_id: first.session_id,
+                        events: batch.map(({ visitor_id, session_id, queued_at, ...event }) => event) }),
+                    keepalive: true, signal: AbortSignal.timeout(7000)
+                });
+                if (response.ok || [400, 403, 409, 413].includes(response.status)) {
+                    const ids = new Set(batch.map(e => e.event_id)); this.queue = this.queue.filter(e => !ids.has(e.event_id)); this.persist();
+                } else if (response.status === 401) this.widget.widgetSession = null;
+            } catch (_) { /* Retry stable IDs; an ambiguous response must not create fresh events. */ }
+            finally { this.sending = false; }
+        }
+        installCartAdapter() {
+            if (!this.enabled()) return;
+            const tracker = this;
+            if (window.Shopify && !window.__clarityShopifyCartHook) {
+                window.__clarityShopifyCartHook = true;
+                const original = window.fetch;
+                window.fetch = function (...args) {
+                    return original.apply(this, args).then(response => {
+                        try {
+                            const url = new URL(args[0]?.url || args[0], document.baseURI);
+                            const method = args[1]?.method || args[0]?.method || 'GET';
+                            if (response.ok && !response.redirected && method.toUpperCase() === 'POST' && url.origin === window.location.origin && /\/cart\/add(?:\.js|\.json)?$/.test(url.pathname)) {
+                                // Inspect a clone, never consume/delay the store's original response.
+                                response.clone().json().then(data => {
+                                    const items = Array.isArray(data?.items) ? data.items : [data];
+                                    if (items.length && items.every(item => item && (item.id || item.variant_id) && Number(item.quantity) > 0)) tracker.record('cart_add', 'shopify_ajax');
+                                }).catch(() => {});
+                            }
+                        } catch (_) {}
+                        return response;
+                    });
+                };
+            } else if (window.wc_add_to_cart_params && window.jQuery) {
+                window.jQuery(document.body).off('added_to_cart.claritycartAnalytics').on('added_to_cart.claritycartAnalytics', () => tracker.record('cart_add', 'woocommerce_added'));
+            }
+        }
+    }
+
     class ClarityCartWidget {
         constructor() {
             this.targetSelector = '#add-to-cart';
             this.init();
+            themesReady.then(() => this.applyThemePreset(window.ClarityCartConfig.themePreset || 'classic'));
         }
 
         init() {
@@ -103,6 +215,7 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
             // Fetch live settings and theme color from Backend
             this.fetchStoreSettings();
             this.getRequestSession().catch(() => {});
+            try { this.analytics = new ClarityAnalytics(this); } catch (_) {}
 
             // Centralized setting applicator for instant real-time sync
             this.applyLiveSetting = (key, val) => {
@@ -111,12 +224,13 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                     if (cfg.themePreset !== val) {
                         cfg.themePreset = val || 'classic';
                         this.applyThemePreset(val || 'classic');
-                        this._showLiveToast(`🎨 Style: ${val === 'neon_pop' ? 'Neon POP ✨' : 'Classic'}`);
+                        this._showLiveToast('Widget theme updated');
                     }
                 } else if (key === 'widget_color') {
+                    val = val === 'null' ? null : val;
                     if (cfg.widgetColor !== val) {
                         cfg.widgetColor = val;
-                        if (val) this.applyThemeColor(val);
+                        if (val) this.applyThemeColor(val); else this.applyThemePreset(cfg.themePreset || 'classic');
                         this._showLiveToast(`🎨 Color: ${val}`);
                     }
                 } else if (key === 'use_emojis') {
@@ -124,6 +238,11 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                     if (cfg.use_emojis !== boolVal) {
                         cfg.use_emojis = boolVal;
                         this._showLiveToast(boolVal ? '😊 Emojis: ON' : '🚫 Emojis: OFF');
+                    }
+                } else if (key === 'tone') {
+                    if (['friendly','formal','concise','professional','sales','custom'].includes(val)) {
+                        cfg.tone = val; cfg.friendly_tone = val === 'friendly';
+                        this._showLiveToast('Brand Voice updated');
                     }
                 } else if (key === 'friendly_tone') {
                     const boolVal = (val === 'true' || val === true);
@@ -147,6 +266,7 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                     'clarity_theme_preset': 'theme_preset',
                     'clarity_use_emojis': 'use_emojis',
                     'clarity_friendly_tone': 'friendly_tone',
+                    'clarity_tone': 'tone',
                     'clarity_exit_intent': 'exit_intent',
                     'clarity_widget_color': 'widget_color'
                 };
@@ -178,8 +298,11 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                 if (lsEmojis !== null && (lsEmojis === 'true') !== window.ClarityCartConfig.use_emojis) {
                     this.applyLiveSetting('use_emojis', lsEmojis === 'true');
                 }
+                const lsCanonicalTone = localStorage.getItem('clarity_tone');
                 const lsTone = localStorage.getItem('clarity_friendly_tone');
-                if (lsTone !== null && (lsTone === 'true') !== window.ClarityCartConfig.friendly_tone) {
+                if (lsCanonicalTone !== null) {
+                    if (lsCanonicalTone !== window.ClarityCartConfig.tone) this.applyLiveSetting('tone', lsCanonicalTone);
+                } else if (lsTone !== null && (lsTone === 'true') !== window.ClarityCartConfig.friendly_tone) {
                     this.applyLiveSetting('friendly_tone', lsTone === 'true');
                 }
                 const lsExit = localStorage.getItem('clarity_exit_intent');
@@ -191,175 +314,18 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
 
         applyThemePreset(preset) {
             if (!this.shadow) return;
+            const themes = window.ClarityCartThemes;
+            if (!themes) return;
             const container = this.shadow.querySelector('.widget-container');
-            let styleTag = this.shadow.getElementById('clarity-preset-theme');
-            if (!styleTag) {
-                styleTag = document.createElement('style');
-                styleTag.id = 'clarity-preset-theme';
-                this.shadow.appendChild(styleTag);
-            }
-
-            if (preset === 'neon_pop') {
-                if (container) container.classList.add('theme-neon-pop');
-                styleTag.textContent = `
-                    .widget-container.theme-neon-pop {
-                        background: #1E1D24 !important;
-                        border: 2.5px solid #F472B6 !important;
-                        border-radius: 22px !important;
-                        box-shadow: 6px 6px 0px #0A0910, 0 0 25px rgba(244, 114, 182, 0.22) !important;
-                        color: #F8FAFC !important;
-                        position: relative !important;
-                    }
-                    .theme-neon-pop .header .title {
-                        color: #FDE047 !important;
-                        font-weight: 800 !important;
-                        font-size: 15px !important;
-                        letter-spacing: -0.01em !important;
-                    }
-                    .theme-neon-pop .header .title-icon {
-                        color: #FDE047 !important;
-                        stroke-width: 2.8px !important;
-                    }
-                    .theme-neon-pop .ai-badge {
-                        background: rgba(253, 224, 71, 0.12) !important;
-                        color: #FDE047 !important;
-                        border: 1.5px solid rgba(253, 224, 71, 0.3) !important;
-                        font-weight: 700 !important;
-                        letter-spacing: 0.8px !important;
-                    }
-                    .theme-neon-pop .ai-badge .dot {
-                        background-color: #22D3EE !important;
-                        box-shadow: 0 0 6px #22D3EE !important;
-                    }
-                    .theme-neon-pop .reset-btn {
-                        color: #F472B6 !important;
-                    }
-                    .theme-neon-pop .quick-chips {
-                        gap: 8px !important;
-                    }
-                    .theme-neon-pop .chip {
-                        border-radius: 9999px !important;
-                        font-weight: 700 !important;
-                        padding: 8px 16px !important;
-                        border: 2px solid #000000 !important;
-                        box-shadow: 2.5px 2.5px 0px #000000 !important;
-                        font-size: 12.5px !important;
-                        background: #FDE047 !important;
-                        color: #18181B !important;
-                        transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1) !important;
-                    }
-                    .theme-neon-pop .chip:hover {
-                        transform: translate(-1px, -2px) !important;
-                        box-shadow: 3.5px 4.5px 0px #000000 !important;
-                        filter: brightness(1.06) !important;
-                        background: #FEF08A !important;
-                    }
-                    .theme-neon-pop .chip:active {
-                        transform: translate(1px, 1px) !important;
-                        box-shadow: 1px 1px 0px #000000 !important;
-                    }
-                    .theme-neon-pop .chat-container {
-                        border-top: 2px solid #2B2836 !important;
-                    }
-                    .theme-neon-pop .message.user {
-                        background: #14131A !important;
-                        color: #F8FAFC !important;
-                        border: 2px solid #2D2A37 !important;
-                        box-shadow: 2.5px 2.5px 0px #000000 !important;
-                        border-radius: 9999px !important;
-                        padding: 9px 18px !important;
-                        font-weight: 600 !important;
-                    }
-                    .theme-neon-pop .message.ai {
-                        background: #FDE047 !important;
-                        color: #18181B !important;
-                        border: 2px solid #000000 !important;
-                        box-shadow: 3px 3px 0px #000000 !important;
-                        border-radius: 18px !important;
-                        padding: 12px 18px !important;
-                        font-weight: 600 !important;
-                        line-height: 1.5 !important;
-                    }
-                    .theme-neon-pop .loader {
-                        background: #FDE047 !important;
-                        border: 2px solid #000000 !important;
-                        box-shadow: 2px 2px 0px #000000 !important;
-                        border-radius: 14px !important;
-                    }
-                    .theme-neon-pop .loader-dot {
-                        background: #18181B !important;
-                    }
-                    .theme-neon-pop .input-field {
-                        background: #16151D !important;
-                        color: #F8FAFC !important;
-                        border: 2px solid #FDE047 !important;
-                        box-shadow: 2px 2px 0px #000000 !important;
-                        border-radius: 9999px !important;
-                        padding: 11px 18px !important;
-                    }
-                    .theme-neon-pop .input-field::placeholder {
-                        color: #71717A !important;
-                    }
-                    .theme-neon-pop .input-field:focus {
-                        border-color: #FDE047 !important;
-                        box-shadow: 0 0 12px rgba(253, 224, 71, 0.35), 2px 2px 0px #000000 !important;
-                    }
-                    .theme-neon-pop .send-btn {
-                        background: #FDE047 !important;
-                        color: #18181B !important;
-                        border: 2px solid #000000 !important;
-                        box-shadow: 2px 2.5px 0px #000000 !important;
-                        border-radius: 50% !important;
-                        width: 40px !important;
-                        height: 40px !important;
-                    }
-                    .theme-neon-pop .send-btn:hover {
-                        background: #FEF08A !important;
-                        transform: translate(-1px, -1px) scale(1.05) !important;
-                        box-shadow: 3px 4px 0px #000000 !important;
-                    }
-                    .theme-neon-pop .send-btn svg {
-                        color: #18181B !important;
-                        stroke: #18181B !important;
-                    }
-                    .theme-neon-pop .footer {
-                        color: #71717A !important;
-                    }
-                `;
-
-                const targetBtn = document.querySelector(this.targetSelector);
-                if (targetBtn) {
-                    targetBtn.classList.add('clarity-neon-pop-btn');
-                    if (!document.getElementById('clarity-global-neon-style')) {
-                        const globalStyle = document.createElement('style');
-                        globalStyle.id = 'clarity-global-neon-style';
-                        globalStyle.textContent = `
-                            .clarity-neon-pop-btn {
-                                background: linear-gradient(135deg, #1E1B2C 0%, #26213A 100%) !important;
-                                color: #FFFFFF !important;
-                                border: 2.5px solid #F472B6 !important;
-                                border-radius: 16px !important;
-                                box-shadow: 4px 4px 0px #000000, 0 0 16px rgba(244, 114, 182, 0.25) !important;
-                                font-weight: 800 !important;
-                                letter-spacing: 0.5px !important;
-                                text-shadow: 0 0 8px rgba(255,255,255,0.4);
-                                position: relative !important;
-                                transition: all 0.2s ease !important;
-                            }
-                            .clarity-neon-pop-btn:hover {
-                                transform: translate(-1px, -1px) scale(1.01) !important;
-                                box-shadow: 5px 5px 0px #000000, 0 0 22px rgba(244, 114, 182, 0.4) !important;
-                            }
-                        `;
-                        document.head.appendChild(globalStyle);
-                    }
-                }
-            } else {
-                if (container) container.classList.remove('theme-neon-pop');
-                styleTag.textContent = '';
-                const targetBtn = document.querySelector(this.targetSelector);
-                if (targetBtn) targetBtn.classList.remove('clarity-neon-pop-btn');
-            }
+            if (!container) return;
+            let style = this.shadow.getElementById('clarity-preset-theme');
+            if (!style) { style = document.createElement('style'); style.id = 'clarity-preset-theme'; this.shadow.appendChild(style); }
+            style.textContent = themes.CSS;
+            themes.apply(container, preset, window.ClarityCartConfig.widgetColor);
+            container.classList.remove('theme-neon-pop');
+            // Remove the old global decoration without changing the merchant's cart functionality.
+            document.querySelector(this.targetSelector)?.classList.remove('clarity-neon-pop-btn');
+            document.getElementById('clarity-global-neon-style')?.remove();
         }
 
         // Live notification helper for real-time settings feedback in widget
@@ -385,22 +351,20 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
 
         applyThemeColor(color) {
             if (typeof color !== 'string' || !/^#[0-9a-f]{6}$/i.test(color)) return;
-            if (!this.shadow || !color) return;
-            let styleTag = this.shadow.getElementById('clarity-custom-theme');
-            if (!styleTag) {
-                styleTag = document.createElement('style');
-                styleTag.id = 'clarity-custom-theme';
-                this.shadow.appendChild(styleTag);
-            }
-            styleTag.textContent = `
-                .send-btn { background: ${color} !important; }
-                .send-btn:hover { filter: brightness(1.15) !important; }
-                .ai-badge { color: ${color} !important; background: ${color}18 !important; }
-                .ai-badge .dot { background-color: ${color} !important; }
-                .message.user { background: ${color} !important; color: #ffffff !important; }
-                .input-field:focus { border-color: ${color} !important; box-shadow: 0 0 0 2px ${color}33 !important; }
-                .chip:hover { border-color: ${color}80 !important; color: ${color} !important; }
-            `;
+            window.ClarityCartConfig.widgetColor = color;
+            this.shadow?.getElementById('clarity-custom-theme')?.remove();
+            this.applyThemePreset(window.ClarityCartConfig.themePreset || 'classic');
+        }
+
+        isAnalyticsProductPage() {
+            if (document.querySelector(this.targetSelector) || document.querySelector('[itemtype*="schema.org/Product"]')) return true;
+            return [...document.querySelectorAll('script[type="application/ld+json"]')].some(script => {
+                if (script.textContent.length > 100000) return false;
+                try {
+                    const values = JSON.parse(script.textContent);
+                    return [values].flat().flatMap(value => value?.['@graph'] || value).some(value => [value?.['@type']].flat().includes('Product'));
+                } catch (_) { return false; }
+            });
         }
 
         async getRequestSession(force = false) {
@@ -447,6 +411,7 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                             window.ClarityCartConfig.friendly_tone = settings.friendly_tone;
                             window.ClarityCartConfig.tone = settings.friendly_tone ? 'friendly' : 'professional';
                         }
+                        if (settings.tone) { window.ClarityCartConfig.tone = settings.tone; window.ClarityCartConfig.friendly_tone = settings.tone === 'friendly'; }
                         const lsUseEmojis = localStorage.getItem('clarity_use_emojis');
                         if (lsUseEmojis !== null) {
                             window.ClarityCartConfig.use_emojis = lsUseEmojis === 'true';
@@ -465,12 +430,12 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                             window.ClarityCartConfig.exitIntentEnabled = Boolean(settings.exit_intent);
                         }
                         const lsColor = localStorage.getItem('clarity_widget_color');
-                        if (lsColor) {
+                        if (lsColor && /^#[0-9a-f]{6}$/i.test(lsColor)) {
                             window.ClarityCartConfig.widgetColor = lsColor;
                             this.applyThemeColor(lsColor);
-                        } else if (settings.widget_color) {
-                            window.ClarityCartConfig.widgetColor = settings.widget_color;
-                            this.applyThemeColor(settings.widget_color);
+                        } else {
+                            window.ClarityCartConfig.widgetColor = settings.widget_color || null;
+                            this.applyThemePreset(window.ClarityCartConfig.themePreset || 'classic');
                         }
                     }
                 }
@@ -480,83 +445,54 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
         }
 
         extractProductContext() {
-            let title = '';
-            let description = '';
-            let price = '';
-            let currency = '';
-
-            // a) Parse JSON-LD microdata
-            const jsonLdScripts = document.querySelectorAll('script[type="application/ld+json"]');
-            for (let script of jsonLdScripts) {
-                try {
-                    const data = JSON.parse(script.innerText);
-                    const items = Array.isArray(data) ? data : [data];
-
-                    for (let item of items) {
-                        const graphItems = item['@graph'] ? item['@graph'] : [item];
-                        for (let gItem of graphItems) {
-                            if (gItem['@type'] === 'Product') {
-                                title = gItem.name || title;
-                                description = gItem.description || description;
-                                if (gItem.offers) {
-                                    const offer = Array.isArray(gItem.offers) ? gItem.offers[0] : gItem.offers;
-                                    price = offer.price || price;
-                                    currency = offer.priceCurrency || currency;
-                                }
-                            }
-                        }
-                    }
-                } catch (e) {
-                    // Silently fail on parse errors
-                }
-            }
-
-            // b) Fallback to OpenGraph and meta tags
-            if (!title) {
-                title = document.querySelector('meta[property="og:title"]')?.content ||
-                    document.title ||
-                    document.querySelector('h1')?.innerText?.trim() || '';
-            }
-            if (!description) {
-                description = document.querySelector('meta[name="description"]')?.content ||
-                    document.querySelector('meta[property="og:description"]')?.content || '';
-            }
-            if (!price) {
-                price = document.querySelector('meta[property="product:price:amount"]')?.content || '';
-            }
-
-            // c) Fallback to DOM traversal
-            if (!title) {
-                title = document.querySelector('h1')?.innerText?.trim() || '';
-            }
-            if (!description) {
-                const descSelectors = ['.description', '#product-description', '[class*="desc"]'];
-                for (let sel of descSelectors) {
-                    const el = document.querySelector(sel);
-                    if (el) {
-                        description += el.innerText.trim() + '\n';
-                    }
-                }
-            }
-            if (!price) {
-                const priceSelectors = ['.current-price', '[class*="price"]:not([class*="old"]):not([class*="strike"])'];
-                for (let sel of priceSelectors) {
-                    const el = document.querySelector(sel);
-                    if (el && el.innerText.match(/\d/)) {
-                        price = el.innerText.trim();
-                        break;
-                    }
-                }
-            }
-
-            const productData = {
-                title: title.trim(),
-                price: price ? `${price} ${currency}`.trim() : '',
-                description: description.trim()
+            const clean = (value, max) => {
+                if (typeof value !== 'string' && typeof value !== 'number') return '';
+                return String(value).slice(0, max * 4).replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi, ' ').replace(/<[^>]*>/g, ' ').replace(/[\u0000-\u001f\u200b-\u200f\u202a-\u202e]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, max);
             };
-
-            console.log("🛒 ClarityCart Parsed Context:", productData);
-            return productData;
+            const offerOf = item => Array.isArray(item?.offers) ? item.offers[0] : item?.offers || {};
+            let product = {};
+            for (const script of [...document.querySelectorAll('script[type="application/ld+json"]')].slice(0, 10)) {
+                const raw = script.textContent || script.innerText || '';
+                if (raw.length > 100000) continue;
+                try {
+                    const parsed = JSON.parse(raw);
+                    const items = [parsed].flat().slice(0, 50).flatMap(item => Array.isArray(item?.['@graph']) ? item['@graph'].slice(0, 50) : item);
+                    const products = items.filter(item => [item?.['@type']].flat().includes('Product'));
+                    const matchesPage = item => {
+                        if (typeof item.url !== 'string') return false;
+                        try { const url = new URL(item.url, window.location.href), current = new URL(window.location.href);
+                            return url.hostname === current.hostname && url.pathname.replace(/\/$/, '') === current.pathname.replace(/\/$/, '');
+                        } catch (_) { return false; }
+                    };
+                    const matched = products.find(matchesPage);
+                    if (matched) { product = matched; break; }
+                    // An explicitly different product URL is a recommendation, not this page's product.
+                    if (!Object.keys(product).length) product = products.find(item => !item.url) || {};
+                } catch (_) {}
+            }
+            const offer = offerOf(product);
+            const content = selector => {
+                const el = document.querySelector(selector);
+                return el?.getAttribute('content') || el?.getAttribute('href') || el?.textContent || '';
+            };
+            const title = clean(product.name || content('[itemprop="name"]') || content('meta[property="og:title"]') || document.querySelector('h1')?.textContent || document.title, 240);
+            let description = clean(product.description || content('[itemprop="description"]') || content('meta[name="description"]') || content('meta[property="og:description"]'), 4000);
+            if (!description) description = clean(document.querySelector('#product-description, .description, [class*="desc"]')?.textContent || '', 4000);
+            const structuredPrice = offer.price === 0 ? '0' : offer.price;
+            const price = clean(content('[itemprop="price"]') || structuredPrice || content('meta[property="product:price:amount"]') || document.querySelector('.current-price, [class*="price"]:not([class*="old"]):not([class*="strike"])')?.textContent || '', 80);
+            const attributes = Object.create(null);
+            for (const p of (Array.isArray(product.additionalProperty) ? product.additionalProperty : []).slice(0, 12)) {
+                const key = clean(p?.name, 40), value = clean(p?.value, 120);
+                if (key && value && !['__proto__', 'constructor', 'prototype'].includes(key)) attributes[key] = value;
+            }
+            const variants = (Array.isArray(product.hasVariant) ? product.hasVariant : []).slice(0, 6).map(item => ({
+                title: clean(item?.name, 100), price: clean(offerOf(item).price, 80), availability: clean(offerOf(item).availability, 80)
+            })).filter(item => item.title);
+            const image_alts = [...document.querySelectorAll('[itemprop="image"][alt], .product-image[alt], .product img[alt]')].slice(0, 3).map(img => clean(img.getAttribute('alt'), 150)).filter(Boolean);
+            let url = '';
+            try { const current = new URL(window.location.href); current.search = ''; current.hash = ''; url = current.href.slice(0, 1024); } catch (_) {}
+            return { title, description, price, currency: clean(offer.priceCurrency || content('[itemprop="priceCurrency"]') || content('meta[property="product:price:currency"]'), 12),
+                availability: clean(content('[itemprop="availability"]') || offer.availability, 80), url, attributes, variants, image_alts };
         }
 
         render(shadow) {
@@ -605,7 +541,7 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                     backdrop-filter: blur(8px);
                     -webkit-backdrop-filter: blur(8px);
                     border: 1px solid rgba(0, 0, 0, 0.08);
-                    border-radius: 12px;
+                    border-radius: var(--cc-control-radius, 12px);
                     padding: 16px;
                     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
                     display: flex;
@@ -629,7 +565,7 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                 .title {
                     font-size: 14px;
                     font-weight: 600;
-                    color: #1a1a1a;
+                    color: var(--cc-text, #1a1a1a);
                     margin: 0;
                     display: flex;
                     align-items: center;
@@ -639,7 +575,7 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                 .title-icon {
                     width: 16px;
                     height: 16px;
-                    color: #1a1a1a;
+                    color: var(--cc-text, #1a1a1a);
                 }
 
                 .ai-badge {
@@ -711,7 +647,7 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                 }
 
                 .reset-btn:hover {
-                    color: #1a1a1a;
+                    color: var(--cc-text, #1a1a1a);
                     background: rgba(0,0,0,0.05);
                 }
 
@@ -733,8 +669,8 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                 }
 
                 .chip {
-                    background: #f8f9fa;
-                    border: 1px solid #eeeeee;
+                    background: var(--cc-chip-bg, #f8f9fa);
+                    border: 1px solid var(--cc-border, #eeeeee);
                     border-radius: 100px;
                     padding: 8px 14px;
                     font-size: 13px;
@@ -749,9 +685,9 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                 }
 
                 .chip:hover {
-                    background: #ffffff;
+                    background: var(--cc-bg, #ffffff);
                     border-color: #d1d5db;
-                    color: #1a1a1a;
+                    color: var(--cc-text, #1a1a1a);
                     transform: translateY(-1px);
                     box-shadow: 0 2px 8px rgba(0,0,0,0.05);
                 }
@@ -786,7 +722,7 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
 
                 .message {
                     padding: 12px 14px;
-                    border-radius: 12px;
+                    border-radius: var(--cc-control-radius, 12px);
                     font-size: 13px;
                     line-height: 1.5;
                     animation: fadeIn 0.3s ease forwards;
@@ -811,8 +747,8 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                 }
 
                 .message.ai {
-                    background: #f4f6f8;
-                    color: #1a1a1a;
+                    background: var(--cc-surface, #f4f6f8);
+                    color: var(--cc-text, #1a1a1a);
                     align-self: flex-start;
                     border-bottom-left-radius: 4px;
                 }
@@ -822,8 +758,8 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                     align-items: center;
                     gap: 4px;
                     padding: 12px 14px;
-                    background: #f4f6f8;
-                    border-radius: 12px;
+                    background: var(--cc-surface, #f4f6f8);
+                    border-radius: var(--cc-control-radius, 12px);
                     border-bottom-left-radius: 4px;
                     align-self: flex-start;
                 }
@@ -869,7 +805,7 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                 .input-field:focus {
                     border-color: #b0b0b0;
                     box-shadow: 0 0 0 2px rgba(0,0,0,0.03);
-                    background: #ffffff;
+                    background: var(--cc-bg, #ffffff);
                 }
 
                 .send-btn {
@@ -918,7 +854,7 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                     padding: 16px;
                     display: none;
                     flex-direction: column;
-                    border-radius: 12px;
+                    border-radius: var(--cc-control-radius, 12px);
                     overflow-y: auto;
                 }
                 .settings-modal.active {
@@ -1015,10 +951,10 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                         <div class="discount-banner" id="discount-banner">
                             <button class="discount-close" id="discount-close">&times;</button>
                             <div class="discount-title">Special Offer!</div>
-                            <div style="margin-top: 6px; font-size: 12px; color: #1e3a8a;">
+                            <div style="margin-top: 6px; font-size: 12px; color: var(--cc-text, #1e3a8a);">
                                 Use code <span class="discount-code" id="discount-code-val"></span> for <span id="discount-amount-val" style="font-weight:600;"></span> off!
                             </div>
-                            <button id="discount-copy-btn" style="margin-top: 8px; font-size: 11px; font-weight:600; background: #1e3a8a; color: #fff; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer;">Copy Code</button>
+                            <button id="discount-copy-btn" style="margin-top: 8px; font-size: 11px; font-weight:600; background: var(--cc-accent, #1e3a8a); color: var(--cc-on-accent, #fff); border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer;">Copy Code</button>
                         </div>
                         <div class="chat-history" id="chat-history">
                             <div class="loader" id="typing-indicator">
@@ -1039,14 +975,14 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                     </div>
                     
                     <div style="text-align: center; padding-top: 12px;">
-                        <div style="font-size: 10px; color: #64748b; margin-bottom: 6px;">AI responses may vary. Verify with store staff.</div>
+                        <div style="font-size: 10px; color: var(--cc-muted, #64748b); margin-bottom: 6px;">AI responses may vary. Verify with store staff.</div>
                         <div class="footer" id="clarity-footer" style="${(window.ClarityCartConfig.activeTier === 'Business' && window.ClarityCartConfig.whiteLabel) ? 'display:none;' : ''}">
-                            ⚡ Powered by <a href="https://claritycart-landing.vercel.app" target="_blank" class="hover:underline text-blue-400" style="color: #60a5fa; text-decoration: none; font-weight: 600;">ClarityCart</a>
+                            ⚡ Powered by <a href="https://claritycart-landing.vercel.app" target="_blank" class="hover:underline text-blue-400" style="color: var(--cc-accent-ink, #60a5fa); text-decoration: none; font-weight: 600;">ClarityCart</a>
                         </div>
                     </div>
                     
                     <div class="settings-modal" id="settings-modal">
-                        <h4 style="margin:0 0 12px 0; color:#1a1a1a;">Widget Settings (Test)</h4>
+                        <h4 style="margin:0 0 12px 0; color:var(--cc-text, #1a1a1a);">Widget Settings (Test)</h4>
                         <div class="settings-group">
                             <label>Simulate Plan</label>
                             <select id="stg-tier">
@@ -1070,6 +1006,8 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                         <div class="settings-group">
                             <label>AI Tone</label>
                             <select id="stg-tone">
+                                <option value="formal">Formal</option>
+                                <option value="concise">Concise</option>
                                 <option value="friendly">Friendly</option>
                                 <option value="professional">Professional</option>
                                 <option value="sales">Sales-Driven</option>
@@ -1134,7 +1072,7 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                         exitBanner = document.createElement('div');
                         exitBanner.id = 'exit-intent-banner';
                         
-                        const isNeon = window.ClarityCartConfig.themePreset === 'neon_pop';
+                        const isNeon = ['neon_pop','solar_graphite'].includes(window.ClarityCartConfig.themePreset);
                         const activeColor = /^#[a-f0-9]{6}$/i.test(window.ClarityCartConfig.widgetColor || '') ? window.ClarityCartConfig.widgetColor : '#3B82F6';
 
                         if (isNeon) {
@@ -1203,15 +1141,13 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                 sendBtn.disabled = true;
 
                 const extractedContext = this.extractProductContext();
+                if (extractedContext.url && this.conversationProduct !== extractedContext.url) { this.conversation = []; this.conversationProduct = extractedContext.url; }
 
                 const cfg = window.ClarityCartConfig;
                 const widgetSession = await this.getRequestSession();
                 if (!this.developerAuthorized) cfg.mockMode = false;
                 // Read live tone from config (friendly_tone flag or tone string)
-                let currentTone = cfg.tone || 'friendly';
-                // If friendly_tone flag is explicitly set, use it
-                if (cfg.friendly_tone === false) currentTone = 'professional';
-                else if (cfg.friendly_tone === true && currentTone !== 'sales' && currentTone !== 'custom') currentTone = 'friendly';
+                let currentTone = cfg.tone || (cfg.friendly_tone === false ? 'professional' : 'friendly');
 
                 // Re-read use_emojis from localStorage for live sync
                 const lsEmojis = localStorage.getItem('clarity_use_emojis');
@@ -1222,6 +1158,8 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                 let tonePrompt = "";
                 if (currentTone === "friendly") tonePrompt = "ROLE: You are an approachable, friendly store assistant. Speak casually, warmly, and naturally.";
                 else if (currentTone === "professional") tonePrompt = "ROLE: Technical specialist. Output facts, specs, and details in clean bullet points (•). No greetings or conversational filler.";
+                else if (currentTone === "formal") tonePrompt = "Use formal, respectful language. Facts stay unchanged.";
+                else if (currentTone === "concise") tonePrompt = "Answer briefly and directly. Facts stay unchanged.";
                 else if (currentTone === "sales") tonePrompt = "ROLE: Persuasive sales consultant. Highlight value, overcome hesitations, and suggest proceeding to checkout.";
                 else if (currentTone === "custom") tonePrompt = "Tone: " + cfg.customTonePrompt;
 
@@ -1274,13 +1212,26 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                     // Keep the exact payload and ID after an ambiguous failure, including refresh.
                     let pending;
                     try { pending = JSON.parse(sessionStorage.getItem(pendingKey)); } catch (e) {}
-                    if (!pending || pending.question !== question.trim()) {
+                    if (!pending || pending.question !== question.trim() || (pending.productContext?.url && extractedContext.url && pending.productContext.url !== extractedContext.url)) {
                         pending = {
                             request_id: crypto.randomUUID(), question: question.trim(), domain: resolvedDomain,
                             productContext: extractedContext, systemInstruction: sysInstr,
+                            ...(this.conversation?.length ? {history:this.conversation.slice(-6)} : {}),
                             temperature: currentTone === 'professional' ? 0.2 : 0.7
                         };
+                        if (typeof TextEncoder !== 'undefined') {
+                            while (new TextEncoder().encode(JSON.stringify(pending)).byteLength > 28000) {
+                                if (pending.history?.length) pending.history.shift();
+                                else if (pending.productContext.description?.length > 200) pending.productContext.description = pending.productContext.description.slice(0, Math.floor(pending.productContext.description.length / 2));
+                                else if (pending.productContext.variants?.length) pending.productContext.variants.pop();
+                                else if (Object.keys(pending.productContext.attributes || {}).length) delete pending.productContext.attributes[Object.keys(pending.productContext.attributes).pop()];
+                                else if (pending.systemInstruction) pending.systemInstruction = '';
+                                else break;
+                            }
+                        }
                     }
+                    const analyticsIdentity = this.analytics?.identity();
+                    if (analyticsIdentity) pending.analytics = analyticsIdentity; else delete pending.analytics;
                     try { sessionStorage.setItem(pendingKey, JSON.stringify(pending)); } catch (e) {}
                     let data;
                     for (let attempt = 0; attempt < 2; attempt++) {
@@ -1296,7 +1247,8 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                                 if (data.retryable) throw new Error(data.error || 'REQUEST_PENDING');
                                 if (typeof data.answer !== 'string') throw new Error('INVALID_RESPONSE');
                                 if (response.ok && !data.blocked && !data.limitReached && !data.error &&
-                                    (data.requestId !== pending.request_id || data.usageRecorded !== true)) {
+                                    (data.requestId !== pending.request_id || data.usageRecorded !== true) &&
+                                    !(isLocalDev && window.ClarityCartConfig.previewAccessToken && data.demo === true && data.usedModel === 'local-sony-demo' && data.usageRecorded === false)) {
                                     throw new Error('API_USAGE_PROTOCOL_MISMATCH');
                                 }
                                 try { sessionStorage.removeItem(pendingKey); } catch (e) {}
@@ -1326,6 +1278,7 @@ window.ClarityCartConfig = window.ClarityCartConfig || {
                     }
                     // Only the server writes questions. Notify the dashboard after its committed ACK.
                     if (usageRecorded) {
+                        this.conversation = [...(this.conversation || []), {role:'user',text:question.trim().slice(0,1000)}, {role:'assistant',text:cleanResponse.slice(0,1000)}].slice(-6);
                         try {
                             const bc = new BroadcastChannel('claritycart_channel');
                             bc.postMessage({ question_logged: true, domain: resolvedDomain });

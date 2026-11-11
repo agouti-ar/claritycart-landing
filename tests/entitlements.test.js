@@ -139,7 +139,8 @@ test('account API verifies identity, rejects foreign store and blocks entitlemen
  assert.equal((await run(h,req('PATCH',{plan:'business'}))).code,400);
  assert.equal((await run(h,req('PATCH',{query_limit:99999}))).code,400);
  assert.equal((await used(s)).plan,'starter');
- const updated=await run(h,req('PATCH',{settings:{friendly_tone:false},cancel_at_period_end:true}));
- assert.equal(updated.code,200);assert.equal(updated.body.settings.friendly_tone,false);assert.equal(updated.body.cancel_at_period_end,true);
+ assert.equal((await run(h,req('PATCH',{settings:{friendly_tone:false}}))).code,400);
+ const updated=await run(h,req('PATCH',{settings:{use_emojis:false},cancel_at_period_end:true}));
+ assert.equal(updated.code,200);assert.equal(updated.body.settings.use_emojis,false);assert.equal(updated.body.cancel_at_period_end,true);
  assert.equal(updated.body.query_limit,3);
 });
