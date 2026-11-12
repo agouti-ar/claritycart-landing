@@ -19,43 +19,8 @@
     <main>
         <a href="index.html">Back to ClarityCart</a>
         <h1>Contact ClarityCart</h1>
-        <form id="contact">
-            <label for="email">Reply email</label>
-            <input id="email" name="email" type="email" maxlength="254" autocomplete="email" required>
-            <label for="message">Message</label>
-            <textarea id="message" name="message" rows="6" maxlength="2000" required></textarea>
-            <p>Leave out passwords and payment details. See our <a href="privacy.html">Privacy Policy</a>.</p>
-            <button type="submit">Send message</button>
-            <p id="status" role="status"></p>
-        </form>
+        <p>Email us at <a href="mailto:support.claritycart@gmail.com">support.claritycart@gmail.com</a> for product support or privacy inquiries.</p>
         <p>For Paddle payments and refunds, visit <a href="https://paddle.net">Paddle buyer support</a>.</p>
     </main>
-    <script>
-        const form = document.getElementById('contact');
-        const status = document.getElementById('status');
-        const button = form.querySelector('button');
-        form.addEventListener('submit', async event => {
-            event.preventDefault();
-            if (button.disabled) return;
-            button.disabled = true;
-            status.textContent = 'Sending…';
-            try {
-                const base = location.port === '5500' ? 'http://127.0.0.1:3000' : '';
-                const response = await fetch(base + '/api/contact', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(Object.fromEntries(new FormData(form))),
-                    signal: AbortSignal.timeout(12000)
-                });
-                if (!response.ok) throw new Error(response.status === 429 ? 'Too many attempts. Please wait a minute.' : 'Message could not be sent. Please try again.');
-                form.reset();
-                status.textContent = 'Message received.';
-            } catch (error) {
-                status.textContent = error.message;
-            } finally {
-                button.disabled = false;
-            }
-        });
-    </script>
 </body>
 </html>

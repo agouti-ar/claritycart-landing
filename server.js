@@ -17,7 +17,6 @@ app.post('/api/billing/webhook',express.raw({type:'application/json',limit:'256k
 // Parse JSON request bodies
 app.use(express.json({limit:'32kb'}));
 app.post('/api/waitlist', require('./api/waitlist'));
-app.post('/api/contact', require('./api/contact'));
 const events=require('./lib/events-handler').createEventsHandler({db:options.db,...(options.eventsOptions||{})});
 app.all(['/api/events','/api/billing/events'],events);
 app.all(['/api/knowledge','/api/billing/knowledge'],require('./lib/knowledge-handler').createKnowledgeHandler({db:options.db,...(options.knowledgeOptions||{})}));
