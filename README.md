@@ -1,4 +1,4 @@
-# ClarityCart AI — Autonomous E-commerce Product Advisor Landing Page
+# ClarityCart AI | Product Landing Page
 
 ![HTML5](https://img.shields.io/badge/html5-%23E34F26.svg?style=for-the-badge&logo=html5&logoColor=white)
 ![TailwindCSS](https://img.shields.io/badge/tailwindcss-%2338B2AC.svg?style=for-the-badge&logo=tailwind-css&logoColor=white)
@@ -6,7 +6,7 @@
 ![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)
 
 ## Overview
-ClarityCart AI is a lightweight, autonomous product advisor widget designed to embed seamlessly into e-commerce product pages. By instantly answering sizing, material, and policy questions, it effectively reduces cart abandonment and increases conversion rates. This repository contains the high-conversion landing page for the SaaS product.
+ClarityCart AI is a product-page assistant that uses product details to answer questions about an item before purchase. This repository contains the marketing page and its lead form. The [embeddable widget lives in its own repository](https://github.com/agouti-ar/clarity-cart-widget).
 
 ## Demo
 ![ClarityCart AI Widget Demo](./demo.gif)
@@ -14,7 +14,7 @@ ClarityCart AI is a lightweight, autonomous product advisor widget designed to e
 ## Key Features
 - **Zero-dependency Vanilla JS architecture** with Shadow DOM encapsulation.
 - **Autonomous context scraping** (JSON-LD & DOM inspection).
-- **High-conversion responsive landing page** with dark-mode aesthetic.
+- **Responsive marketing page** with a dark theme.
 - **Lead capture integration** via Formspree.
 
 ## Tech Stack
@@ -38,7 +38,7 @@ To run this landing page locally, simply follow these steps:
      ```bash
      npx serve .
      # or
-     python3 -m http.server
+     python3 -m http.server 3000
      ```
 3. Open `http://localhost:3000` (or the port provided by your server) in your browser.
 
