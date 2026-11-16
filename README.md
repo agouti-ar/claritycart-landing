@@ -6,7 +6,9 @@
 ![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)
 
 ## Overview
-ClarityCart AI is a product-page assistant that uses product details to answer questions about an item before purchase. This repository contains the marketing page and its lead form. The [embeddable widget lives in its own repository](https://github.com/agouti-ar/clarity-cart-widget).
+ClarityCart AI is a product-page assistant that uses product details to answer questions about an item before purchase. This repository contains the current site, lead form and widget source. The [earlier standalone demo](https://github.com/agouti-ar/clarity-cart-widget) shows the original sneaker example.
+
+[Open the current site](https://claritycart-landing.vercel.app/)
 
 ## Demo
 ![ClarityCart AI Widget Demo](./demo.gif)
