@@ -310,21 +310,20 @@
 
         async function fetchDashboardData() {
             try {
-                // 1. Проверяем сессию (вошел ли пользователь)
+                // Require an authenticated session.
                 const { data: { session } } = await supabaseClient.auth.getSession();
                 if (!session) {
                     window.location.href = 'login.html';
                     return;
                 }
 
-                // 2. Берем домен из метаданных пользователя
+                // Read the store domain from user metadata.
                 const storeDomain = session.user.user_metadata?.store_domain || 'mystore.com';
                 
-                // 3. Меняем надпись mystore.com в шапке на реальный домен
                 const domainEl = document.querySelector('header .text-sm.text-brand-muted');
                 if (domainEl) domainEl.textContent = storeDomain;
 
-                // 4. Загружаем данные из Supabase ТОЛЬКО для этого домена
+                // Filter analytics by the configured store domain.
                 const { data, error } = await supabaseClient
                     .from('questions')
                     .select('*')

@@ -14,8 +14,8 @@ ClarityCart AI is a product-page assistant that uses product details to answer q
 ![ClarityCart AI Widget Demo](./demo.gif)
 
 ## Key Features
-- **Zero-dependency Vanilla JS architecture** with Shadow DOM encapsulation.
-- **Autonomous context scraping** (JSON-LD & DOM inspection).
+- The browser widget uses vanilla JavaScript and Shadow DOM.
+- Product data extraction from JSON-LD and the DOM.
 - **Responsive marketing page** with a dark theme.
 - **Lead capture integration** via Formspree.
 
@@ -43,6 +43,8 @@ To run this landing page locally, simply follow these steps:
      python3 -m http.server 3000
      ```
 3. Open `http://localhost:3000` (or the port provided by your server) in your browser.
+
+A static HTTP server serves the frontend only. Testing the AI endpoint also requires the server-side function and its environment configuration.
 
 ## License
 This project is licensed under the MIT License.
